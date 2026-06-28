@@ -7,13 +7,15 @@
 
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
-  resetBallAfterGoal, PHASES
+  resetBallAfterGoal, applyMove, PHASES
 } from '../engine/gameEngine.js';
+import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail } from '../services/supabaseClient.js';
-import { checkoutTheme, isMockPaymentActive } from '../services/payment/paymentProvider.js';
+import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/payment/paymentProvider.js';
+import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -53,6 +55,16 @@ let currentUser = null;
 let availableThemes = [];
 let purchasedThemeIds = [];
 let activeThemeId = loadSavedThemeId();
+let gameMode = 'local'; // 'local' | 'ai' | 'online'
+let aiLevel = AI_LEVELS.MOYEN;
+let aiThinking = false;
+const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujours Bleu en mode IA
+
+// État multijoueur : myTeam est l'équipe contrôlée par CE navigateur ;
+// l'autre équipe n'est jouable qu'en recevant les mises à jour de l'adversaire.
+let onlineSessionId = null;
+let myTeam = TEAMS.BLEU;
+let unsubscribeFromSession = null;
 let authMode = 'signin'; // 'signin' | 'signup'
 let screenBeforeShop = 'setup';
 
@@ -79,6 +91,18 @@ function cacheDomRefs() {
   els.restartBtn = document.getElementById('restartBtn');
   els.startBtn = document.getElementById('startBtn');
   els.goalOptions = document.getElementById('goalOptions');
+  els.modeOptions = document.getElementById('modeOptions');
+  els.aiDifficultyField = document.getElementById('aiDifficultyField');
+  els.aiDifficultyOptions = document.getElementById('aiDifficultyOptions');
+  els.localAiBlock = document.getElementById('localAiBlock');
+  els.onlineBlock = document.getElementById('onlineBlock');
+  els.createOnlineBtn = document.getElementById('createOnlineBtn');
+  els.joinCodeInput = document.getElementById('joinCodeInput');
+  els.joinOnlineBtn = document.getElementById('joinOnlineBtn');
+  els.onlineError = document.getElementById('onlineError');
+  els.waitingScreen = document.getElementById('waitingScreen');
+  els.inviteCodeDisplay = document.getElementById('inviteCodeDisplay');
+  els.cancelWaitingBtn = document.getElementById('cancelWaitingBtn');
   els.goalOverlay = document.getElementById('goalOverlay');
   els.goalTitle = document.getElementById('goalTitle');
   els.goalSub = document.getElementById('goalSub');
@@ -118,6 +142,7 @@ function startGame(goalsToWin) {
   els.gameScreen.classList.remove('hidden');
   buildBoardGrid(els.boardGrid, handleCellClick);
   render();
+  maybeTriggerAiTurn();
 }
 
 function render() {
@@ -143,6 +168,14 @@ function render() {
 
 function updateHint() {
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
+  if (gameMode === 'ai' && gameState.turn === AI_TEAM) {
+    els.hintBar.textContent = 'L\'ordinateur réfléchit…';
+    return;
+  }
+  if (gameMode === 'online' && gameState.turn !== myTeam) {
+    els.hintBar.textContent = 'En attente du coup de ton adversaire…';
+    return;
+  }
   if (gameState.phase === PHASES.SELECT) {
     els.hintBar.textContent = gameState.selectedTokenId
       ? 'Clique une case pour bouger, ou directement le ballon pour le pousser'
@@ -153,6 +186,11 @@ function updateHint() {
 }
 
 function updateCancelButton() {
+  if (gameMode === 'online') {
+    els.cancelBtn.style.opacity = '0.3';
+    els.cancelBtn.style.pointerEvents = 'none';
+    return;
+  }
   const canCancel =
     (gameState.phase === PHASES.SELECT && gameState.selectedTokenId) ||
     gameState.phase === PHASES.MOVED_CAN_PASS ||
@@ -169,7 +207,8 @@ function updateEndTurnButton() {
 // ---------- Interactions plateau ----------
 
 function handleCellClick(row, col) {
-  if (gameState.gameOver) return;
+  if (gameState.gameOver || aiThinking) return;
+  if (gameMode === 'online' && gameState.turn !== myTeam) return;
 
   if (gameState.phase === PHASES.SELECT) {
     const tok = gameState.tokens.find(t => t.row === row && t.col === col);
@@ -212,6 +251,7 @@ function handleCellClick(row, col) {
 function handlePostActionEffects(previousState) {
   if (gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy) {
     render();
+    syncOnlineStateIfNeeded();
     if (gameState.gameOver) {
       setTimeout(() => showEndOverlay(gameState.winner), 350);
     } else {
@@ -220,11 +260,44 @@ function handlePostActionEffects(previousState) {
     return;
   }
   render();
+  syncOnlineStateIfNeeded();
+  maybeTriggerAiTurn();
+}
+
+/**
+ * Si le mode IA est actif et que c'est au tour de l'IA, déclenche son coup
+ * après un court délai (pour que l'humain voie bien son propre coup se jouer
+ * avant que l'IA ne réponde — sans délai, l'enchaînement paraît instantané
+ * et illisible). L'IA peut jouer plusieurs coups d'affilée si un but la
+ * remet en position d'engager (cas rare mais géré par cette même fonction,
+ * rappelée après chaque coup tant que c'est son tour).
+ */
+function maybeTriggerAiTurn() {
+  if (gameMode !== 'ai') return;
+  if (gameState.gameOver) return;
+  if (gameState.turn !== AI_TEAM) return;
+
+  aiThinking = true;
+  els.boardGrid.classList.add('ai-thinking');
+  setTimeout(() => {
+    const before = gameState;
+    const move = chooseAiMove(gameState, aiLevel);
+    aiThinking = false;
+    if (!move) {
+      els.boardGrid.classList.remove('ai-thinking');
+      return;
+    }
+    gameState = applyMove(gameState, move);
+    els.boardGrid.classList.remove('ai-thinking');
+    handlePostActionEffects(before);
+  }, 550);
 }
 
 // ---------- Annulation ----------
 
 function handleCancel() {
+  if (aiThinking) return;
+  if (gameMode === 'online') return; // pas d'undo en ligne : ça désynchroniserait l'adversaire
   if (gameState.phase === PHASES.SELECT && gameState.selectedTokenId) {
     gameState = { ...gameState, selectedTokenId: null };
     render();
@@ -251,6 +324,8 @@ function hideGoalOverlayAndResume() {
   gameState = resetBallAfterGoal(gameState);
   undoSnapshot = null;
   render();
+  syncOnlineStateIfNeeded();
+  maybeTriggerAiTurn();
 }
 
 function showEndOverlay(winningTeam) {
@@ -261,6 +336,12 @@ function showEndOverlay(winningTeam) {
 }
 
 function backToSetup() {
+  if (unsubscribeFromSession) {
+    unsubscribeFromSession();
+    unsubscribeFromSession = null;
+  }
+  onlineSessionId = null;
+  gameMode = 'local';
   els.gameScreen.classList.add('hidden');
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
@@ -279,6 +360,29 @@ function wireSetupScreen() {
       selectedGoals = parseInt(opt.dataset.val, 10);
     });
   });
+
+  const modeOpts = els.modeOptions.querySelectorAll('.setup-option');
+  modeOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      modeOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      gameMode = opt.dataset.val;
+      els.aiDifficultyField.classList.toggle('hidden', gameMode !== 'ai');
+      els.onlineBlock.classList.toggle('hidden', gameMode !== 'online');
+      els.localAiBlock.classList.toggle('hidden', gameMode === 'online');
+      els.onlineError.textContent = '';
+    });
+  });
+
+  const difficultyOpts = els.aiDifficultyOptions.querySelectorAll('.setup-option');
+  difficultyOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      difficultyOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      aiLevel = opt.dataset.val;
+    });
+  });
+
   els.startBtn.addEventListener('click', () => startGame(selectedGoals));
 
   els.goToSetupBtn.addEventListener('click', () => {
@@ -292,6 +396,108 @@ function wireSetupScreen() {
   });
 }
 
+// ---------- Multijoueur en ligne ----------
+
+function wireOnlineMode() {
+  els.createOnlineBtn.addEventListener('click', handleCreateOnlineGame);
+  els.joinOnlineBtn.addEventListener('click', handleJoinOnlineGame);
+  els.joinCodeInput.addEventListener('input', () => {
+    els.joinCodeInput.value = els.joinCodeInput.value.toUpperCase();
+  });
+  els.joinCodeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleJoinOnlineGame();
+  });
+  els.cancelWaitingBtn.addEventListener('click', cancelOnlineWaiting);
+}
+
+async function handleCreateOnlineGame() {
+  els.onlineError.textContent = '';
+  try {
+    const initialState = createGame({ goalsToWin: 3 });
+    const { id, inviteCode } = await createGameSession(initialState);
+
+    onlineSessionId = id;
+    myTeam = TEAMS.BLEU; // l'hôte est toujours Bleu
+    gameState = initialState;
+
+    els.configScreen.classList.add('hidden');
+    els.waitingScreen.classList.remove('hidden');
+    els.inviteCodeDisplay.textContent = inviteCode;
+
+    unsubscribeFromSession = subscribeToGameSession(id, (newState, status) => {
+      const stillWaiting = !els.waitingScreen.classList.contains('hidden');
+      if (status === 'active' && stillWaiting) {
+        // L'adversaire vient de rejoindre : on quitte la salle d'attente
+        // et on démarre vraiment l'écran de jeu avec l'état reçu.
+        gameState = newState;
+        els.waitingScreen.classList.add('hidden');
+        els.gameScreen.classList.remove('hidden');
+        buildBoardGrid(els.boardGrid, handleCellClick);
+        render();
+        return;
+      }
+      // Mise à jour normale en cours de partie (coup de l'adversaire).
+      gameState = newState;
+      render();
+    });
+  } catch (err) {
+    els.onlineError.textContent = err.message || 'Impossible de créer la partie.';
+  }
+}
+
+async function handleJoinOnlineGame() {
+  els.onlineError.textContent = '';
+  const code = els.joinCodeInput.value.trim();
+  if (code.length < 4) {
+    els.onlineError.textContent = 'Entre le code complet de la partie.';
+    return;
+  }
+
+  try {
+    const { id, gameState: remoteState } = await joinGameSession(code);
+
+    onlineSessionId = id;
+    myTeam = TEAMS.ROUGE; // celui qui rejoint est toujours Rouge
+    gameState = remoteState;
+
+    els.configScreen.classList.add('hidden');
+    els.gameScreen.classList.remove('hidden');
+    buildBoardGrid(els.boardGrid, handleCellClick);
+    render();
+
+    unsubscribeFromSession = subscribeToGameSession(id, (newState) => {
+      gameState = newState;
+      render();
+    });
+  } catch (err) {
+    els.onlineError.textContent = err.message || 'Code invalide ou partie déjà commencée.';
+  }
+}
+
+function cancelOnlineWaiting() {
+  if (unsubscribeFromSession) {
+    unsubscribeFromSession();
+    unsubscribeFromSession = null;
+  }
+  onlineSessionId = null;
+  els.waitingScreen.classList.add('hidden');
+  els.configScreen.classList.remove('hidden');
+}
+
+/**
+ * Pousse l'état courant vers Supabase si une partie en ligne est active.
+ * Appelé après chaque coup local validé par le moteur, pour que l'adversaire
+ * le reçoive via son abonnement Realtime.
+ */
+async function syncOnlineStateIfNeeded() {
+  if (gameMode !== 'online' || !onlineSessionId) return;
+  try {
+    await pushGameState(onlineSessionId, gameState);
+  } catch (err) {
+    console.error('Échec de synchronisation multijoueur :', err);
+  }
+}
+
 function wireGameControls() {
   els.cancelBtn.addEventListener('click', handleCancel);
   els.endTurnBtn.addEventListener('click', handleEndTurnClick);
@@ -301,6 +507,7 @@ function wireGameControls() {
 }
 
 function handleEndTurnClick() {
+  if (aiThinking) return;
   const before = gameState;
   gameState = passTurn(gameState);
   handlePostActionEffects(before);
@@ -313,7 +520,12 @@ function handleEndTurnClick() {
 // présentable plutôt que vide, même si les achats ne pourront pas être validés
 // dans cet état (l'utilisateur verra l'erreur au moment d'acheter, pas avant).
 const FALLBACK_THEMES = [
-  { id: 'classique', name: 'Classique', description: 'Le terrain vert historique de Plateau Foot.', price_cents: 0, currency: 'eur', config: { vertTerrain: '#1F3D2B', vertTerrainClair: '#28492F', bleuEquipe: '#3A6EA5', rougeEquipe: '#C84B31', accent: '#C97B4A' } },
+  { id: 'or-mondial', name: 'Or Mondial', description: 'L’or du sommet, l’instant où tout se joue.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0F2818', vertTerrainClair: '#173820', bleuEquipe: '#1C3F66', rougeEquipe: '#C9A227', accent: '#F4D35E' }, isWorldCup: true },
+  { id: 'samba', name: 'Samba', description: 'Jaune et vert, la fête sur la pelouse.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0B4D2C', vertTerrainClair: '#116B3D', bleuEquipe: '#1565C0', rougeEquipe: '#F9D923', accent: '#2E9E4F' }, isWorldCup: true },
+  { id: 'tricolore', name: 'Tricolore', description: 'Bleu, blanc, rouge, droit vers la cage.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#13294B', vertTerrainClair: '#1B3A66', bleuEquipe: '#1B3A66', rougeEquipe: '#C8102E', accent: '#F5F2E8' }, isWorldCup: true },
+  { id: 'albiceleste', name: 'Albiceleste', description: 'Le ciel et la victoire, à bandes blanches.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#1B2A4A', vertTerrainClair: '#243A63', bleuEquipe: '#6CB4EE', rougeEquipe: '#F5F2E8', accent: '#FDB927' }, isWorldCup: true },
+  { id: 'nuit-americaine', name: 'Nuit Américaine', description: 'Sous les étoiles, l’été du grand tournoi.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0A1A33', vertTerrainClair: '#102448', bleuEquipe: '#3B5BA5', rougeEquipe: '#B22234', accent: '#F5F2E8' }, isWorldCup: true },
+  { id: 'classique', name: 'Classique', description: 'Le terrain vert historique de Tactic Master.', price_cents: 0, currency: 'eur', config: { vertTerrain: '#1F3D2B', vertTerrainClair: '#28492F', bleuEquipe: '#3A6EA5', rougeEquipe: '#C84B31', accent: '#C97B4A' } },
   { id: 'neon', name: 'Néon', description: 'Un terrain électrique pour les soirées arcade.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0D1B2A', vertTerrainClair: '#15263B', bleuEquipe: '#00E5FF', rougeEquipe: '#FF2D75', accent: '#FFD600' } },
   { id: 'neige', name: 'Neige', description: 'Le grand froid s’abat sur le terrain.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#E8EEF3', vertTerrainClair: '#F4F8FB', bleuEquipe: '#2C5C8A', rougeEquipe: '#A23B3B', accent: '#6FA8D6' } },
   { id: 'terre-battue', name: 'Terre battue', description: 'Ambiance Roland-Garros, mais au foot.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#A8542E', vertTerrainClair: '#BD663C', bleuEquipe: '#2B4C7E', rougeEquipe: '#7E2B2B', accent: '#F2C572' } },
@@ -345,6 +557,71 @@ async function refreshThemeData() {
   return usedFallback;
 }
 
+// IDs des thèmes événementiels "Coupe du Monde", utilisés pour afficher un
+// badge promotionnel dans la boutique quel que soit l'endroit d'où vient le
+// catalogue (Supabase réel ou catalogue de secours hors-ligne).
+const WORLD_CUP_THEME_IDS = ['or-mondial', 'samba', 'tricolore', 'albiceleste', 'nuit-americaine'];
+
+const WORLD_CUP_BUNDLE_PRICE_CENTS = 699; // 6,99€ au lieu de 9,95€ (5 x 1,99€) séparément
+
+function renderWorldCupBundleCard() {
+  const missingThemes = WORLD_CUP_THEME_IDS.filter(id => !purchasedThemeIds.includes(id));
+  if (missingThemes.length === 0) return; // déjà tout débloqué, le bundle n'a plus d'intérêt
+
+  const card = document.createElement('div');
+  card.className = 'theme-card world-cup bundle-card';
+
+  const badge = document.createElement('span');
+  badge.className = 'world-cup-badge';
+  badge.textContent = 'Économisez 3€';
+  card.appendChild(badge);
+
+  const swatch = document.createElement('div');
+  swatch.className = 'theme-swatch bundle-swatch';
+  ['#F4D35E', '#2E9E4F', '#C8102E', '#6CB4EE', '#3B5BA5'].forEach(color => {
+    const dot = document.createElement('span');
+    dot.style.background = color;
+    swatch.appendChild(dot);
+  });
+
+  const name = document.createElement('div');
+  name.className = 'theme-name';
+  name.textContent = 'Pack Mondial complet';
+
+  const desc = document.createElement('div');
+  desc.className = 'theme-desc';
+  desc.textContent = `Les 5 thèmes événementiels en un seul achat — ${formatPrice(WORLD_CUP_BUNDLE_PRICE_CENTS)} au lieu de ${formatPrice(199 * 5)}.`;
+
+  const action = document.createElement('button');
+  action.className = 'btn primary theme-action';
+  action.textContent = `Tout débloquer — ${formatPrice(WORLD_CUP_BUNDLE_PRICE_CENTS)}`;
+  action.addEventListener('click', () => handleBundlePurchase(missingThemes));
+
+  card.appendChild(swatch);
+  card.appendChild(name);
+  card.appendChild(desc);
+  card.appendChild(action);
+  els.shopGrid.appendChild(card);
+}
+
+async function handleBundlePurchase(themeIds) {
+  if (!currentUser) {
+    authMode = 'signin';
+    renderAccountOverlayContent();
+    els.accountOverlay.classList.add('show');
+    return;
+  }
+  try {
+    const result = await checkoutBundle(themeIds, WORLD_CUP_BUNDLE_PRICE_CENTS, currentUser);
+    if (result.immediate) {
+      const usedFallback = await refreshThemeData();
+      renderShop(usedFallback);
+    }
+  } catch (err) {
+    alert(err.message || 'Achat groupé impossible pour le moment.');
+  }
+}
+
 function renderShop(usedFallback = false) {
   els.shopGrid.innerHTML = '';
 
@@ -355,6 +632,8 @@ function renderShop(usedFallback = false) {
     els.shopGrid.appendChild(banner);
   }
 
+  renderWorldCupBundleCard();
+
   if (availableThemes.length === 0) {
     els.shopGrid.innerHTML = '<p class="shop-empty">Boutique indisponible pour le moment.</p>';
     return;
@@ -362,8 +641,16 @@ function renderShop(usedFallback = false) {
 
   availableThemes.forEach(theme => {
     const unlocked = isThemeUnlocked(theme, purchasedThemeIds);
+    const isWorldCup = WORLD_CUP_THEME_IDS.includes(theme.id);
     const card = document.createElement('div');
-    card.className = 'theme-card' + (theme.id === activeThemeId ? ' active' : '');
+    card.className = 'theme-card' + (theme.id === activeThemeId ? ' active' : '') + (isWorldCup ? ' world-cup' : '');
+
+    if (isWorldCup) {
+      const badge = document.createElement('span');
+      badge.className = 'world-cup-badge';
+      badge.textContent = 'Édition Mondial';
+      card.appendChild(badge);
+    }
 
     const swatch = document.createElement('div');
     swatch.className = 'theme-swatch';
@@ -579,6 +866,7 @@ function init() {
   }
 
   wireSetupScreen();
+  wireOnlineMode();
   wireGameControls();
   wireShop();
   wireAccount();

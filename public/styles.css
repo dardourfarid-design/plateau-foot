@@ -197,6 +197,12 @@ body{
 
 /* ---------- PLATEAU ---------- */
 
+.board-grid.ai-thinking{
+  pointer-events: none;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
 .board-wrap{
   position:relative;
   width:100%;
@@ -597,6 +603,37 @@ body{
   flex-direction:column;
 }
 
+.world-cup-banner{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  background: linear-gradient(120deg, #1d1408, #2a1d0a);
+  border: 1px solid rgba(244,211,94,0.3);
+  border-radius:10px;
+  padding: 14px 18px;
+  margin-bottom:22px;
+}
+
+.world-cup-banner-tag{
+  background: linear-gradient(135deg, #F4D35E, #E0A52C);
+  color: #1A1208;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding: 5px 12px;
+  border-radius:20px;
+  flex-shrink:0;
+}
+
+.world-cup-banner-text{
+  font-size:13px;
+  color: var(--craie-att);
+}
+
 /* ---------- BOUTIQUE ---------- */
 
 .shop-layout{
@@ -647,9 +684,32 @@ body{
   display:flex; flex-direction:column; gap:10px;
   border: 1px solid rgba(245,242,232,0.08);
   transition: border-color 0.15s ease, transform 0.15s ease;
+  position:relative;
 }
 .theme-card:hover{ transform: translateY(-2px); }
 .theme-card.active{ border-color: var(--terre-vif); }
+
+.theme-card.world-cup{
+  border-color: rgba(244,211,94,0.35);
+  background: linear-gradient(165deg, var(--nuit-clair), #1d1408);
+}
+.theme-card.world-cup:hover{ border-color: rgba(244,211,94,0.6); }
+
+.world-cup-badge{
+  position:absolute;
+  top:-10px;
+  right:14px;
+  background: linear-gradient(135deg, #F4D35E, #E0A52C);
+  color: #1A1208;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:10px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding: 4px 10px;
+  border-radius:20px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
 
 .theme-swatch{
   height:72px;
@@ -657,6 +717,20 @@ body{
   display:flex; align-items:flex-end; gap:8px;
   padding:10px;
 }
+.bundle-card{
+  border-color: rgba(244,211,94,0.5);
+  border-width: 2px;
+}
+
+.bundle-swatch{
+  background: linear-gradient(120deg, #0F2818, #1d1408);
+  justify-content:space-between;
+}
+.bundle-swatch span{
+  width:16px; height:16px; border-radius:50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
 .theme-swatch span{
   width:18px; height:18px; border-radius:50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -721,6 +795,89 @@ body{
 
   .setup-text{ text-align:left; }
   .setup-preview{ display:flex; }
+}
+
+/* ---------- MULTIJOUEUR EN LIGNE ---------- */
+
+.online-divider{
+  text-align:center;
+  font-size:12px;
+  color: var(--craie-att);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  margin: 10px 0 18px;
+  position:relative;
+}
+.online-divider::before, .online-divider::after{
+  content:'';
+  position:absolute;
+  top:50%;
+  width:38%;
+  height:1px;
+  background: rgba(245,242,232,0.12);
+}
+.online-divider::before{ left:0; }
+.online-divider::after{ right:0; }
+
+.join-code-row{
+  display:flex;
+  gap:8px;
+}
+
+.join-code-input{
+  text-transform:uppercase;
+  letter-spacing:0.15em;
+  text-align:center;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  margin-bottom:0;
+  flex:1;
+}
+
+.online-error{
+  min-height:16px;
+  font-size:12px;
+  color: var(--rouge-equipe-clair);
+  margin: 8px 0 0;
+}
+
+.waiting-card{
+  text-align:center;
+  align-items:center;
+  display:flex;
+  flex-direction:column;
+}
+
+.invite-code-display{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:48px;
+  letter-spacing:0.12em;
+  color: var(--terre-vif);
+  margin: 18px 0 14px;
+  padding: 14px 28px;
+  background: var(--nuit);
+  border-radius:10px;
+  border: 1px dashed rgba(224,143,79,0.4);
+}
+
+.waiting-text{
+  font-size:13px;
+  color: var(--craie-att);
+  max-width:280px;
+  margin: 0 0 20px;
+}
+
+.waiting-spinner{
+  width:28px; height:28px;
+  border-radius:50%;
+  border: 3px solid rgba(245,242,232,0.15);
+  border-top-color: var(--terre-vif);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin{
+  to{ transform: rotate(360deg); }
 }
 
 /* ---------- COMPTE / AUTH ---------- */

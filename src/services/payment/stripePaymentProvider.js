@@ -41,6 +41,27 @@ export async function checkoutTheme(theme, user) {
   return { redirectUrl: data.url };
 }
 
+/**
+ * Équivalent bundle de checkoutTheme : la fonction Edge `create-checkout-session`
+ * devra accepter soit { themeId }, soit { themeIds, bundleId } pour calculer le
+ * bon prix côté serveur (jamais confiance dans un prix envoyé par le client).
+ */
+export async function checkoutBundle(themeIds, bundlePriceCents, user) {
+  if (!user) {
+    throw new Error('Connexion requise avant achat.');
+  }
+
+  const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+    body: { themeIds, isBundle: true }
+  });
+
+  if (error) {
+    throw new Error(`Impossible de démarrer le paiement groupé : ${error.message}`);
+  }
+
+  return { redirectUrl: data.url };
+}
+
 export async function verifyPurchase(themeId, user) {
   // Identique au mock : la vérité est dans Supabase, écrite par le webhook,
   // jamais par le front. Cette fonction reste donc une simple lecture.

@@ -2,7 +2,7 @@ import { describe, test, expect } from './test-utils.js';
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
   resetBallAfterGoal, getMoveDestinations, getPassDestinations,
-  tokenAt, isAdjacent, PHASES
+  tokenAt, isAdjacent, PHASES, listLegalMoves, applyMove
 } from '../src/engine/gameEngine.js';
 import { TEAMS, CENTER } from '../src/engine/constants.js';
 
@@ -214,5 +214,95 @@ describe('immutabilité de l’état', () => {
     s2 = moveSelectedToken(s2, 8, 2);
     expect(state.tokens).toEqual(original.tokens);
     expect(state.turn).toEqual(original.turn);
+  });
+});
+
+describe('listLegalMoves', () => {
+  test('retourne une liste non vide en début de partie', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state);
+    expect(moves.length > 0).toBe(true);
+  });
+
+  test('ne propose que des coups pour l’équipe au tour', () => {
+    const state = createGame(); // tour de bleu
+    const moves = listLegalMoves(state);
+    const allBleu = moves.every(m => {
+      const tok = state.tokens.find(t => t.id === m.tokenId);
+      return tok.team === TEAMS.BLEU;
+    });
+    expect(allBleu).toBe(true);
+  });
+
+  test('retourne un tableau vide si la partie est terminée', () => {
+    let state = createGame({ goalsToWin: 1 });
+    state = { ...state, gameOver: true, winner: TEAMS.BLEU };
+    const moves = listLegalMoves(state);
+    expect(moves).toEqual([]);
+  });
+
+  test('inclut des coups move_and_pass quand un déplacement amène au contact du ballon', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state);
+    const hasMoveAndPass = moves.some(m => m.type === 'move_and_pass');
+    expect(hasMoveAndPass).toBe(true);
+  });
+
+  test('chaque coup move référence une destination réellement valide', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state).filter(m => m.type === 'move');
+    const allValid = moves.every(m => {
+      const tok = state.tokens.find(t => t.id === m.tokenId);
+      const validDests = getMoveDestinations(state, tok);
+      return validDests.some(([r, c]) => r === m.to[0] && c === m.to[1]);
+    });
+    expect(allValid).toBe(true);
+  });
+});
+
+describe('applyMove', () => {
+  test('applique correctement un coup de type move', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state).filter(m => m.type === 'move');
+    const move = moves[0];
+    const next = applyMove(state, move);
+    const movedToken = next.tokens.find(t => t.id === move.tokenId);
+    expect(movedToken.row).toBe(move.to[0]);
+    expect(movedToken.col).toBe(move.to[1]);
+  });
+
+  test('applique correctement un coup de type move_and_pass, y compris un but', () => {
+    let state = createGame({ goalsToWin: 99 });
+    state = { ...state, ball: { row: 1, col: 3 } };
+    const tokens = state.tokens.map(t =>
+      t.id === 'b-att1' ? { ...t, row: 2, col: 4 } : t
+    );
+    state = { ...state, tokens };
+    const move = { type: 'move_and_pass', tokenId: 'b-att1', to: [2, 3], passTo: [0, 3] };
+    const next = applyMove(state, move);
+    expect(next.score[TEAMS.BLEU]).toBe(1);
+  });
+
+  test('un coup move qui ne touche pas le ballon termine le tour', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state).filter(m => m.type === 'move');
+    // b-def* sont loin du ballon en début de partie
+    const farMove = moves.find(m => m.tokenId.startsWith('b-def'));
+    const next = applyMove(state, farMove);
+    expect(next.turn).toBe(TEAMS.ROUGE);
+  });
+
+  test('appliquer chaque coup listé par listLegalMoves ne lève jamais d’erreur', () => {
+    const state = createGame();
+    const moves = listLegalMoves(state);
+    let allOk = true;
+    moves.forEach(m => {
+      try {
+        applyMove(state, m);
+      } catch (e) {
+        allOk = false;
+      }
+    });
+    expect(allOk).toBe(true);
   });
 });

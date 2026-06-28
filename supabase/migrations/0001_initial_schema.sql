@@ -96,7 +96,7 @@ create policy "Un joueur peut lire ses propres achats"
 
 -- ---------- SEED : thèmes de départ ----------
 insert into public.themes (id, name, description, price_cents, sort_order, config) values
-  ('classique', 'Classique', 'Le terrain vert historique de Plateau Foot.', 0, 0,
+  ('classique', 'Classique', 'Le terrain vert historique de Tactic Master.', 0, 0,
     '{"vertTerrain":"#1F3D2B","vertTerrainClair":"#28492F","bleuEquipe":"#3A6EA5","rougeEquipe":"#C84B31","accent":"#C97B4A"}'::jsonb),
   ('neon', 'Néon', 'Un terrain électrique pour les soirées arcade.', 199, 1,
     '{"vertTerrain":"#0D1B2A","vertTerrainClair":"#15263B","bleuEquipe":"#00E5FF","rougeEquipe":"#FF2D75","accent":"#FFD600"}'::jsonb),

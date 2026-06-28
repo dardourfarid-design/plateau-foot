@@ -262,3 +262,83 @@ export function deselect(state) {
   if (state.phase !== PHASES.SELECT) return state;
   return Object.freeze({ ...state, selectedTokenId: null });
 }
+
+/**
+ * Énumère tous les coups légaux pour l'équipe au tour, dans l'état donné.
+ * Un coup est soit un déplacement simple { type: 'move', tokenId, to: [r,c] },
+ * soit un déplacement suivi d'une passe { type: 'move_and_pass', tokenId, to, passTo },
+ * soit une passe directe sans déplacement { type: 'pass', tokenId, passTo }.
+ *
+ * Cette fonction ne s'appuie que sur l'état et les règles déjà testées du moteur
+ * (getMoveDestinations, getPassDestinations) — elle ne fait qu'énumérer, jamais
+ * elle ne mute quoi que ce soit. Utilisée par le module IA (voir ai.js) pour
+ * choisir un coup, mais reste indépendante de toute notion de "joueur artificiel" :
+ * elle décrit simplement l'espace des coups légaux, ce qui est une propriété du jeu.
+ */
+export function listLegalMoves(state) {
+  if (state.gameOver || state.phase !== PHASES.SELECT) return [];
+
+  const moves = [];
+  const myTokens = state.tokens.filter(t => t.team === state.turn);
+
+  for (const token of myTokens) {
+    // Cas 1 : le pion est déjà adjacent au ballon sans bouger -> passe directe possible
+    if (isAdjacent(token.row, token.col, state.ball.row, state.ball.col)) {
+      const passes = getPassDestinations(state);
+      passes.forEach(([pr, pc]) => {
+        moves.push({ type: 'pass', tokenId: token.id, passTo: [pr, pc] });
+      });
+    }
+
+    // Cas 2 : déplacements simples, certains menant à une passe possible ensuite
+    const destinations = getMoveDestinations(state, token);
+    destinations.forEach(([dr, dc]) => {
+      moves.push({ type: 'move', tokenId: token.id, to: [dr, dc] });
+
+      if (isAdjacent(dr, dc, state.ball.row, state.ball.col)) {
+        // Simuler l'état juste après ce déplacement pour énumérer les passes
+        // réellement disponibles depuis cette nouvelle position du pion.
+        const simulatedTokens = state.tokens.map(t =>
+          t.id === token.id ? { ...t, row: dr, col: dc } : t
+        );
+        const simulatedState = { ...state, tokens: simulatedTokens };
+        const passesAfterMove = getPassDestinations(simulatedState);
+        passesAfterMove.forEach(([pr, pc]) => {
+          moves.push({ type: 'move_and_pass', tokenId: token.id, to: [dr, dc], passTo: [pr, pc] });
+        });
+      }
+    });
+  }
+
+  return moves;
+}
+
+/**
+ * Applique un coup décrit par listLegalMoves() à un état, et retourne le nouvel
+ * état résultant. Centralise la logique d'exécution pour que l'IA n'ait jamais
+ * à connaître les détails de selectToken/moveSelectedToken/passBall/passTurn.
+ */
+export function applyMove(state, move) {
+  let next = selectToken(state, move.tokenId);
+
+  if (move.type === 'pass') {
+    return passBall(next, move.passTo[0], move.passTo[1]);
+  }
+
+  if (move.type === 'move') {
+    next = moveSelectedToken(next, move.to[0], move.to[1]);
+    // Le déplacement seul peut amener en phase MOVED_CAN_PASS si adjacent au
+    // ballon ; comme ce coup ne prévoit pas de passe, on termine le tour.
+    if (next.phase === PHASES.MOVED_CAN_PASS) {
+      next = passTurn(next);
+    }
+    return next;
+  }
+
+  if (move.type === 'move_and_pass') {
+    next = moveSelectedToken(next, move.to[0], move.to[1]);
+    return passBall(next, move.passTo[0], move.passTo[1]);
+  }
+
+  return state;
+}

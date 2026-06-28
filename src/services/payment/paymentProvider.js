@@ -12,4 +12,5 @@ const activeProvider = mockProvider; // <- remplacer par stripeProvider en produ
 
 export const isMockPaymentActive = activeProvider.isMock;
 export const checkoutTheme = activeProvider.checkoutTheme;
+export const checkoutBundle = activeProvider.checkoutBundle;
 export const verifyPurchase = activeProvider.verifyPurchase;

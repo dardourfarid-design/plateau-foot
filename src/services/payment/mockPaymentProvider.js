@@ -33,6 +33,28 @@ export async function checkoutTheme(theme, user) {
   return { immediate: true };
 }
 
+/**
+ * Achète plusieurs thèmes d'un coup à un prix groupé (ex. bundle promotionnel).
+ * Même principe que checkoutTheme : passe par une fonction RPC dédiée plutôt
+ * que des insertions directes, pour garder la même discipline de sécurité.
+ */
+export async function checkoutBundle(themeIds, bundlePriceCents, user) {
+  if (!user) {
+    throw new Error('Connexion requise avant achat.');
+  }
+
+  const { error } = await supabase.rpc('mock_complete_bundle_purchase', {
+    p_theme_ids: themeIds,
+    p_amount_cents: bundlePriceCents
+  });
+
+  if (error) {
+    throw new Error(`Échec de l'achat groupé simulé : ${error.message}`);
+  }
+
+  return { immediate: true };
+}
+
 export async function verifyPurchase(themeId) {
   const user = await getCurrentUser();
   if (!user) return false;

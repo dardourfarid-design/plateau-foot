@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plateau Foot</title>
+<title>Tactic Master</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
   <div class="setup-screen" id="setupScreen">
     <div class="setup-hero">
       <div class="setup-text">
-        <div class="logo-title">PLATEAU<br><span>FOOT</span></div>
+        <div class="logo-title">TACTIC<br><span>MASTER</span></div>
         <div class="logo-sub">Le foot se joue aussi assis</div>
         <p class="hero-pitch">
           Un plateau comme les dames, un ballon qui circule comme au foot.
@@ -76,16 +76,66 @@
     <button class="topbar-link config-back" id="configBackBtn">← Retour</button>
     <div class="config-card">
       <div class="setup-field">
-        <span class="setup-label">Buts pour gagner</span>
-        <div class="setup-options" id="goalOptions">
-          <div class="setup-option" data-val="1">1</div>
-          <div class="setup-option active" data-val="3">3</div>
-          <div class="setup-option" data-val="5">5</div>
-          <div class="setup-option" data-val="99">Libre</div>
+        <span class="setup-label">Contre qui ?</span>
+        <div class="setup-options" id="modeOptions">
+          <div class="setup-option active" data-val="local">2 joueurs</div>
+          <div class="setup-option" data-val="ai">Ordinateur</div>
+          <div class="setup-option" data-val="online">En ligne</div>
         </div>
       </div>
 
-      <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
+      <div class="setup-field hidden" id="aiDifficultyField">
+        <span class="setup-label">Difficulté</span>
+        <div class="setup-options" id="aiDifficultyOptions">
+          <div class="setup-option" data-val="facile">Facile</div>
+          <div class="setup-option active" data-val="moyen">Moyen</div>
+          <div class="setup-option" data-val="difficile">Difficile</div>
+        </div>
+      </div>
+
+      <!-- Bloc Local/IA : réglage du nombre de buts + lancement classique -->
+      <div id="localAiBlock">
+        <div class="setup-field">
+          <span class="setup-label">Buts pour gagner</span>
+          <div class="setup-options" id="goalOptions">
+            <div class="setup-option" data-val="1">1</div>
+            <div class="setup-option active" data-val="3">3</div>
+            <div class="setup-option" data-val="5">5</div>
+            <div class="setup-option" data-val="99">Libre</div>
+          </div>
+        </div>
+
+        <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
+      </div>
+
+      <!-- Bloc En ligne : créer une partie ou rejoindre via code -->
+      <div class="hidden" id="onlineBlock">
+        <button class="btn primary" id="createOnlineBtn" style="width:100%; padding:14px; font-size:15px; margin-bottom:14px;">
+          Créer une partie
+        </button>
+
+        <div class="online-divider">ou</div>
+
+        <div class="setup-field">
+          <span class="setup-label">Rejoindre avec un code</span>
+          <div class="join-code-row">
+            <input type="text" id="joinCodeInput" class="auth-input join-code-input" placeholder="EX: A1B2C3" maxlength="6" autocapitalize="characters">
+            <button class="btn primary" id="joinOnlineBtn">Rejoindre</button>
+          </div>
+          <p class="online-error" id="onlineError"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ECRAN SALLE D'ATTENTE (multijoueur) -->
+  <div class="config-screen hidden" id="waitingScreen">
+    <div class="config-card waiting-card">
+      <div class="setup-label">Partie créée — invite un ami</div>
+      <div class="invite-code-display" id="inviteCodeDisplay">------</div>
+      <p class="waiting-text">Partage ce code. La partie démarre dès que ton adversaire le saisit.</p>
+      <div class="waiting-spinner" aria-hidden="true"></div>
+      <button class="btn" id="cancelWaitingBtn" style="width:100%; margin-top:18px;">Annuler</button>
     </div>
   </div>
 
@@ -170,6 +220,12 @@
         <p class="shop-subtitle">Change l'ambiance du terrain. Un thème acheté reste débloqué pour toujours.</p>
       </div>
     </div>
+
+    <div class="world-cup-banner">
+      <span class="world-cup-banner-tag">Édition limitée</span>
+      <span class="world-cup-banner-text">5 nouveaux thèmes aux couleurs du grand tournoi — l'ambiance des stades, sur ton plateau.</span>
+    </div>
+
     <div class="shop-grid" id="shopGrid"></div>
   </div>
 

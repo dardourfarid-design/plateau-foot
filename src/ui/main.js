@@ -1350,7 +1350,12 @@ function renderLineupSlots() {
 
     const nameEl = document.createElement('div');
     nameEl.className = 'lineup-slot-name';
-    nameEl.textContent = owned ? (owned.custom_name || owned.fictional_players.name) : 'Glisse un joueur ici';
+    if (owned) {
+      const baseName = owned.isCustom ? owned.name : owned.fictional_players.name;
+      nameEl.textContent = owned.custom_name || baseName;
+    } else {
+      nameEl.textContent = 'Glisse un joueur ici';
+    }
     slotEl.appendChild(nameEl);
 
     if (owned) {

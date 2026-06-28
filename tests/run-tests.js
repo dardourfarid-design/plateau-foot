@@ -7,6 +7,7 @@ await import('./gameEngine.test.js');
 await import('./themeManager.test.js');
 await import('./ai.test.js');
 await import('./multiplayer-protocol.test.js');
+await import('./playerIdentity.test.js');
 
 const success = printSummary();
 process.exit(success ? 0 : 1);

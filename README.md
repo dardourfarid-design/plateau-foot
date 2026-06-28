@@ -42,6 +42,11 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 4. `0004_rename_to_tactic_master.sql` — mise à jour du texte suite au renommage du jeu
 5. `0005_multiplayer_sessions.sql` — table et fonctions pour le multijoueur en ligne (lien d'invitation)
 6. `0006_world_cup_themes.sql` — 5 thèmes événementiels + fonction d'achat groupé (bundle)
+7. `0007_gdpr_consent.sql` — consentement granulaire par finalité, export et suppression de données (RGPD)
+8. `0008_fictional_players.sql` — catalogue de joueurs fictifs, collection, composition d'équipe, mercato
+9. `0009_daily_challenges_progress.sql` — progression (XP/niveau), streak sans punition, défis quotidiens
+10. `0010_leaderboard.sql` — vue de classement
+11. `0011_notification_consent.sql` — ajoute la finalité notifications au système de consentement
 
 ## Activer le multijoueur en ligne
 
@@ -131,6 +136,46 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Croissance produit (rétention saine)** : système de joueurs fictifs
+  (14 au catalogue, 3 raretés, styles purement cosmétiques), collection,
+  composition d'équipe (6 postes), mercato (échange direct entre comptes),
+  progression (XP/niveau), streak quotidien **sans punition d'absence**,
+  3 défis tirés chaque jour, classement. Écran "Mon profil" dans la topbar.
+  Noms de joueurs affichés sur les pions en partie quand une composition
+  existe (`src/ui/playerIdentity.js`, 9 tests dédiés).
+  ⚠️ Tous les joueurs sont **entièrement fictifs**, par choix délibéré :
+  voir la discussion produit qui a écarté les noms de joueurs réels ou
+  "légèrement modifiés" pour raisons de droit à l'image / droit des
+  marques. Le renommage par l'utilisateur reste libre (usage personnel).
+- 🆕 **Notifications de retour strictement opt-in**, contenu toujours
+  factuel (jamais culpabilisant — voir les templates dans
+  `src/services/notificationService.js`). Aucun envoi réel implémenté
+  encore (pas d'infrastructure Web Push) — uniquement la préférence
+  utilisateur, stockée dans le même système de consentement RGPD.
+- ⚠️ **Mercato V1 simplifié** : échange direct et immédiat entre deux
+  comptes (pas d'offre asynchrone, pas de négociation) — à enrichir si le
+  besoin se confirme.
+- ℹ️ **Le jeu reste accessible sans compte** (tutoriel et parties locales/IA
+  inclus). Un compte obligatoire pour jouer a été implémenté puis désactivé
+  temporairement pour faciliter les tests — le code existe toujours
+  (`requireAccountThen()` dans `src/ui/main.js`, non appelé) si on veut le
+  réactiver plus tard. Un compte reste nécessaire pour la boutique, le
+  profil (progression/collection/classement) et le multijoueur en ligne.
+- ⚠️ **Système de consentement RGPD granulaire** : 3 cases séparées et non
+  pré-cochées à l'inscription (analyse d'usage, emails marketing, partage à
+  des tiers), chacune tracée individuellement en base avec horodatage
+  (`user_consents`). Export et suppression de compte disponibles depuis
+  "Mon compte". **Brouillon de politique de confidentialité** dans
+  `public/privacy.html`, qui doit être relu par un juriste avant toute mise
+  en ligne réelle ou ouverture à grande échelle — voir le bandeau
+  d'avertissement en haut de cette page.
+- ⚠️ **Limite RGPD connue** : la suppression de compte ne nettoie que les
+  données applicatives (profil, achats, consentements) ; le compte
+  d'authentification Supabase lui-même persiste. Une suppression complète
+  nécessite un appel serveur avec la clé `service_role` (jamais côté
+  client) — chantier documenté dans `docs/team/developpeur-backend.md`,
+  point n°1, à traiter avant tout contrôle réel ou volume significatif
+  d'utilisateurs.
 - ✅ **Tutoriel guidé interactif** : mini-partie scriptée jouée sur le vrai
   plateau (pas une simulation séparée), 6 étapes avec bulles contextuelles
   qui mettent en valeur l'élément concerné (halo doré pulsant). Accessible

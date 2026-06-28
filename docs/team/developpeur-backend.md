@@ -48,7 +48,14 @@ quelques tables, le temps réel change l'ordre de grandeur de la complexité.
 
 ## Premiers chantiers concrets
 
-1. Concevoir le schéma de données du multijoueur : table `game_sessions`
+1. **Suppression complète de compte (RGPD, urgent)** : `delete_my_data()` ne
+   nettoie que les tables applicatives (profil, achats, consentements). Le
+   compte `auth.users` lui-même persiste — sa suppression nécessite la clé
+   `service_role` (jamais côté client) via une Supabase Edge Function ou un
+   appel admin serveur. Tant que ce n'est pas fait, le droit à l'effacement
+   RGPD n'est que partiellement respecté : à traiter avant tout contrôle ou
+   toute échelle réelle d'utilisateurs.
+2. Concevoir le schéma de données du multijoueur : table `game_sessions`
    (état de la partie partagée), gestion de la présence des deux joueurs,
    et synchronisation des coups via Supabase Realtime (channels broadcast ou
    postgres_changes selon le volume attendu).

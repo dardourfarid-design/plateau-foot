@@ -18,7 +18,10 @@
     <button class="topbar-link" id="accountBtn">
       <span id="accountStatus">Non connecté</span>
     </button>
-    <button class="topbar-link" id="shopBtn">Boutique de thèmes</button>
+    <div class="topbar-right">
+      <button class="topbar-link" id="profileBtn">Mon profil</button>
+      <button class="topbar-link" id="shopBtn">Boutique de thèmes</button>
+    </div>
   </div>
 
   <!-- ECRAN D'ACCUEIL / VENTE -->
@@ -230,6 +233,73 @@
     <div class="shop-grid" id="shopGrid"></div>
   </div>
 
+  <!-- ECRAN PROFIL : progression, défis, collection/équipe, classement -->
+  <div id="profileScreen" class="hidden shop-layout">
+    <div class="shop-hero">
+      <button class="btn" id="profileBackBtn">← Retour</button>
+      <div class="shop-hero-text">
+        <div class="shop-title">Mon profil</div>
+        <p class="shop-subtitle">Progression, défis du jour, équipe et classement.</p>
+      </div>
+    </div>
+
+    <div class="profile-tabs" id="profileTabs">
+      <button class="profile-tab active" data-tab="progress">Progression</button>
+      <button class="profile-tab" data-tab="challenges">Défis du jour</button>
+      <button class="profile-tab" data-tab="team">Mon équipe</button>
+      <button class="profile-tab" data-tab="leaderboard">Classement</button>
+    </div>
+
+    <!-- Onglet Progression -->
+    <div class="profile-panel" id="panelProgress">
+      <div class="progress-summary">
+        <div class="progress-stat">
+          <span class="progress-stat-value" id="progressLevel">1</span>
+          <span class="progress-stat-label">Niveau</span>
+        </div>
+        <div class="progress-stat">
+          <span class="progress-stat-value" id="progressXp">0</span>
+          <span class="progress-stat-label">XP</span>
+        </div>
+        <div class="progress-stat">
+          <span class="progress-stat-value" id="progressStreak">0</span>
+          <span class="progress-stat-label">Jours de suite</span>
+        </div>
+        <div class="progress-stat">
+          <span class="progress-stat-value" id="progressWins">0</span>
+          <span class="progress-stat-label">Victoires</span>
+        </div>
+      </div>
+      <p class="profile-empty-note" id="progressEmptyNote">Connecte-toi pour suivre ta progression.</p>
+    </div>
+
+    <!-- Onglet Défis du jour -->
+    <div class="profile-panel hidden" id="panelChallenges">
+      <div id="challengesList"></div>
+    </div>
+
+    <!-- Onglet Mon équipe (collection + composition + mercato) -->
+    <div class="profile-panel hidden" id="panelTeam">
+      <p class="team-tab-intro">Compose ton équipe avec les joueurs de ta collection. Glisse-les dans les 6 postes ci-dessous.</p>
+      <div class="lineup-slots" id="lineupSlots"></div>
+      <button class="btn primary" id="saveLineupBtn" style="margin-top:14px;">Enregistrer la composition</button>
+      <div class="collection-section">
+        <div class="sidebar-title" style="margin-top:24px;">Ma collection</div>
+        <div class="collection-grid" id="collectionGrid"></div>
+      </div>
+    </div>
+
+    <!-- Onglet Classement -->
+    <div class="profile-panel hidden" id="panelLeaderboard">
+      <table class="leaderboard-table" id="leaderboardTable">
+        <thead>
+          <tr><th>#</th><th>Joueur</th><th>Niveau</th><th>XP</th><th>Victoires</th></tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <!-- COACHING TUTORIEL : voile + bulle qui pointe vers l'élément concerné -->
@@ -270,12 +340,44 @@
       <input class="auth-input" type="text" id="authDisplayName" placeholder="Pseudo" style="display:none;">
       <input class="auth-input" type="email" id="authEmail" placeholder="Email">
       <input class="auth-input" type="password" id="authPassword" placeholder="Mot de passe">
+
+      <p class="account-required-note" id="accountRequiredNote">Un compte est nécessaire pour jouer.</p>
+
+      <!-- Consentement granulaire : une case par finalité, aucune pré-cochée,
+           uniquement visible en mode inscription. Le compte lui-même n'est
+           pas un "consentement" RGPD (c'est l'exécution du service), donc
+           pas de case pour ça — seulement les usages annexes optionnels. -->
+      <div class="consent-block hidden" id="consentBlock">
+        <label class="consent-row">
+          <input type="checkbox" id="consentAnalytics">
+          <span>J'accepte que mon usage du jeu soit analysé pour améliorer le produit (optionnel)</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="consentEmailMarketing">
+          <span>J'accepte de recevoir des emails sur les nouveautés et offres (optionnel)</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="consentDataSharing">
+          <span>J'accepte que mes données soient partagées avec des partenaires sélectionnés (optionnel)</span>
+        </label>
+        <p class="consent-legal-link">
+          <a href="privacy.html" target="_blank" rel="noopener">Lire la politique de confidentialité</a>
+        </p>
+      </div>
+
       <button class="btn primary account-submit" id="authSubmitBtn">Se connecter</button>
       <button class="topbar-link account-switch" id="authSwitchBtn">Pas encore de compte ? Créer un compte</button>
     </div>
     <div id="accountLoggedInView" class="hidden">
       <div class="overlay-title account-title">Mon compte</div>
-      <p class="overlay-sub account-sub" id="accountEmailDisplay"></p>
+      <p class="overlay-sub" id="accountEmailDisplay"></p>
+
+      <div class="account-privacy-actions">
+        <button class="topbar-link" id="manageConsentBtn">Gérer mes préférences de données</button>
+        <button class="topbar-link" id="exportDataBtn">Exporter mes données</button>
+        <button class="topbar-link account-danger" id="deleteDataBtn">Supprimer mon compte</button>
+      </div>
+
       <button class="btn account-submit" id="signOutBtn">Se déconnecter</button>
     </div>
     <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>

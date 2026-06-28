@@ -11,6 +11,7 @@ import {
   getMoveDestinations, getPassDestinations, tokenAt, isBallAt,
   isAdjacent, canSelectToken, PHASES
 } from '../engine/gameEngine.js';
+import { displayNameForToken } from './playerIdentity.js';
 
 /**
  * Construit la grille de cellules vide une seule fois (structure statique).
@@ -34,8 +35,12 @@ export function buildBoardGrid(container, onCellClick) {
 
 /**
  * Rend l'état complet du jeu dans la grille déjà construite par buildBoardGrid().
+ * `lineupsByTeam` est optionnel : { bleu: {...}, rouge: {...} } produit par
+ * resolveLineup() (voir playerIdentity.js). Si absent (pas de compte, pas de
+ * composition choisie), le rendu reste strictement identique à avant ce
+ * système — aucune régression pour les parties sans identité de joueurs.
  */
-export function renderBoard(container, state) {
+export function renderBoard(container, state, lineupsByTeam = null) {
   const cells = container.querySelectorAll('.cell');
 
   cells.forEach(cell => {
@@ -49,7 +54,7 @@ export function renderBoard(container, state) {
 
     const tok = tokenAt(state, r, c);
     if (tok) {
-      cell.appendChild(renderToken(state, tok));
+      cell.appendChild(renderToken(state, tok, lineupsByTeam));
     }
 
     if (isBallAt(state, r, c)) {
@@ -62,7 +67,7 @@ export function renderBoard(container, state) {
   renderDestinationMarkers(container, state);
 }
 
-function renderToken(state, tok) {
+function renderToken(state, tok, lineupsByTeam) {
   const div = document.createElement('div');
   div.className = 'token ' + tok.team + (tok.isGK ? ' gardien' : '');
   if (tok.id === state.selectedTokenId) div.classList.add('selected');
@@ -74,7 +79,28 @@ function renderToken(state, tok) {
     div.appendChild(mark);
   }
   div.dataset.tokenId = tok.id;
+
+  const playerName = displayNameForToken(tok.id, lineupsByTeam);
+  if (playerName) {
+    div.title = playerName; // infobulle native au survol (desktop)
+    const label = document.createElement('span');
+    label.className = 'token-name-label';
+    label.textContent = abbreviateName(playerName);
+    div.appendChild(label);
+  }
+
   return div;
+}
+
+/**
+ * Réduit un nom complet à un format court lisible sur un petit pion
+ * (ex: "Aleksander Kovac" -> "A. Kovac"), à la façon d'un maillot de foot.
+ */
+function abbreviateName(fullName) {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  return `${parts[0][0]}. ${last}`;
 }
 
 function markCell(container, r, c, type) {

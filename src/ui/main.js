@@ -17,6 +17,10 @@ import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange,
 import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
+import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
+import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, renamePlayer, saveLineup } from '../services/playerCollectionService.js';
+import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
+import { resolveLineup } from './playerIdentity.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -64,6 +68,11 @@ const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujour
 // État multijoueur : myTeam est l'équipe contrôlée par CE navigateur ;
 // l'autre équipe n'est jouable qu'en recevant les mises à jour de l'adversaire.
 let onlineSessionId = null;
+
+// Identité des joueurs fictifs alignés (résolue une fois par partie, pas
+// par coup). null si pas de compte ou pas encore de composition choisie —
+// dans ce cas l'affichage reste strictement identique à avant ce système.
+let myResolvedLineup = null;
 let myTeam = TEAMS.BLEU;
 let unsubscribeFromSession = null;
 
@@ -126,6 +135,24 @@ function cacheDomRefs() {
   els.newGameBtn = document.getElementById('newGameBtn');
   els.shopBtn = document.getElementById('shopBtn');
   els.shopScreen = document.getElementById('shopScreen');
+  els.profileBtn = document.getElementById('profileBtn');
+  els.profileScreen = document.getElementById('profileScreen');
+  els.profileBackBtn = document.getElementById('profileBackBtn');
+  els.profileTabs = document.getElementById('profileTabs');
+  els.panelProgress = document.getElementById('panelProgress');
+  els.panelChallenges = document.getElementById('panelChallenges');
+  els.panelTeam = document.getElementById('panelTeam');
+  els.panelLeaderboard = document.getElementById('panelLeaderboard');
+  els.progressLevel = document.getElementById('progressLevel');
+  els.progressXp = document.getElementById('progressXp');
+  els.progressStreak = document.getElementById('progressStreak');
+  els.progressWins = document.getElementById('progressWins');
+  els.progressEmptyNote = document.getElementById('progressEmptyNote');
+  els.challengesList = document.getElementById('challengesList');
+  els.lineupSlots = document.getElementById('lineupSlots');
+  els.collectionGrid = document.getElementById('collectionGrid');
+  els.saveLineupBtn = document.getElementById('saveLineupBtn');
+  els.leaderboardBody = document.getElementById('leaderboardBody');
   els.shopGrid = document.getElementById('shopGrid');
   els.shopBackBtn = document.getElementById('shopBackBtn');
   els.accountBtn = document.getElementById('accountBtn');
@@ -142,10 +169,35 @@ function cacheDomRefs() {
   els.authSwitchBtn = document.getElementById('authSwitchBtn');
   els.accountEmailDisplay = document.getElementById('accountEmailDisplay');
   els.signOutBtn = document.getElementById('signOutBtn');
+  els.consentBlock = document.getElementById('consentBlock');
+  els.consentAnalytics = document.getElementById('consentAnalytics');
+  els.consentEmailMarketing = document.getElementById('consentEmailMarketing');
+  els.consentDataSharing = document.getElementById('consentDataSharing');
+  els.accountRequiredNote = document.getElementById('accountRequiredNote');
+  els.manageConsentBtn = document.getElementById('manageConsentBtn');
+  els.exportDataBtn = document.getElementById('exportDataBtn');
+  els.deleteDataBtn = document.getElementById('deleteDataBtn');
   els.accountCloseBtn = document.getElementById('accountCloseBtn');
 }
 
 // ---------- Cycle de vie du jeu ----------
+
+async function loadMyLineupForGame() {
+  if (!currentUser) {
+    myResolvedLineup = null;
+    return;
+  }
+  try {
+    const [lineupRow, collection] = await Promise.all([fetchMyLineup(), fetchMyCollection()]);
+    myResolvedLineup = resolveLineup(lineupRow, collection);
+  } catch (err) {
+    // Ne bloque jamais une partie si la lineup ne peut pas être chargée
+    // (hors-ligne, pas encore de composition choisie, etc.) — le jeu reste
+    // jouable normalement, juste sans les noms de joueurs affichés.
+    console.error('Lineup non chargée :', err);
+    myResolvedLineup = null;
+  }
+}
 
 function startGame(goalsToWin) {
   gameState = createGame({ goalsToWin });
@@ -154,12 +206,14 @@ function startGame(goalsToWin) {
   els.configScreen.classList.add('hidden');
   els.gameScreen.classList.remove('hidden');
   buildBoardGrid(els.boardGrid, handleCellClick);
+  loadMyLineupForGame().then(render); // rendu initial sans lineup, puis re-rendu dès qu'elle arrive
   render();
   maybeTriggerAiTurn();
 }
 
 function render() {
-  renderBoard(els.boardGrid, gameState);
+  const lineupsByTeam = myResolvedLineup ? { bleu: myResolvedLineup } : null;
+  renderBoard(els.boardGrid, gameState, lineupsByTeam);
   els.scoreBleu.textContent = gameState.score[TEAMS.BLEU];
   els.scoreRouge.textContent = gameState.score[TEAMS.ROUGE];
   els.sidebarScoreBleu.textContent = gameState.score[TEAMS.BLEU];
@@ -377,6 +431,17 @@ function showEndOverlay(winningTeam) {
   els.endTitle.textContent = winningTeam === TEAMS.BLEU ? 'BLEU GAGNE' : 'ROUGE GAGNE';
   els.endSub.textContent = `Score final : ${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
   els.endOverlay.classList.add('show');
+
+  if (currentUser && !tutorial.isActive()) {
+    const won = winningTeam === myTeam;
+    const goalsScored = gameState.score[myTeam];
+    recordGameResult(won, goalsScored).catch(err => {
+      // N'affecte jamais l'expérience de jeu si l'enregistrement échoue
+      // (hors-ligne, etc.) : la partie reste valide pour le joueur, on
+      // perd juste la progression de cette partie précise côté serveur.
+      console.error('Résultat de partie non enregistré :', err);
+    });
+  }
 }
 
 function backToSetup() {
@@ -393,6 +458,27 @@ function backToSetup() {
 }
 
 // ---------- Écran d'accueil et configuration ----------
+
+/**
+ * Bloque l'accès au jeu si aucun compte n'est connecté : ouvre la modale
+ * de compte en mode inscription plutôt que de lancer l'action demandée.
+ * Centralise la règle "un compte est nécessaire pour jouer" à un seul
+ * endroit, plutôt que de la dupliquer à chaque point d'entrée du jeu.
+ */
+// Fonction conservée mais non appelée pour l'instant : le compte obligatoire
+// pour jouer a été désactivé temporairement pour faciliter les tests en
+// conditions réelles. Pour réactiver le gating, remettre
+// requireAccountThen(...) autour des actions startBtn/goToSetupBtn
+// ci-dessous (voir l'historique du projet pour le code exact retiré).
+function requireAccountThen(action) {
+  if (currentUser) {
+    action();
+    return;
+  }
+  authMode = 'signup';
+  renderAccountOverlayContent();
+  els.accountOverlay.classList.add('show');
+}
 
 function wireSetupScreen() {
   let selectedGoals = 3;
@@ -822,6 +908,7 @@ function renderAccountOverlayContent() {
       ? 'Pas encore de compte ? Créer un compte'
       : 'Déjà un compte ? Se connecter';
     els.authDisplayName.style.display = authMode === 'signup' ? 'block' : 'none';
+    els.consentBlock.classList.toggle('hidden', authMode !== 'signup');
     els.authError.textContent = '';
   }
 }
@@ -844,6 +931,23 @@ async function handleAuthSubmit() {
       const displayName = els.authDisplayName.value.trim() || 'Joueur';
       const { error } = await signUpWithEmail(email, password, displayName);
       if (error) throw error;
+
+      // Enregistre chaque consentement séparément, reflétant exactement
+      // l'état des cases au moment de l'inscription (cochée ou non).
+      try {
+        await recordConsents({
+          [CONSENT_PURPOSES.ANALYTICS]: els.consentAnalytics.checked,
+          [CONSENT_PURPOSES.EMAIL_MARKETING]: els.consentEmailMarketing.checked,
+          [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked
+        });
+      } catch (consentErr) {
+        // Ne bloque pas la création de compte si l'enregistrement du
+        // consentement échoue (ex: confirmation email requise avant que la
+        // session soit active) — mais on le journalise pour pouvoir
+        // diagnostiquer si ça arrive souvent.
+        console.error('Consentement non enregistré :', consentErr);
+      }
+
       els.authError.style.color = 'var(--craie-att)';
       els.authError.textContent = 'Compte créé. Vérifie tes emails si une confirmation est requise.';
       return;
@@ -893,6 +997,61 @@ function wireAccount() {
     currentUser = null;
     updateAccountUI();
     els.accountOverlay.classList.remove('show');
+  });
+
+  els.exportDataBtn?.addEventListener('click', async () => {
+    try {
+      const data = await exportMyData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tactic-master-mes-donnees.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message || 'Export impossible pour le moment.');
+    }
+  });
+
+  els.deleteDataBtn?.addEventListener('click', async () => {
+    const confirmed = confirm(
+      'Supprimer définitivement ton compte et toutes tes données (achats, parties, préférences) ? Cette action est irréversible.'
+    );
+    if (!confirmed) return;
+    try {
+      await deleteMyData();
+      await signOut();
+      currentUser = null;
+      updateAccountUI();
+      els.accountOverlay.classList.remove('show');
+      alert('Tes données ont été supprimées.');
+    } catch (err) {
+      alert(err.message || 'Suppression impossible pour le moment.');
+    }
+  });
+
+  els.manageConsentBtn?.addEventListener('click', () => {
+    // Réutilise le même panneau de consentement que l'inscription, en mode
+    // "mise à jour" plutôt que création — les choix sont enregistrés
+    // immédiatement, sans recréer de compte.
+    openConsentManagementPanel();
+  });
+}
+
+function openConsentManagementPanel() {
+  const analytics = confirm('Acceptes-tu l\'analyse de ton usage du jeu pour améliorer le produit ?');
+  const emailMarketing = confirm('Acceptes-tu de recevoir des emails sur les nouveautés et offres ?');
+  const dataSharing = confirm('Acceptes-tu le partage de tes données avec des partenaires sélectionnés ?');
+
+  recordConsents({
+    [CONSENT_PURPOSES.ANALYTICS]: analytics,
+    [CONSENT_PURPOSES.EMAIL_MARKETING]: emailMarketing,
+    [CONSENT_PURPOSES.DATA_SHARING]: dataSharing
+  }).then(() => {
+    alert('Tes préférences ont été mises à jour.');
+  }).catch(err => {
+    alert(err.message || 'Mise à jour impossible pour le moment.');
   });
 }
 
@@ -1013,6 +1172,238 @@ function endTutorial() {
   backToSetup();
 }
 
+// ---------- Écran Profil ----------
+
+let myCollectionCache = [];
+let myLineupCache = null;
+
+function wireProfileScreen() {
+  els.profileBtn?.addEventListener('click', openProfileScreen);
+  els.profileBackBtn?.addEventListener('click', () => {
+    els.profileScreen.classList.add('hidden');
+    els.setupScreen.classList.remove('hidden');
+  });
+
+  els.profileTabs?.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab));
+  });
+
+  els.saveLineupBtn?.addEventListener('click', handleSaveLineup);
+}
+
+async function openProfileScreen() {
+  if (!currentUser) {
+    authMode = 'signin';
+    renderAccountOverlayContent();
+    els.accountOverlay.classList.add('show');
+    return;
+  }
+
+  els.setupScreen.classList.add('hidden');
+  els.configScreen.classList.add('hidden');
+  els.gameScreen.classList.add('hidden');
+  els.shopScreen.classList.add('hidden');
+  els.profileScreen.classList.remove('hidden');
+
+  await loadProgressPanel();
+}
+
+function switchProfileTab(tabName) {
+  els.profileTabs.querySelectorAll('.profile-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tabName);
+  });
+  els.panelProgress.classList.toggle('hidden', tabName !== 'progress');
+  els.panelChallenges.classList.toggle('hidden', tabName !== 'challenges');
+  els.panelTeam.classList.toggle('hidden', tabName !== 'team');
+  els.panelLeaderboard.classList.toggle('hidden', tabName !== 'leaderboard');
+
+  if (tabName === 'challenges') loadChallengesPanel();
+  if (tabName === 'team') loadTeamPanel();
+  if (tabName === 'leaderboard') loadLeaderboardPanel();
+}
+
+async function loadProgressPanel() {
+  try {
+    await ensureStarterPack(); // garantit un starter pack dès la première visite
+    const progress = await fetchMyProgress();
+    els.progressEmptyNote.classList.toggle('hidden', !!progress);
+    els.progressLevel.textContent = progress?.level ?? 1;
+    els.progressXp.textContent = progress?.xp ?? 0;
+    els.progressStreak.textContent = progress?.current_streak_days ?? 0;
+    els.progressWins.textContent = progress?.games_won ?? 0;
+  } catch (err) {
+    console.error('Progression non chargée :', err);
+  }
+}
+
+async function loadChallengesPanel() {
+  els.challengesList.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  try {
+    const challenges = await fetchTodayChallenges();
+    if (!challenges || challenges.length === 0) {
+      els.challengesList.innerHTML = '<p class="profile-empty-note">Aucun défi disponible aujourd\'hui.</p>';
+      return;
+    }
+    els.challengesList.innerHTML = '';
+    challenges.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'challenge-card' + (c.completed ? ' completed' : '');
+
+      const left = document.createElement('div');
+      const desc = document.createElement('div');
+      desc.className = 'challenge-desc';
+      desc.textContent = c.daily_challenge_templates?.description || 'Défi du jour';
+      const progress = document.createElement('div');
+      progress.className = 'challenge-progress';
+      const target = c.daily_challenge_templates?.target_count ?? 1;
+      progress.textContent = `${Math.min(c.progress_count, target)}/${target}`;
+      left.appendChild(desc);
+      left.appendChild(progress);
+
+      const check = document.createElement('div');
+      check.className = 'challenge-check';
+      check.textContent = c.completed ? '✓' : '';
+
+      card.appendChild(left);
+      card.appendChild(check);
+      els.challengesList.appendChild(card);
+    });
+  } catch (err) {
+    els.challengesList.innerHTML = '<p class="profile-empty-note">Défis indisponibles pour le moment.</p>';
+  }
+}
+
+const LINEUP_SLOT_LABELS = {
+  gk: 'Gardien', def0: 'Défenseur 1', def1: 'Défenseur 2',
+  att0: 'Attaquant 1', att1: 'Attaquant 2', att2: 'Attaquant 3'
+};
+
+async function loadTeamPanel() {
+  els.lineupSlots.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  els.collectionGrid.innerHTML = '';
+  try {
+    const [collection, lineup] = await Promise.all([fetchMyCollection(), fetchMyLineup()]);
+    myCollectionCache = collection;
+    myLineupCache = lineup || {};
+    renderLineupSlots();
+    renderCollectionGrid();
+  } catch (err) {
+    els.lineupSlots.innerHTML = '<p class="profile-empty-note">Équipe indisponible pour le moment.</p>';
+  }
+}
+
+function renderLineupSlots() {
+  els.lineupSlots.innerHTML = '';
+  Object.entries(LINEUP_SLOT_LABELS).forEach(([slot, label]) => {
+    const ownershipId = myLineupCache?.[`slot_${slot}`];
+    const owned = myCollectionCache.find(c => c.id === ownershipId);
+
+    const slotEl = document.createElement('div');
+    slotEl.className = 'lineup-slot' + (owned ? ' filled' : '');
+    slotEl.dataset.slot = slot;
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'lineup-slot-label';
+    labelEl.textContent = label;
+    slotEl.appendChild(labelEl);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'lineup-slot-name';
+    nameEl.textContent = owned ? (owned.custom_name || owned.fictional_players.name) : 'Vide — choisis ci-dessous';
+    slotEl.appendChild(nameEl);
+
+    els.lineupSlots.appendChild(slotEl);
+  });
+}
+
+let activeSlotForAssignment = null;
+
+function renderCollectionGrid() {
+  els.collectionGrid.innerHTML = '';
+  if (myCollectionCache.length === 0) {
+    els.collectionGrid.innerHTML = '<p class="profile-empty-note">Aucun joueur dans ta collection pour le moment.</p>';
+    return;
+  }
+  myCollectionCache.forEach(owned => {
+    const card = document.createElement('div');
+    card.className = `player-card rarity-${owned.fictional_players.rarity}`;
+
+    const name = document.createElement('div');
+    name.className = 'player-card-name';
+    name.textContent = owned.custom_name || owned.fictional_players.name;
+
+    const style = document.createElement('div');
+    style.className = 'player-card-style';
+    style.textContent = owned.fictional_players.style;
+
+    const rarity = document.createElement('span');
+    rarity.className = 'player-card-rarity';
+    rarity.textContent = owned.fictional_players.rarity;
+
+    card.appendChild(name);
+    card.appendChild(style);
+    card.appendChild(rarity);
+
+    card.addEventListener('click', () => handlePlayerCardClick(owned));
+    els.collectionGrid.appendChild(card);
+  });
+}
+
+function handlePlayerCardClick(owned) {
+  // Clic simple : assigne ce joueur au premier slot vide (UX volontairement
+  // simple pour cette V1 — pas de drag&drop, juste "clique un joueur, il se
+  // pose sur le premier poste libre"). Un second clic sur un slot rempli
+  // permettrait plus tard de le vider ; hors scope immédiat.
+  const emptySlot = Object.keys(LINEUP_SLOT_LABELS).find(slot => !myLineupCache?.[`slot_${slot}`]);
+  if (!emptySlot) {
+    alert('Les 6 postes sont déjà pourvus. Enregistre ou change ta composition avant d\'ajouter ce joueur.');
+    return;
+  }
+  myLineupCache[`slot_${emptySlot}`] = owned.id;
+  renderLineupSlots();
+}
+
+async function handleSaveLineup() {
+  try {
+    await saveLineup({
+      slot_gk: myLineupCache.slot_gk || null,
+      slot_def0: myLineupCache.slot_def0 || null,
+      slot_def1: myLineupCache.slot_def1 || null,
+      slot_att0: myLineupCache.slot_att0 || null,
+      slot_att1: myLineupCache.slot_att1 || null,
+      slot_att2: myLineupCache.slot_att2 || null
+    });
+    alert('Composition enregistrée ! Elle s\'appliquera à ta prochaine partie.');
+  } catch (err) {
+    alert(err.message || 'Impossible d\'enregistrer la composition pour le moment.');
+  }
+}
+
+async function loadLeaderboardPanel() {
+  els.leaderboardBody.innerHTML = '<tr><td colspan="5">Chargement…</td></tr>';
+  try {
+    const rows = await fetchLeaderboard(20);
+    if (!rows || rows.length === 0) {
+      els.leaderboardBody.innerHTML = '<tr><td colspan="5">Aucun classement disponible pour le moment.</td></tr>';
+      return;
+    }
+    els.leaderboardBody.innerHTML = '';
+    rows.forEach((row, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${row.display_name}</td>
+        <td>${row.level}</td>
+        <td>${row.xp}</td>
+        <td>${row.games_won}</td>
+      `;
+      els.leaderboardBody.appendChild(tr);
+    });
+  } catch (err) {
+    els.leaderboardBody.innerHTML = '<tr><td colspan="5">Classement indisponible pour le moment.</td></tr>';
+  }
+}
+
 // ---------- Démarrage ----------
 
 function init() {
@@ -1030,6 +1421,7 @@ function init() {
   wireOnlineMode();
   wireGameControls();
   wireShop();
+  wireProfileScreen();
   wireAccount();
   wireTutorial();
 }

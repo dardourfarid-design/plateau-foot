@@ -304,6 +304,31 @@ body{
   letter-spacing:0.05em;
 }
 
+.token-name-label{
+  position:absolute;
+  top: 100%;
+  left:50%;
+  transform: translateX(-50%);
+  margin-top:2px;
+  font-family:'Space Grotesk', sans-serif;
+  font-size:8px;
+  font-weight:600;
+  white-space:nowrap;
+  color: var(--craie-att);
+  background: rgba(11,20,30,0.75);
+  padding:1px 4px;
+  border-radius:4px;
+  pointer-events:none;
+  z-index:6;
+  max-width: 64px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+@media (max-width: 480px){
+  .token-name-label{ display:none; } /* trop petit pour rester lisible sans casser la grille */
+}
+
 .token.selectable{ cursor:pointer; }
 
 .token.selected{
@@ -632,6 +657,187 @@ body{
 .world-cup-banner-text{
   font-size:13px;
   color: var(--craie-att);
+}
+
+/* ---------- TOPBAR : groupe droit ---------- */
+
+.topbar-right{
+  display:flex;
+  gap:18px;
+  align-items:center;
+}
+
+/* ---------- ÉCRAN PROFIL ---------- */
+
+.profile-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  border-bottom: 1px solid rgba(245,242,232,0.1);
+  padding-bottom:2px;
+}
+
+.profile-tab{
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  padding:10px 14px;
+  cursor:pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.profile-tab:hover{ color: var(--craie); }
+.profile-tab.active{ color: var(--terre-vif); border-color: var(--terre-vif); }
+
+.profile-panel{ width:100%; }
+
+.progress-summary{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.progress-stat{
+  background: var(--nuit-clair);
+  border-radius:10px;
+  padding:16px 10px;
+  text-align:center;
+}
+
+.progress-stat-value{
+  display:block;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:28px;
+  color: var(--terre-vif);
+}
+
+.progress-stat-label{
+  display:block;
+  font-size:11px;
+  color: var(--craie-att);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  margin-top:4px;
+}
+
+.profile-empty-note{
+  font-size:13px;
+  color: var(--craie-att);
+  text-align:center;
+  padding:20px 0;
+}
+
+.challenge-card{
+  background: var(--nuit-clair);
+  border-radius:10px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.challenge-card.completed{ border: 1px solid rgba(46,158,79,0.4); }
+
+.challenge-desc{ font-size:14px; color: var(--craie); }
+.challenge-progress{ font-size:12px; color: var(--craie-att); margin-top:4px; }
+.challenge-check{
+  flex-shrink:0;
+  width:24px; height:24px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px;
+  background: rgba(245,242,232,0.08);
+  color: var(--craie-att);
+}
+.challenge-card.completed .challenge-check{
+  background: var(--terre-vif);
+  color:#1A1208;
+}
+
+.team-tab-intro{ font-size:13px; color: var(--craie-att); margin-bottom:16px; }
+
+.lineup-slots{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+}
+
+.lineup-slot{
+  background: var(--nuit-clair);
+  border: 1px dashed rgba(245,242,232,0.2);
+  border-radius:10px;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  min-height:70px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.lineup-slot.filled{ border-style:solid; border-color: rgba(244,211,94,0.4); }
+.lineup-slot-label{ font-size:10px; text-transform:uppercase; color: var(--craie-att); letter-spacing:0.06em; }
+.lineup-slot-name{ font-size:13px; color: var(--craie); margin-top:4px; font-weight:600; }
+
+.collection-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.player-card{
+  background: var(--nuit-clair);
+  border-radius:10px;
+  padding:12px;
+  cursor:pointer;
+  border: 1px solid rgba(245,242,232,0.08);
+}
+.player-card.rarity-rare{ border-color: rgba(108,180,238,0.4); }
+.player-card.rarity-legendaire{ border-color: rgba(244,211,94,0.5); }
+.player-card:hover{ transform: translateY(-1px); }
+
+.player-card-name{ font-size:13px; font-weight:700; color: var(--craie); }
+.player-card-style{ font-size:11px; color: var(--craie-att); text-transform:capitalize; margin-top:2px; }
+.player-card-rarity{
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin-top:6px;
+  display:inline-block;
+  padding:2px 6px;
+  border-radius:8px;
+  background: rgba(245,242,232,0.08);
+  color: var(--craie-att);
+}
+
+.leaderboard-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+.leaderboard-table th{
+  text-align:left;
+  padding:8px 10px;
+  color: var(--craie-att);
+  font-family:'Barlow Condensed', sans-serif;
+  text-transform:uppercase;
+  font-size:11px;
+  border-bottom: 1px solid rgba(245,242,232,0.12);
+}
+.leaderboard-table td{
+  padding:10px 10px;
+  color: var(--craie);
+  border-bottom: 1px solid rgba(245,242,232,0.06);
 }
 
 /* ---------- BOUTIQUE ---------- */
@@ -997,10 +1203,11 @@ body{
 
 /* ---------- COMPTE / AUTH ---------- */
 
-.account-card{ max-width: 320px; text-align:left; }
+.account-card{ max-width: 360px; text-align:left; }
 .account-title{ font-size:28px; text-align:left; }
 .account-sub{ text-align:left; min-height:14px; }
 .account-sub:not(:empty){ color: var(--rouge-equipe-clair); }
+#accountEmailDisplay{ text-align:left; color: var(--craie-att); margin-bottom:4px; }
 
 .auth-input{
   width:100%;
@@ -1016,6 +1223,67 @@ body{
 .auth-input:focus{ outline:2px solid var(--terre-vif); outline-offset:1px; }
 .auth-input::placeholder{ color: var(--craie-att); }
 
+.account-required-note{
+  font-size:12px;
+  color: var(--craie-att);
+  margin: -2px 0 14px;
+}
+
+.consent-block{
+  background: var(--nuit);
+  border-radius:8px;
+  padding: 12px 14px;
+  margin-bottom:16px;
+}
+
+.consent-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:12px;
+  cursor:pointer;
+}
+.consent-row:last-of-type{ margin-bottom:8px; }
+
+.consent-row input[type="checkbox"]{
+  flex-shrink:0;
+  width:16px;
+  height:16px;
+  margin-top:2px;
+  accent-color: var(--terre-vif);
+  cursor:pointer;
+}
+
+.consent-row span{
+  font-size:12px;
+  line-height:1.5;
+  color: var(--craie-att);
+}
+
+.consent-legal-link{
+  margin:0;
+  font-size:11px;
+}
+.consent-legal-link a{
+  color: var(--terre-vif);
+  text-decoration:underline;
+}
+
 .account-submit{ width:100%; margin-top:4px; }
 .account-switch{ display:block; margin: 14px auto 0; text-align:center; width:100%; }
 .account-close{ display:block; margin: 18px auto 0; text-align:center; width:100%; }
+
+.account-privacy-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin: 18px 0;
+  padding: 14px 0;
+  border-top: 1px solid rgba(245,242,232,0.1);
+  border-bottom: 1px solid rgba(245,242,232,0.1);
+}
+.account-privacy-actions .topbar-link{
+  text-align:left;
+  padding:4px 0;
+}
+.account-danger{ color: var(--rouge-equipe-clair) !important; }

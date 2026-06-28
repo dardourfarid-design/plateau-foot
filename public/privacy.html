@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — Tactic Master</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.privacy-page{
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  color: var(--craie);
+}
+.privacy-page h1{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:34px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.privacy-page .updated{
+  color: var(--craie-att);
+  font-size:13px;
+  margin-bottom:32px;
+}
+.privacy-page .draft-banner{
+  background: rgba(200,75,49,0.12);
+  border: 1px solid rgba(200,75,49,0.3);
+  border-radius:8px;
+  padding:14px 16px;
+  font-size:13px;
+  margin-bottom:32px;
+}
+.privacy-page h2{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:20px;
+  text-transform:uppercase;
+  margin-top:36px;
+  margin-bottom:12px;
+  color: var(--terre-vif);
+}
+.privacy-page p, .privacy-page li{
+  font-size:14px;
+  line-height:1.7;
+  color: var(--craie-att);
+}
+.privacy-page table{
+  width:100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size:13px;
+}
+.privacy-page th, .privacy-page td{
+  text-align:left;
+  padding:8px 10px;
+  border-bottom: 1px solid rgba(245,242,232,0.1);
+  color: var(--craie-att);
+}
+.privacy-page th{
+  color: var(--craie);
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  text-transform:uppercase;
+  font-size:11px;
+}
+.privacy-page a{ color: var(--terre-vif); }
+.back-link{
+  display:inline-block;
+  margin-bottom:24px;
+  color: var(--craie-att);
+  text-decoration:underline;
+}
+</style>
+</head>
+<body>
+
+<div class="privacy-page">
+  <a href="index.html" class="back-link">← Retour au jeu</a>
+
+  <div class="draft-banner">
+    <strong>Brouillon de travail.</strong> Ce document décrit fidèlement les
+    données réellement traitées par l'application au moment de sa rédaction.
+    Il doit être relu par un juriste ou un professionnel du droit avant toute
+    mise en ligne définitive ou ouverture publique à grande échelle —
+    notamment pour valider les bases légales exactes, les durées de
+    conservation, et la conformité de toute clause de partage à des tiers.
+  </div>
+
+  <h1>Politique de confidentialité</h1>
+  <p class="updated">Dernière mise à jour : 28 juin 2026 (version 2026-06-28)</p>
+
+  <h2>1. Qui est responsable de vos données ?</h2>
+  <p>
+    Tactic Master est édité à titre indépendant. Pour toute question relative
+    à vos données personnelles, vous pouvez contacter l'éditeur via les
+    moyens de contact indiqués sur le site.
+  </p>
+
+  <h2>2. Quelles données sont collectées ?</h2>
+  <table>
+    <tr><th>Donnée</th><th>Finalité</th><th>Obligatoire ?</th></tr>
+    <tr><td>Adresse email, mot de passe (chiffré)</td><td>Création et sécurisation du compte, nécessaires pour jouer</td><td>Oui</td></tr>
+    <tr><td>Pseudo affiché</td><td>Identification dans l'interface</td><td>Oui</td></tr>
+    <tr><td>Historique d'achats de thèmes</td><td>Débloquer les contenus achetés</td><td>Oui (si achat)</td></tr>
+    <tr><td>Données de partie multijoueur (scores, identifiant de session)</td><td>Faire fonctionner le mode multijoueur</td><td>Oui (si usage du mode en ligne)</td></tr>
+    <tr><td>Données d'usage du jeu (parties jouées, fonctionnalités utilisées)</td><td>Analyse statistique pour améliorer le produit</td><td>Non — soumis à votre consentement séparé</td></tr>
+    <tr><td>Adresse email</td><td>Envoi de communications marketing (nouveautés, offres)</td><td>Non — soumis à votre consentement séparé</td></tr>
+    <tr><td>Données de compte et d'usage</td><td>Partage avec des partenaires sélectionnés</td><td>Non — soumis à votre consentement séparé</td></tr>
+  </table>
+
+  <h2>3. Base légale de chaque traitement</h2>
+  <ul>
+    <li><strong>Compte et achats</strong> : exécution du contrat de service (vous ne pouvez pas jouer sans compte, c'est une condition du service lui-même, pas un consentement au sens RGPD).</li>
+    <li><strong>Analyse d'usage, emails marketing, partage à des tiers</strong> : consentement explicite, recueilli séparément pour chacune de ces trois finalités lors de votre inscription, et modifiable à tout moment depuis votre compte.</li>
+  </ul>
+
+  <h2>4. Qui a accès à vos données ?</h2>
+  <p>
+    Vos données sont hébergées chez Supabase (infrastructure cloud). Aucun
+    partage à un tiers n'a lieu sans votre consentement explicite et
+    spécifique à cette finalité. Si vous avez consenti au partage avec des
+    partenaires, la liste des partenaires concernés vous sera communiquée
+    avant toute transmission effective.
+  </p>
+
+  <h2>5. Combien de temps vos données sont conservées ?</h2>
+  <p>
+    Vos données sont conservées tant que votre compte est actif. Vous pouvez
+    demander leur suppression à tout moment (voir section 7).
+  </p>
+
+  <h2>6. Cookies et traceurs</h2>
+  <p>
+    Le jeu utilise le stockage local de votre navigateur (localStorage) pour
+    mémoriser votre thème visuel préféré. Cette information reste sur votre
+    appareil et n'est pas transmise à nos serveurs.
+  </p>
+
+  <h2>7. Vos droits</h2>
+  <p>Conformément au RGPD, vous disposez des droits suivants :</p>
+  <ul>
+    <li><strong>Droit d'accès</strong> : exporter une copie de vos données depuis votre compte ("Exporter mes données").</li>
+    <li><strong>Droit de rectification</strong> : modifier votre pseudo depuis votre compte.</li>
+    <li><strong>Droit à l'effacement</strong> : supprimer votre compte et vos données depuis votre compte ("Supprimer mon compte").</li>
+    <li><strong>Droit de retrait du consentement</strong> : modifier vos préférences de données à tout moment depuis votre compte ("Gérer mes préférences de données").</li>
+    <li><strong>Droit de réclamation</strong> : vous pouvez introduire une réclamation auprès de la CNIL (cnil.fr) si vous estimez que vos droits ne sont pas respectés.</li>
+  </ul>
+
+  <h2>8. Modifications de cette politique</h2>
+  <p>
+    Cette politique peut évoluer. Toute modification substantielle vous sera
+    signalée et, si elle affecte une finalité pour laquelle vous avez donné
+    votre consentement, un nouveau consentement vous sera demandé.
+  </p>
+</div>
+
+</body>
+</html>

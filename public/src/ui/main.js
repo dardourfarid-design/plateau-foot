@@ -202,8 +202,11 @@ async function loadMyLineupForGame() {
     return;
   }
   try {
-    const [lineupRow, collection] = await Promise.all([fetchMyLineup(), fetchMyCollection()]);
-    myResolvedLineup = resolveLineup(lineupRow, collection);
+    const [lineupRow, collection, customPlayers] = await Promise.all([
+      fetchMyLineup(), fetchMyCollection(), fetchMyCustomPlayers()
+    ]);
+    const allOwned = [...collection, ...customPlayers.map(toOwnedShape)];
+    myResolvedLineup = resolveLineup(lineupRow, allOwned);
   } catch (err) {
     // Ne bloque jamais une partie si la lineup ne peut pas être chargée
     // (hors-ligne, pas encore de composition choisie, etc.) — le jeu reste
@@ -1311,11 +1314,23 @@ async function loadTeamPanel() {
   }
 }
 
+/**
+ * Liste combinée de tous les joueurs possédés, catalogue + créations
+ * personnalisées, dans une forme uniforme. Source de vérité unique utilisée
+ * partout où on doit retrouver un joueur par son ownershipId — avant ce
+ * correctif, renderLineupSlots() ne cherchait que dans myCollectionCache,
+ * ce qui rendait les joueurs custom invisibles une fois assignés à un poste.
+ */
+function getAllOwnedPlayers() {
+  return [...myCollectionCache, ...myCustomPlayersCache.map(toOwnedShape)];
+}
+
 function renderLineupSlots() {
   els.lineupSlots.innerHTML = '';
+  const allOwned = getAllOwnedPlayers();
   Object.entries(LINEUP_SLOT_LABELS).forEach(([slot, label]) => {
     const ownershipId = myLineupCache?.[`slot_${slot}`];
-    const owned = myCollectionCache.find(c => c.id === ownershipId);
+    const owned = allOwned.find(c => c.id === ownershipId);
 
     const slotEl = document.createElement('div');
     slotEl.className = 'lineup-slot' + (owned ? ' filled' : '');
@@ -1398,7 +1413,7 @@ function avatarForOwned(owned) {
 
 function renderCollectionGrid() {
   els.collectionGrid.innerHTML = '';
-  const allOwned = [...myCollectionCache, ...myCustomPlayersCache.map(toOwnedShape)];
+  const allOwned = getAllOwnedPlayers();
 
   if (allOwned.length === 0) {
     els.collectionGrid.innerHTML = '<p class="profile-empty-note">Aucun joueur dans ta collection pour le moment.</p>';

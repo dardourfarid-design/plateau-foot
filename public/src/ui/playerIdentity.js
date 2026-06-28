@@ -27,10 +27,20 @@ export function resolveLineup(lineupRow, collection) {
     if (!ownershipId) return;
     const owned = collection.find(c => c.id === ownershipId);
     if (!owned) return;
+
+    // Un joueur custom (owned.isCustom === true) porte son nom et son style
+    // directement à plat (voir toOwnedShape() dans main.js) ; un joueur du
+    // catalogue les porte dans owned.fictional_players. On normalise ici
+    // pour que le reste du jeu n'ait jamais besoin de connaître cette
+    // différence de structure entre les deux sources.
+    const baseName = owned.isCustom ? owned.name : owned.fictional_players?.name;
+    const style = owned.isCustom ? owned.style : owned.fictional_players?.style;
+    const rarity = owned.isCustom ? 'personnalise' : owned.fictional_players?.rarity;
+
     bySlot[slot] = {
-      displayName: owned.custom_name || owned.fictional_players.name,
-      style: owned.fictional_players.style,
-      rarity: owned.fictional_players.rarity
+      displayName: owned.custom_name || baseName,
+      style,
+      rarity
     };
   });
 

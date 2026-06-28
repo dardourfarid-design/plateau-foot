@@ -29,6 +29,16 @@ describe('resolveLineup', () => {
     expect(resolved.att0.displayName).toBe('Diego Salaz');
   });
 
+  test('résout correctement un joueur personnalisé (structure différente du catalogue)', () => {
+    const lineupRow = { slot_att1: 'custom-1' };
+    const collection = [
+      { id: 'custom-1', isCustom: true, custom_name: null, name: 'Mon Joueur', style: 'technique' }
+    ];
+    const resolved = resolveLineup(lineupRow, collection);
+    expect(resolved.att1.displayName).toBe('Mon Joueur');
+    expect(resolved.att1.style).toBe('technique');
+  });
+
   test('ignore un slot dont l’ownership référencé n’existe plus dans la collection', () => {
     const lineupRow = { slot_gk: 'own-absent' };
     const resolved = resolveLineup(lineupRow, []);

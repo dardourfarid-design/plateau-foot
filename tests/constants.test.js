@@ -2,12 +2,12 @@ import { describe, test, expect } from './test-utils.js';
 import { buildStartingFormation, validateNoOverlap, BOARD_COLS, BOARD_ROWS, TEAMS } from '../src/engine/constants.js';
 
 describe('constants - formation initiale', () => {
-  test('génère exactement 11 pions par équipe', () => {
+  test('génère exactement 6 pions par équipe', () => {
     const tokens = buildStartingFormation();
     const bleus = tokens.filter(t => t.team === TEAMS.BLEU);
     const rouges = tokens.filter(t => t.team === TEAMS.ROUGE);
-    expect(bleus).toHaveLength(11);
-    expect(rouges).toHaveLength(11);
+    expect(bleus).toHaveLength(6);
+    expect(rouges).toHaveLength(6);
   });
 
   test('chaque équipe a exactement un gardien', () => {

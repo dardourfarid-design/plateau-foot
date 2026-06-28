@@ -61,6 +61,13 @@ les deux clients font confiance à leur moteur local identique. Pas
 d'anti-triche pour l'instant — acceptable pour une V1 entre amis, à revoir
 avant tout mode compétitif/classé.
 
+**Note suite à la simplification des règles (plateau 7×9, 6 pions/équipe)** :
+toute partie multijoueur déjà créée en base avec l'ancienne géométrie
+(9×11, 11 pions) sera incohérente avec le moteur actuel. Sans impact connu à
+ce jour puisque le multijoueur n'a pas encore été testé en conditions
+réelles ; à garder en tête si jamais des sessions `waiting`/`active`
+anciennes traînent en base lors d'un futur nettoyage.
+
 ## Structure du projet
 
 ```
@@ -124,6 +131,17 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- ✅ **Tutoriel guidé interactif** : mini-partie scriptée jouée sur le vrai
+  plateau (pas une simulation séparée), 6 étapes avec bulles contextuelles
+  qui mettent en valeur l'élément concerné (halo doré pulsant). Accessible
+  depuis l'accueil via "Comment jouer ?". Le joueur sélectionne un pion,
+  le déplace, pousse le ballon, et marque un vrai but guidé avant de basculer
+  vers une partie normale. Bouton "Passer le tutoriel" disponible à tout
+  moment. Voir `src/ui/tutorial.js` pour la séquence d'étapes.
+- ✅ **Règles simplifiées (v2)** : plateau réduit de 9×11 à 7×9, 6 pions par
+  équipe au lieu de 11 (1 gardien + 2 défenseurs + 3 attaquants), gardien
+  limité à sa seule ligne de cage au lieu d'une zone profonde de 3 lignes —
+  plus rapide à saisir et à jouer, tout en gardant de vrais choix tactiques
 - ✅ Renommé en **Tactic Master** (anciennement Plateau Foot)
 - ✅ 5 thèmes événementiels "Mondial" (Or Mondial, Samba, Tricolore,
   Albiceleste, Nuit Américaine) — couleurs et ambiance uniquement, aucune

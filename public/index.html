@@ -33,6 +33,7 @@
           compliquée à apprendre.
         </p>
         <button class="btn primary cta-main" id="goToSetupBtn">Jouer maintenant</button>
+        <button class="tutorial-link" id="startTutorialBtn">Comment jouer ? Lancer le tutoriel guidé →</button>
       </div>
 
       <div class="setup-preview" aria-hidden="true">
@@ -173,7 +174,7 @@
         <div class="board-grid" id="boardGrid"></div>
       </div>
 
-      <div class="controls">
+      <div class="controls" id="gameControls">
         <div class="hint-bar" id="hintBar">Choisis un pion à déplacer</div>
         <div class="btn-row">
           <button class="btn" id="cancelBtn">Annuler le coup</button>
@@ -203,7 +204,7 @@
         <ul class="sidebar-rules">
           <li>Déplace un pion d'une case, dans n'importe quelle direction.</li>
           <li>Adjacent au ballon ? Pousse-le en ligne droite aussi loin que tu veux.</li>
-          <li>Le gardien reste cantonné à sa zone de cage.</li>
+          <li>Le gardien glisse uniquement sur sa ligne de cage.</li>
           <li>Premier arrivé au nombre de buts fixé gagne la partie.</li>
         </ul>
       </div>
@@ -229,6 +230,17 @@
     <div class="shop-grid" id="shopGrid"></div>
   </div>
 
+</div>
+
+<!-- COACHING TUTORIEL : voile + bulle qui pointe vers l'élément concerné -->
+<div class="tutorial-veil hidden" id="tutorialVeil"></div>
+<div class="tutorial-bubble hidden" id="tutorialBubble">
+  <div class="tutorial-progress" id="tutorialProgress">Étape 1/6</div>
+  <p class="tutorial-text" id="tutorialText"></p>
+  <div class="tutorial-actions">
+    <button class="tutorial-skip" id="tutorialSkipBtn">Passer le tutoriel</button>
+    <button class="btn primary tutorial-next hidden" id="tutorialNextBtn">Suivant →</button>
+  </div>
 </div>
 
 <!-- OVERLAY BUT -->

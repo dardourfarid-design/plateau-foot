@@ -207,14 +207,14 @@ body{
   position:relative;
   width:100%;
   max-width:460px;
-  aspect-ratio: 9 / 11;
+  aspect-ratio: 7 / 9;
   background:
     repeating-linear-gradient(
       to bottom,
       var(--vert-terrain-clair) 0%,
-      var(--vert-terrain-clair) 9.09%,
-      var(--vert-terrain) 9.09%,
-      var(--vert-terrain) 18.18%
+      var(--vert-terrain-clair) 11.11%,
+      var(--vert-terrain) 11.11%,
+      var(--vert-terrain) 22.22%
     );
   border-radius:8px;
   box-shadow: 0 14px 34px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(245,242,232,0.22);
@@ -226,8 +226,8 @@ body{
 .board-grid{
   position:absolute; inset:0;
   display:grid;
-  grid-template-columns: repeat(9, 1fr);
-  grid-template-rows: repeat(11, 1fr);
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(9, 1fr);
 }
 
 .cell{ position:relative; display:flex; align-items:center; justify-content:center; }
@@ -257,7 +257,7 @@ body{
 }
 
 .goal-line-top, .goal-line-bottom{
-  position:absolute; left: 22.2%; right:22.2%; height:2px;
+  position:absolute; left: 28.57%; right:28.57%; height:2px;
   background: rgba(245,242,232,0.35);
   pointer-events:none;
 }
@@ -265,7 +265,7 @@ body{
 .goal-line-bottom{bottom:0;}
 
 .goal-box-top, .goal-box-bottom{
-  position:absolute; left: 22.2%; right:22.2%; height: 18.18%;
+  position:absolute; left: 28.57%; right:28.57%; height: 11.11%;
   border-left:2px solid rgba(245,242,232,0.22);
   border-right:2px solid rgba(245,242,232,0.22);
   pointer-events:none;
@@ -878,6 +878,121 @@ body{
 
 @keyframes spin{
   to{ transform: rotate(360deg); }
+}
+
+/* ---------- TUTORIEL GUIDÉ ---------- */
+
+.tutorial-link{
+  display:block;
+  margin-top:14px;
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-size:13px;
+  text-decoration: underline;
+  text-decoration-color: rgba(245,242,232,0.25);
+  cursor:pointer;
+  padding:4px 0;
+}
+.tutorial-link:hover{ color: var(--craie); }
+
+.tutorial-veil{
+  position:fixed; inset:0;
+  background: rgba(11,20,30,0.55);
+  z-index:40;
+  pointer-events:none;
+}
+
+/* L'élément actuellement visé par le tutoriel passe au-dessus du voile et
+   reçoit un halo, pour qu'il ressorte clairement sans masque SVG complexe. */
+.tutorial-spotlight{
+  position:relative;
+  z-index:41;
+  box-shadow: 0 0 0 6px rgba(244,211,94,0.35), 0 0 30px 10px rgba(244,211,94,0.25);
+  border-radius:50%;
+  animation: tutorial-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse{
+  0%,100%{ box-shadow: 0 0 0 6px rgba(244,211,94,0.35), 0 0 30px 10px rgba(244,211,94,0.25); }
+  50%{ box-shadow: 0 0 0 10px rgba(244,211,94,0.5), 0 0 40px 16px rgba(244,211,94,0.35); }
+}
+
+.tutorial-bubble{
+  position:fixed;
+  z-index:42;
+  max-width:300px;
+  background: var(--nuit-clair);
+  border: 1px solid rgba(244,211,94,0.4);
+  border-radius:12px;
+  padding:16px 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  left:50%;
+  bottom:24px;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 859px){
+  .tutorial-bubble{
+    left:10px;
+    right:10px;
+    bottom:10px;
+    max-width:none;
+    width:auto;
+    transform:none;
+    padding:12px 14px;
+  }
+  .tutorial-text{ font-size:13px; margin-bottom:10px; }
+  .tutorial-progress{ margin-bottom:6px; }
+}
+
+.tutorial-progress{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color: var(--terre-vif);
+  margin-bottom:8px;
+}
+
+.tutorial-text{
+  font-size:14px;
+  line-height:1.5;
+  color: var(--craie);
+  margin:0 0 14px;
+}
+
+.tutorial-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.tutorial-skip{
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-size:12px;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:0;
+  white-space:nowrap;
+}
+.tutorial-skip:hover{ color: var(--craie); }
+
+.tutorial-next{ flex-shrink:0; padding:8px 16px; font-size:12px; }
+
+@media (min-width: 860px){
+  .tutorial-bubble{
+    left:auto;
+    right:32px;
+    bottom:auto;
+    top:50%;
+    transform: translateY(-50%);
+  }
 }
 
 /* ---------- COMPTE / AUTH ---------- */

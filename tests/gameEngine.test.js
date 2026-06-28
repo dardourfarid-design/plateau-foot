@@ -25,13 +25,13 @@ describe('createGame', () => {
 describe('selectToken', () => {
   test('sélectionne un pion appartenant au joueur actif', () => {
     const state = createGame();
-    const next = selectToken(state, 'b-mid1');
-    expect(next.selectedTokenId).toBe('b-mid1');
+    const next = selectToken(state, 'b-att1');
+    expect(next.selectedTokenId).toBe('b-att1');
   });
 
   test('refuse de sélectionner un pion adverse', () => {
     const state = createGame();
-    const next = selectToken(state, 'r-mid1'); // c'est au tour de bleu
+    const next = selectToken(state, 'r-att1'); // c'est au tour de bleu
     expect(next.selectedTokenId).toBeNull();
   });
 
@@ -55,8 +55,8 @@ describe('moveSelectedToken', () => {
 
   test('termine le tour si le déplacement ne touche pas le ballon', () => {
     let state = createGame();
-    state = selectToken(state, 'b-def1'); // (9,3), loin du ballon en (5,4)
-    const next = moveSelectedToken(state, 8, 2); // déplacement adjacent réel (-1,-1)
+    state = selectToken(state, 'b-def1'); // (7,5), loin du ballon en (4,3)
+    const next = moveSelectedToken(state, 6, 4); // déplacement adjacent réel (-1,-1)
     expect(next.turn).toBe(TEAMS.ROUGE);
     expect(next.phase).toBe(PHASES.SELECT);
   });
@@ -133,15 +133,15 @@ describe('passBall', () => {
 
   test('un but bleu incrémente le score et fait passer le tour à rouge', () => {
     let state = createGame({ goalsToWin: 99 });
-    // Placer le ballon juste devant la cage rouge, sur une colonne libre (pas le gardien)
-    state = { ...state, ball: { row: 1, col: 3 } };
+    // Placer le ballon juste devant la cage rouge, sur une colonne libre (pas le gardien en col 3)
+    state = { ...state, ball: { row: 1, col: 2 } };
     state = setupAdjacentToBall(state, 'b-att1'); // ne sert qu'à neutraliser, on resélectionne ensuite
     const tokens = state.tokens.map(t =>
-      t.id === 'b-att1' ? { ...t, row: 2, col: 3 } : t
+      t.id === 'b-att1' ? { ...t, row: 2, col: 2 } : t
     );
     state = { ...state, tokens };
     state = selectToken(state, 'b-att1');
-    const next = passBall(state, 0, 3); // case de cage rouge libre
+    const next = passBall(state, 0, 2); // case de cage rouge libre
     expect(next.score[TEAMS.BLEU]).toBe(1);
     expect(next.turn).toBe(TEAMS.ROUGE); // l'équipe qui encaisse engage
     expect(next.lastGoalBy).toBe(TEAMS.BLEU);
@@ -149,26 +149,26 @@ describe('passBall', () => {
 
   test('le tir est bloqué si le gardien occupe la case de but visée', () => {
     let state = createGame({ goalsToWin: 99 });
-    state = { ...state, ball: { row: 1, col: 4 } }; // colonne du gardien rouge (r-gk en (0,4))
-    const tokens = state.tokens.map(t =>
-      t.id === 'b-att1' ? { ...t, row: 2, col: 4 } : t
-    );
-    state = { ...state, tokens };
-    state = selectToken(state, 'b-att1');
-    const passes = getPassDestinations(state);
-    const goalCellReachable = passes.some(([r, c]) => r === 0 && c === 4);
-    expect(goalCellReachable).toBeFalsy(); // le gardien bloque l'accès à sa propre case
-  });
-
-  test('atteindre exactement goalsToWin déclenche la fin de partie avec le bon vainqueur', () => {
-    let state = createGame({ goalsToWin: 1 });
-    state = { ...state, ball: { row: 1, col: 3 } };
+    state = { ...state, ball: { row: 1, col: 3 } }; // colonne du gardien rouge (r-gk en (0,3))
     const tokens = state.tokens.map(t =>
       t.id === 'b-att1' ? { ...t, row: 2, col: 3 } : t
     );
     state = { ...state, tokens };
     state = selectToken(state, 'b-att1');
-    const next = passBall(state, 0, 3);
+    const passes = getPassDestinations(state);
+    const goalCellReachable = passes.some(([r, c]) => r === 0 && c === 3);
+    expect(goalCellReachable).toBeFalsy(); // le gardien bloque l'accès à sa propre case
+  });
+
+  test('atteindre exactement goalsToWin déclenche la fin de partie avec le bon vainqueur', () => {
+    let state = createGame({ goalsToWin: 1 });
+    state = { ...state, ball: { row: 1, col: 2 } };
+    const tokens = state.tokens.map(t =>
+      t.id === 'b-att1' ? { ...t, row: 2, col: 2 } : t
+    );
+    state = { ...state, tokens };
+    state = selectToken(state, 'b-att1');
+    const next = passBall(state, 0, 2);
     expect(next.gameOver).toBe(true);
     expect(next.winner).toBe(TEAMS.BLEU);
   });
@@ -273,12 +273,12 @@ describe('applyMove', () => {
 
   test('applique correctement un coup de type move_and_pass, y compris un but', () => {
     let state = createGame({ goalsToWin: 99 });
-    state = { ...state, ball: { row: 1, col: 3 } };
+    state = { ...state, ball: { row: 1, col: 2 } };
     const tokens = state.tokens.map(t =>
-      t.id === 'b-att1' ? { ...t, row: 2, col: 4 } : t
+      t.id === 'b-att1' ? { ...t, row: 2, col: 1 } : t
     );
     state = { ...state, tokens };
-    const move = { type: 'move_and_pass', tokenId: 'b-att1', to: [2, 3], passTo: [0, 3] };
+    const move = { type: 'move_and_pass', tokenId: 'b-att1', to: [2, 2], passTo: [0, 2] };
     const next = applyMove(state, move);
     expect(next.score[TEAMS.BLEU]).toBe(1);
   });

@@ -7,7 +7,7 @@
 
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
-  resetBallAfterGoal, applyMove, PHASES
+  resetBallAfterGoal, applyMove, getMoveDestinations, PHASES
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
@@ -16,6 +16,7 @@ import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './th
 import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail } from '../services/supabaseClient.js';
 import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
+import { createTutorialController } from './tutorial.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -65,6 +66,10 @@ const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujour
 let onlineSessionId = null;
 let myTeam = TEAMS.BLEU;
 let unsubscribeFromSession = null;
+
+// État tutoriel
+const tutorial = createTutorialController();
+let tutorialSpotlightEl = null; // élément actuellement mis en valeur, pour pouvoir retirer la classe au changement d'étape
 let authMode = 'signin'; // 'signin' | 'signup'
 let screenBeforeShop = 'setup';
 
@@ -103,6 +108,14 @@ function cacheDomRefs() {
   els.waitingScreen = document.getElementById('waitingScreen');
   els.inviteCodeDisplay = document.getElementById('inviteCodeDisplay');
   els.cancelWaitingBtn = document.getElementById('cancelWaitingBtn');
+  els.startTutorialBtn = document.getElementById('startTutorialBtn');
+  els.tutorialVeil = document.getElementById('tutorialVeil');
+  els.tutorialBubble = document.getElementById('tutorialBubble');
+  els.tutorialProgress = document.getElementById('tutorialProgress');
+  els.tutorialText = document.getElementById('tutorialText');
+  els.tutorialNextBtn = document.getElementById('tutorialNextBtn');
+  els.tutorialSkipBtn = document.getElementById('tutorialSkipBtn');
+  els.gameControls = document.getElementById('gameControls');
   els.goalOverlay = document.getElementById('goalOverlay');
   els.goalTitle = document.getElementById('goalTitle');
   els.goalSub = document.getElementById('goalSub');
@@ -219,6 +232,7 @@ function handleCellClick(row, col) {
       }
       gameState = selectToken(gameState, tok.id);
       render();
+      checkTutorialProgress('select-token', { tokenId: tok.id });
       return;
     }
 
@@ -252,6 +266,15 @@ function handlePostActionEffects(previousState) {
   if (gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy) {
     render();
     syncOnlineStateIfNeeded();
+
+    if (tutorial.isActive()) {
+      // Pendant le tutoriel, on ne montre pas l'overlay "BUT !" standard :
+      // l'étape "goal" du script prend le relais avec son propre message,
+      // pour ne pas superposer deux systèmes de feedback différents.
+      checkTutorialProgress('goal-scored', {});
+      return;
+    }
+
     if (gameState.gameOver) {
       setTimeout(() => showEndOverlay(gameState.winner), 350);
     } else {
@@ -259,8 +282,29 @@ function handlePostActionEffects(previousState) {
     }
     return;
   }
+
   render();
   syncOnlineStateIfNeeded();
+
+  if (tutorial.isActive()) {
+    // Détecte si ce coup correspondait à l'étape "déplacement vers le ballon"
+    // ou "passe" attendue par le script, sans dupliquer la logique du moteur.
+    if (gameState.phase === PHASES.MOVED_CAN_PASS && previousState.phase === PHASES.SELECT) {
+      checkTutorialProgress('move-to', {});
+    } else if (gameState.ball.row !== previousState.ball.row || gameState.ball.col !== previousState.ball.col) {
+      checkTutorialProgress('pass-ball', {});
+    }
+    // Le tuto est une mini-partie scriptée jouée uniquement par Bleu : on ne
+    // laisse jamais le tour passer à Rouge (qui n'a ni IA ni joueur humain
+    // actif ici), pour que le joueur puisse continuer à pousser le ballon
+    // sur plusieurs coups d'affilée jusqu'au but, sans jamais être bloqué.
+    if (gameState.turn === TEAMS.ROUGE && !gameState.gameOver) {
+      gameState = { ...gameState, turn: TEAMS.BLEU };
+      render();
+    }
+    return; // pas d'IA pendant le tutoriel
+  }
+
   maybeTriggerAiTurn();
 }
 
@@ -852,6 +896,123 @@ function wireAccount() {
   });
 }
 
+// ---------- Tutoriel guidé ----------
+
+function wireTutorial() {
+  els.startTutorialBtn?.addEventListener('click', startTutorial);
+  els.tutorialNextBtn.addEventListener('click', () => advanceTutorialStep());
+  els.tutorialSkipBtn.addEventListener('click', endTutorial);
+}
+
+function startTutorial() {
+  // Le tuto utilise le vrai moteur, juste avec un objectif minimal (1 but)
+  // pour que la mini-partie se termine vite et naturellement.
+  els.setupScreen.classList.add('hidden');
+  els.configScreen.classList.add('hidden');
+  els.gameScreen.classList.remove('hidden');
+  els.gameControls.classList.add('hidden'); // pas de sens pendant un script guidé
+  gameMode = 'local';
+  gameState = createGame({ goalsToWin: 1 });
+  undoSnapshot = null;
+  buildBoardGrid(els.boardGrid, handleCellClick);
+
+  const firstStep = tutorial.start();
+  els.tutorialVeil.classList.remove('hidden');
+  els.tutorialBubble.classList.remove('hidden');
+  render();
+  renderTutorialStep(firstStep);
+}
+
+function renderTutorialStep(step) {
+  els.tutorialProgress.textContent = tutorial.progressLabel();
+  els.tutorialText.textContent = step.text;
+  els.tutorialNextBtn.classList.toggle('hidden', step.advanceOn !== 'next' && step.advanceOn !== 'finish');
+  els.tutorialNextBtn.textContent = step.advanceOn === 'finish' ? 'Lancer une vraie partie →' : 'Suivant →';
+
+  applyTutorialSpotlight(step);
+}
+
+function applyTutorialSpotlight(step) {
+  if (tutorialSpotlightEl) {
+    tutorialSpotlightEl.classList.remove('tutorial-spotlight');
+    tutorialSpotlightEl = null;
+  }
+
+  let targetEl = null;
+
+  if (step.id === 'move-pawn') {
+    // Cible la vraie case de déplacement disponible la plus proche du ballon
+    // (pas un calcul absolu de position, qui pourrait ne pas être une
+    // destination réellement atteignable en un coup pour ce pion précis).
+    const selectedTok = gameState.tokens.find(t => t.id === gameState.selectedTokenId);
+    if (selectedTok) {
+      const destinations = getMoveDestinations(gameState, selectedTok);
+      const ball = gameState.ball;
+      let best = null;
+      let bestDist = Infinity;
+      destinations.forEach(([r, c]) => {
+        const dist = Math.max(Math.abs(r - ball.row), Math.abs(c - ball.col));
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = [r, c];
+        }
+      });
+      if (best) {
+        targetEl = document.querySelector(`.cell[data-row="${best[0]}"][data-col="${best[1]}"]`);
+      }
+    }
+  } else if (step.id === 'goal') {
+    targetEl = document.querySelector('.board-wrap');
+  } else if (step.target) {
+    targetEl = document.querySelector(step.target);
+  }
+
+  if (targetEl) {
+    targetEl.classList.add('tutorial-spotlight');
+    tutorialSpotlightEl = targetEl;
+  }
+}
+
+/**
+ * Appelée après chaque action de jeu réelle (sélection, déplacement, passe,
+ * but) pendant que le tutoriel est actif, pour vérifier si le geste du
+ * joueur correspond à ce qu'attendait l'étape courante. Si oui, avance.
+ * N'interfère jamais avec le résultat du coup lui-même — le moteur a déjà
+ * appliqué la règle normalement, on ne fait qu'observer.
+ */
+function checkTutorialProgress(eventType, payload) {
+  if (!tutorial.isActive()) return;
+  const step = tutorial.currentStep();
+  if (step.advanceOn !== eventType) return;
+
+  if (eventType === 'select-token' && step.validTokenIds && !step.validTokenIds.includes(payload.tokenId)) {
+    return; // mauvais pion : le jeu continue normalement, mais le tutoriel attend toujours
+  }
+
+  advanceTutorialStep();
+}
+
+function advanceTutorialStep() {
+  if (tutorial.isLastStep() && tutorial.currentStep().advanceOn === 'finish') {
+    endTutorial();
+    return;
+  }
+  const next = tutorial.advance();
+  renderTutorialStep(next);
+}
+
+function endTutorial() {
+  tutorial.stop();
+  if (tutorialSpotlightEl) {
+    tutorialSpotlightEl.classList.remove('tutorial-spotlight');
+    tutorialSpotlightEl = null;
+  }
+  els.tutorialVeil.classList.add('hidden');
+  els.tutorialBubble.classList.add('hidden');
+  els.gameControls.classList.remove('hidden');
+  backToSetup();
+}
+
 // ---------- Démarrage ----------
 
 function init() {
@@ -870,6 +1031,7 @@ function init() {
   wireGameControls();
   wireShop();
   wireAccount();
+  wireTutorial();
 }
 
 document.addEventListener('DOMContentLoaded', init);

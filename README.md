@@ -47,6 +47,7 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 9. `0009_daily_challenges_progress.sql` — progression (XP/niveau), streak sans punition, défis quotidiens
 10. `0010_leaderboard.sql` — vue de classement
 11. `0011_notification_consent.sql` — ajoute la finalité notifications au système de consentement
+12. `0012_custom_players.sql` — joueurs personnalisés (freemium : 1 gratuit, le reste payant)
 
 ## Activer le multijoueur en ligne
 
@@ -136,6 +137,25 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Glisser-déposer pour la composition d'équipe** : API HTML5 Drag and
+  Drop native, zones de dépôt en surbrillance, possibilité de retirer un
+  joueur d'un poste (✕) ou de glisser un nouveau joueur pour remplacer
+  l'occupant. Solution de repli au clic conservée pour le tactile.
+- 🆕 **Création de joueurs personnalisés** : nom, style, et avatar composable
+  (couleur + motif + accessoire, rendu en SVG déterministe — voir
+  `src/ui/playerAvatar.js`, 11 tests dédiés). Modèle freemium : 1 joueur
+  gratuit par compte, les suivants nécessitent l'achat d'un slot (réutilise
+  le système de paiement déjà en place pour les thèmes, jamais de logique
+  de quota côté client — tout vérifié dans `create_custom_player()` côté
+  serveur contre la table `purchases`).
+- 🐛 **Bug corrigé** : le nom du gardien se superposait au marqueur "G",
+  rendant les deux illisibles sur un pion de cette taille. Le marqueur "G"
+  ne s'affiche désormais que si aucun nom de joueur n'est disponible pour
+  ce pion.
+- ⚠️ **Migration multijoueur (`0005_multiplayer_sessions.sql`) à exécuter
+  si pas encore fait** — sans elle, la création de partie en ligne échoue
+  avec une erreur "function not found". Penser aussi à activer la
+  réplication Realtime sur `game_sessions` (Database → Replication).
 - 🆕 **Croissance produit (rétention saine)** : système de joueurs fictifs
   (14 au catalogue, 3 raretés, styles purement cosmétiques), collection,
   composition d'équipe (6 postes), mercato (échange direct entre comptes),

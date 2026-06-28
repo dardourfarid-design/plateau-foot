@@ -21,6 +21,8 @@ import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '..
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, renamePlayer, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
+import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from './playerAvatar.js';
+import { fetchMyCustomPlayers, createCustomPlayer, deleteCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID } from '../services/customPlayerService.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -152,6 +154,18 @@ function cacheDomRefs() {
   els.lineupSlots = document.getElementById('lineupSlots');
   els.collectionGrid = document.getElementById('collectionGrid');
   els.saveLineupBtn = document.getElementById('saveLineupBtn');
+  els.openCreatePlayerBtn = document.getElementById('openCreatePlayerBtn');
+  els.createPlayerOverlay = document.getElementById('createPlayerOverlay');
+  els.createPlayerError = document.getElementById('createPlayerError');
+  els.createPlayerQuotaNote = document.getElementById('createPlayerQuotaNote');
+  els.createPlayerPreview = document.getElementById('createPlayerPreview');
+  els.newPlayerName = document.getElementById('newPlayerName');
+  els.newPlayerStyleOptions = document.getElementById('newPlayerStyleOptions');
+  els.newPlayerColorOptions = document.getElementById('newPlayerColorOptions');
+  els.newPlayerPatternOptions = document.getElementById('newPlayerPatternOptions');
+  els.newPlayerAccessoryOptions = document.getElementById('newPlayerAccessoryOptions');
+  els.confirmCreatePlayerBtn = document.getElementById('confirmCreatePlayerBtn');
+  els.closeCreatePlayerBtn = document.getElementById('closeCreatePlayerBtn');
   els.leaderboardBody = document.getElementById('leaderboardBody');
   els.shopGrid = document.getElementById('shopGrid');
   els.shopBackBtn = document.getElementById('shopBackBtn');
@@ -1175,6 +1189,7 @@ function endTutorial() {
 // ---------- Écran Profil ----------
 
 let myCollectionCache = [];
+let myCustomPlayersCache = [];
 let myLineupCache = null;
 
 function wireProfileScreen() {
@@ -1282,11 +1297,15 @@ async function loadTeamPanel() {
   els.lineupSlots.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
   els.collectionGrid.innerHTML = '';
   try {
-    const [collection, lineup] = await Promise.all([fetchMyCollection(), fetchMyLineup()]);
+    const [collection, lineup, customPlayers] = await Promise.all([
+      fetchMyCollection(), fetchMyLineup(), fetchMyCustomPlayers()
+    ]);
     myCollectionCache = collection;
     myLineupCache = lineup || {};
+    myCustomPlayersCache = customPlayers;
     renderLineupSlots();
     renderCollectionGrid();
+    renderCreatePlayerSection();
   } catch (err) {
     els.lineupSlots.innerHTML = '<p class="profile-empty-note">Équipe indisponible pour le moment.</p>';
   }
@@ -1302,6 +1321,13 @@ function renderLineupSlots() {
     slotEl.className = 'lineup-slot' + (owned ? ' filled' : '');
     slotEl.dataset.slot = slot;
 
+    if (owned) {
+      const avatarEl = document.createElement('div');
+      avatarEl.className = 'lineup-slot-avatar';
+      avatarEl.innerHTML = renderAvatarSvg(avatarForOwned(owned));
+      slotEl.appendChild(avatarEl);
+    }
+
     const labelEl = document.createElement('div');
     labelEl.className = 'lineup-slot-label';
     labelEl.textContent = label;
@@ -1309,58 +1335,158 @@ function renderLineupSlots() {
 
     const nameEl = document.createElement('div');
     nameEl.className = 'lineup-slot-name';
-    nameEl.textContent = owned ? (owned.custom_name || owned.fictional_players.name) : 'Vide — choisis ci-dessous';
+    nameEl.textContent = owned ? (owned.custom_name || owned.fictional_players.name) : 'Glisse un joueur ici';
     slotEl.appendChild(nameEl);
+
+    if (owned) {
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'lineup-slot-clear';
+      clearBtn.textContent = '✕';
+      clearBtn.title = 'Retirer ce joueur du poste';
+      clearBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        myLineupCache[`slot_${slot}`] = null;
+        renderLineupSlots();
+      });
+      slotEl.appendChild(clearBtn);
+    }
+
+    // ---------- Cible de glisser-déposer ----------
+    slotEl.addEventListener('dragover', e => {
+      e.preventDefault(); // nécessaire pour autoriser le drop
+      slotEl.classList.add('drop-target-active');
+    });
+    slotEl.addEventListener('dragleave', () => {
+      slotEl.classList.remove('drop-target-active');
+    });
+    slotEl.addEventListener('drop', e => {
+      e.preventDefault();
+      slotEl.classList.remove('drop-target-active');
+      const ownershipIdDropped = e.dataTransfer.getData('text/plain');
+      if (!ownershipIdDropped) return;
+      assignPlayerToSlot(ownershipIdDropped, slot);
+    });
 
     els.lineupSlots.appendChild(slotEl);
   });
 }
 
-let activeSlotForAssignment = null;
+function assignPlayerToSlot(ownershipId, slot) {
+  // Si ce joueur occupe déjà un autre poste, on le libère d'abord — un
+  // même joueur ne peut pas être aligné à deux postes en même temps.
+  Object.keys(LINEUP_SLOT_LABELS).forEach(s => {
+    if (myLineupCache[`slot_${s}`] === ownershipId) {
+      myLineupCache[`slot_${s}`] = null;
+    }
+  });
+  myLineupCache[`slot_${slot}`] = ownershipId;
+  renderLineupSlots();
+  renderCollectionGrid(); // pour mettre à jour l'état visuel "déjà aligné" des cartes
+}
+
+/**
+ * Détermine l'avatar à afficher pour un joueur possédé : un joueur custom
+ * a son propre avatar choisi explicitement ; un joueur du catalogue dérive
+ * le sien de façon déterministe depuis avatar_seed.
+ */
+function avatarForOwned(owned) {
+  if (owned.isCustom) {
+    return { color: owned.avatar_color, pattern: owned.avatar_pattern, accessory: owned.avatar_accessory };
+  }
+  return hashSeedToAvatar(owned.fictional_players.avatar_seed);
+}
 
 function renderCollectionGrid() {
   els.collectionGrid.innerHTML = '';
-  if (myCollectionCache.length === 0) {
+  const allOwned = [...myCollectionCache, ...myCustomPlayersCache.map(toOwnedShape)];
+
+  if (allOwned.length === 0) {
     els.collectionGrid.innerHTML = '<p class="profile-empty-note">Aucun joueur dans ta collection pour le moment.</p>';
     return;
   }
-  myCollectionCache.forEach(owned => {
+
+  const assignedIds = new Set(Object.keys(LINEUP_SLOT_LABELS).map(s => myLineupCache?.[`slot_${s}`]).filter(Boolean));
+
+  allOwned.forEach(owned => {
+    const rarity = owned.isCustom ? 'custom' : owned.fictional_players.rarity;
     const card = document.createElement('div');
-    card.className = `player-card rarity-${owned.fictional_players.rarity}`;
+    card.className = `player-card rarity-${rarity}` + (assignedIds.has(owned.id) ? ' assigned' : '');
+    card.draggable = true;
+    card.dataset.ownershipId = owned.id;
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'player-card-avatar';
+    avatarEl.innerHTML = renderAvatarSvg(avatarForOwned(owned));
+    card.appendChild(avatarEl);
 
     const name = document.createElement('div');
     name.className = 'player-card-name';
-    name.textContent = owned.custom_name || owned.fictional_players.name;
+    name.textContent = owned.custom_name || (owned.isCustom ? owned.name : owned.fictional_players.name);
 
     const style = document.createElement('div');
     style.className = 'player-card-style';
-    style.textContent = owned.fictional_players.style;
+    style.textContent = owned.isCustom ? owned.style : owned.fictional_players.style;
 
-    const rarity = document.createElement('span');
-    rarity.className = 'player-card-rarity';
-    rarity.textContent = owned.fictional_players.rarity;
+    const rarityTag = document.createElement('span');
+    rarityTag.className = 'player-card-rarity';
+    rarityTag.textContent = owned.isCustom ? 'personnalisé' : owned.fictional_players.rarity;
 
     card.appendChild(name);
     card.appendChild(style);
-    card.appendChild(rarity);
+    card.appendChild(rarityTag);
 
+    if (assignedIds.has(owned.id)) {
+      const badge = document.createElement('span');
+      badge.className = 'player-card-assigned-badge';
+      badge.textContent = 'Aligné';
+      card.appendChild(badge);
+    }
+
+    // ---------- Source de glisser-déposer ----------
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', owned.id);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+    });
+
+    // Solution de repli tactile/clic : assigne au premier poste vide,
+    // pour les appareils où le drag&drop natif est peu pratique.
     card.addEventListener('click', () => handlePlayerCardClick(owned));
+
     els.collectionGrid.appendChild(card);
   });
 }
 
+/**
+ * Adapte la forme d'un joueur custom pour qu'elle ressemble à celle d'un
+ * player_ownership classique (avec fictional_players imbriqué), pour que
+ * renderLineupSlots/renderCollectionGrid puissent traiter les deux sources
+ * de façon presque uniforme malgré leur structure de données différente.
+ */
+function toOwnedShape(customPlayer) {
+  return {
+    id: customPlayer.id,
+    isCustom: true,
+    custom_name: null,
+    name: customPlayer.name,
+    style: customPlayer.style,
+    avatar_color: customPlayer.avatar_color,
+    avatar_pattern: customPlayer.avatar_pattern,
+    avatar_accessory: customPlayer.avatar_accessory
+  };
+}
+
 function handlePlayerCardClick(owned) {
-  // Clic simple : assigne ce joueur au premier slot vide (UX volontairement
-  // simple pour cette V1 — pas de drag&drop, juste "clique un joueur, il se
-  // pose sur le premier poste libre"). Un second clic sur un slot rempli
-  // permettrait plus tard de le vider ; hors scope immédiat.
+  // Clic simple (repli tactile) : assigne ce joueur au premier slot vide.
   const emptySlot = Object.keys(LINEUP_SLOT_LABELS).find(slot => !myLineupCache?.[`slot_${slot}`]);
   if (!emptySlot) {
-    alert('Les 6 postes sont déjà pourvus. Enregistre ou change ta composition avant d\'ajouter ce joueur.');
+    alert('Les 6 postes sont déjà pourvus. Glisse ce joueur directement sur un poste pour remplacer son occupant, ou retire un joueur avec le ✕.');
     return;
   }
-  myLineupCache[`slot_${emptySlot}`] = owned.id;
-  renderLineupSlots();
+  assignPlayerToSlot(owned.id, emptySlot);
 }
 
 async function handleSaveLineup() {
@@ -1376,6 +1502,148 @@ async function handleSaveLineup() {
     alert('Composition enregistrée ! Elle s\'appliquera à ta prochaine partie.');
   } catch (err) {
     alert(err.message || 'Impossible d\'enregistrer la composition pour le moment.');
+  }
+}
+
+// ---------- Création de joueur personnalisé ----------
+
+let newPlayerDraft = {
+  style: 'rapide',
+  color: AVATAR_COLORS[0],
+  pattern: 'plain',
+  accessory: 'none'
+};
+
+function wireCreatePlayer() {
+  els.openCreatePlayerBtn?.addEventListener('click', openCreatePlayerModal);
+  els.closeCreatePlayerBtn?.addEventListener('click', () => {
+    els.createPlayerOverlay.classList.remove('show');
+  });
+  els.confirmCreatePlayerBtn?.addEventListener('click', handleConfirmCreatePlayer);
+
+  els.newPlayerStyleOptions?.querySelectorAll('.setup-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      els.newPlayerStyleOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      newPlayerDraft.style = opt.dataset.style;
+    });
+  });
+
+  els.newPlayerPatternOptions?.querySelectorAll('.setup-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      els.newPlayerPatternOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      newPlayerDraft.pattern = opt.dataset.pattern;
+      renderCreatePlayerPreview();
+    });
+  });
+
+  els.newPlayerAccessoryOptions?.querySelectorAll('.setup-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      els.newPlayerAccessoryOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      newPlayerDraft.accessory = opt.dataset.accessory;
+      renderCreatePlayerPreview();
+    });
+  });
+
+  // Palette de couleurs construite dynamiquement depuis AVATAR_COLORS,
+  // pour rester strictement synchronisée avec ce que le rendu sait afficher.
+  AVATAR_COLORS.forEach(color => {
+    const swatch = document.createElement('div');
+    swatch.className = 'avatar-color-swatch' + (color === newPlayerDraft.color ? ' active' : '');
+    swatch.style.background = color;
+    swatch.addEventListener('click', () => {
+      els.newPlayerColorOptions.querySelectorAll('.avatar-color-swatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+      newPlayerDraft.color = color;
+      renderCreatePlayerPreview();
+    });
+    els.newPlayerColorOptions.appendChild(swatch);
+  });
+}
+
+function renderCreatePlayerSection() {
+  // Met à jour la note de quota chaque fois que l'onglet équipe est rechargé
+  // (après création/suppression), pour refléter l'état réel sans recharger
+  // toute la page.
+  const usedSlots = myCustomPlayersCache.length;
+  if (usedSlots === 0) {
+    els.createPlayerQuotaNote.textContent = '1 emplacement gratuit disponible.';
+  } else {
+    els.createPlayerQuotaNote.textContent = `${usedSlots} joueur(s) personnalisé(s) créé(s). Au-delà du premier, chaque emplacement supplémentaire est payant.`;
+  }
+}
+
+function openCreatePlayerModal() {
+  els.createPlayerError.textContent = '';
+  els.newPlayerName.value = '';
+  newPlayerDraft = { style: 'rapide', color: AVATAR_COLORS[0], pattern: 'plain', accessory: 'none' };
+
+  els.newPlayerStyleOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
+  els.newPlayerPatternOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
+  els.newPlayerAccessoryOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
+  els.newPlayerColorOptions.querySelectorAll('.avatar-color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
+
+  renderCreatePlayerPreview();
+  els.createPlayerOverlay.classList.add('show');
+}
+
+function renderCreatePlayerPreview() {
+  els.createPlayerPreview.innerHTML = renderAvatarSvg(newPlayerDraft);
+}
+
+async function handleConfirmCreatePlayer() {
+  const name = els.newPlayerName.value.trim();
+  els.createPlayerError.textContent = '';
+
+  if (!name) {
+    els.createPlayerError.textContent = 'Donne un nom à ton joueur.';
+    return;
+  }
+
+  try {
+    await createCustomPlayer({
+      name,
+      style: newPlayerDraft.style,
+      avatarColor: newPlayerDraft.color,
+      avatarPattern: newPlayerDraft.pattern,
+      avatarAccessory: newPlayerDraft.accessory
+    });
+    els.createPlayerOverlay.classList.remove('show');
+    await loadTeamPanel(); // recharge la collection pour afficher le nouveau joueur
+  } catch (err) {
+    const message = err.message || '';
+    if (message.includes('Limite de joueurs personnalisés')) {
+      els.createPlayerError.textContent = 'Limite gratuite atteinte. Achète un emplacement supplémentaire pour créer ce joueur.';
+      offerCustomPlayerSlotPurchase();
+    } else {
+      els.createPlayerError.textContent = message || 'Création impossible pour le moment.';
+    }
+  }
+}
+
+/**
+ * Propose l'achat d'un emplacement supplémentaire en réutilisant le système
+ * de paiement déjà en place pour les thèmes (checkoutTheme), plutôt que de
+ * dupliquer une logique de paiement spécifique aux joueurs custom.
+ */
+async function offerCustomPlayerSlotPurchase() {
+  if (!currentUser) return;
+  const confirmed = confirm('Acheter un emplacement supplémentaire pour créer un joueur personnalisé (1,49€) ?');
+  if (!confirmed) return;
+
+  try {
+    const fakeThemeForSlot = { id: CUSTOM_PLAYER_SLOT_THEME_ID, price_cents: 149 };
+    const result = await checkoutTheme(fakeThemeForSlot, currentUser);
+    if (result.immediate) {
+      alert('Emplacement débloqué ! Tu peux maintenant créer ce joueur.');
+      els.createPlayerError.textContent = '';
+    } else if (result.redirectUrl) {
+      window.location.href = result.redirectUrl;
+    }
+  } catch (err) {
+    alert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
@@ -1422,6 +1690,7 @@ function init() {
   wireGameControls();
   wireShop();
   wireProfileScreen();
+  wireCreatePlayer();
   wireAccount();
   wireTutorial();
 }

@@ -72,15 +72,21 @@ function renderToken(state, tok, lineupsByTeam) {
   div.className = 'token ' + tok.team + (tok.isGK ? ' gardien' : '');
   if (tok.id === state.selectedTokenId) div.classList.add('selected');
   if (canSelectToken(state, tok)) div.classList.add('selectable');
-  if (tok.isGK) {
+  div.dataset.tokenId = tok.id;
+
+  const playerName = displayNameForToken(tok.id, lineupsByTeam);
+
+  // Le marqueur "G" et le nom du joueur se chevauchent visuellement sur un
+  // pion de cette taille — quand un nom est disponible, il devient
+  // l'identifiant visuel principal (le contour blanc du gardien reste de
+  // toute façon visible pour le distinguer des autres pions).
+  if (tok.isGK && !playerName) {
     const mark = document.createElement('span');
     mark.className = 'gk-mark';
     mark.textContent = 'G';
     div.appendChild(mark);
   }
-  div.dataset.tokenId = tok.id;
 
-  const playerName = displayNameForToken(tok.id, lineupsByTeam);
   if (playerName) {
     div.title = playerName; // infobulle native au survol (desktop)
     const label = document.createElement('span');

@@ -27,12 +27,21 @@ html,body{
   overflow-x:hidden;
 }
 
+/* Vignette de fond : évite le grand vide uni sur les larges écrans en ancrant
+   doucement le regard vers le centre, sans détourner l'attention du plateau. */
+body{
+  background:
+    radial-gradient(circle at 50% 0%, rgba(40,73,47,0.16), transparent 60%),
+    var(--nuit);
+}
+
 .app{
   display:flex;
   flex-direction:column;
   align-items:center;
   min-height:100vh;
-  padding: 0 14px 40px;
+  width:100%;
+  padding: 0 20px 48px;
 }
 
 .hidden{display:none !important;}
@@ -42,11 +51,11 @@ html,body{
 
 .topbar{
   width:100%;
-  max-width:560px;
+  max-width:1100px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding: 12px 2px;
+  padding: 18px 2px;
   margin-bottom: 4px;
 }
 
@@ -65,11 +74,71 @@ html,body{
 .topbar-link:hover{ color: var(--craie); background: rgba(255,255,255,0.06); }
 .topbar-link:focus-visible{ outline:2px solid var(--terre-vif); outline-offset:2px; }
 
-/* ---------- SCOREBOARD ---------- */
+/* ---------- LAYOUT JEU (deux colonnes sur grand écran) ---------- */
+
+.game-layout{
+  width:100%;
+  max-width:1100px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:28px;
+}
+
+.game-main{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:460px;
+}
+
+.game-sidebar{
+  display:none; /* masqué sur mobile, activé en desktop via media query plus bas */
+  flex-direction:column;
+  gap:16px;
+  width:280px;
+  flex-shrink:0;
+}
+
+.sidebar-card{
+  background: var(--nuit-clair);
+  border-radius:12px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.sidebar-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+  margin-bottom:14px;
+}
+
+.sidebar-stats{ margin:0; display:flex; flex-direction:column; gap:10px; }
+.sidebar-stat{ display:flex; justify-content:space-between; align-items:baseline; margin:0; }
+.sidebar-stat dt{ font-size:13px; color: var(--craie-att); }
+.sidebar-stat dd{
+  margin:0;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:18px;
+}
+
+.sidebar-rules{
+  margin:0; padding-left:18px;
+  display:flex; flex-direction:column; gap:10px;
+  font-size:13px;
+  line-height:1.5;
+  color: var(--craie-att);
+}
+.sidebar-rules li::marker{ color: var(--terre-vif); }
 
 .scoreboard{
   width:100%;
-  max-width:560px;
   display:grid;
   grid-template-columns: 1fr auto 1fr;
   align-items:center;
@@ -112,7 +181,6 @@ html,body{
 
 .turn-banner{
   width:100%;
-  max-width:560px;
   text-align:center;
   font-family:'Barlow Condensed', sans-serif;
   font-weight:700;
@@ -357,12 +425,26 @@ html,body{
 /* ---------- SETUP ---------- */
 
 .setup-screen{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center;
+  display:flex; align-items:center; justify-content:center;
+  width:100%;
   min-height:80vh;
-  width:100%; max-width:420px;
-  margin:0 auto;
   padding: 30px 20px;
+}
+
+.setup-hero{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:64px;
+  max-width:880px;
+  width:100%;
+}
+
+.setup-text{
+  display:flex; flex-direction:column;
+  text-align:center;
+  max-width:420px;
+  width:100%;
 }
 
 .logo-title{
@@ -399,43 +481,98 @@ html,body{
 }
 .setup-option.active{ background: var(--terre); color:#1A1208; border-color: var(--terre); }
 
+/* Aperçu visuel du plateau : évocation stylisée (pas le vrai plateau interactif),
+   masquée sur mobile pour ne pas pousser le formulaire hors écran. */
+.setup-preview{
+  display:none;
+  flex-direction:column;
+  gap:18px;
+  padding: 32px 40px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--vert-terrain-clair) 0%, var(--vert-terrain-clair) 16.6%,
+      var(--vert-terrain) 16.6%, var(--vert-terrain) 33.3%
+    );
+  border-radius:12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(245,242,232,0.18);
+}
+
+.preview-row{ display:flex; gap:14px; justify-content:center; }
+
+.preview-token{
+  width:34px; height:34px; border-radius:50%;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25), 0 3px 6px rgba(0,0,0,0.4);
+}
+.preview-token.bleu{ background: linear-gradient(155deg, var(--bleu-equipe-clair), var(--bleu-equipe)); }
+.preview-token.rouge{ background: linear-gradient(155deg, var(--rouge-equipe-clair), var(--rouge-equipe)); }
+
+.preview-ball{
+  width:30px; height:30px; border-radius:50%;
+  margin: 0 auto;
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, #f1ede0 38%, #d9d3c0 70%, #bfb89f 100%);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
 /* ---------- BOUTIQUE ---------- */
 
-.shop-header{
-  width:100%; max-width:560px;
-  display:flex; align-items:center; gap:16px;
-  margin: 18px 0 22px;
+.shop-layout{
+  width:100%;
+  max-width:920px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
 }
+
+.shop-hero{
+  display:flex;
+  align-items:flex-start;
+  gap:24px;
+  margin: 12px 0 32px;
+  flex-wrap:wrap;
+}
+
+.shop-hero .btn{ flex-shrink:0; }
+
+.shop-hero-text{ display:flex; flex-direction:column; gap:6px; }
+
 .shop-title{
   font-family:'Barlow Condensed', sans-serif;
-  font-weight:800; font-size:24px;
+  font-weight:800; font-size:30px;
   letter-spacing:0.02em; text-transform:uppercase;
   line-height:1;
-  white-space:nowrap;
+}
+
+.shop-subtitle{
+  margin:0;
+  font-size:14px;
+  color: var(--craie-att);
+  max-width:440px;
 }
 
 .shop-grid{
-  width:100%; max-width:560px;
+  width:100%;
   display:grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap:14px;
+  gap:16px;
 }
 
 .theme-card{
   background: var(--nuit-clair);
   border-radius:12px;
-  padding:16px;
-  display:flex; flex-direction:column; gap:8px;
+  padding:18px;
+  display:flex; flex-direction:column; gap:10px;
   border: 1px solid rgba(245,242,232,0.08);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
+.theme-card:hover{ transform: translateY(-2px); }
 .theme-card.active{ border-color: var(--terre-vif); }
 
 .theme-swatch{
-  height:64px;
+  height:72px;
   border-radius:8px;
   display:flex; align-items:flex-end; gap:8px;
-  padding:8px;
+  padding:10px;
 }
 .theme-swatch span{
   width:18px; height:18px; border-radius:50%;
@@ -460,10 +597,40 @@ html,body{
   padding: 16px;
 }
 
+.shop-offline-banner{
+  background: rgba(200,75,49,0.12);
+  border: 1px solid rgba(200,75,49,0.3);
+  border-radius:8px;
+  color: var(--craie);
+}
+
 @media (max-width: 380px){
   .logo-title{ font-size:42px; }
   .score-center{ font-size:26px; }
   .team-name{ font-size:12px; }
+}
+
+/* ---------- ADAPTATION GRAND ÉCRAN ---------- */
+/* Au-delà de 860px de large, assez de place pour afficher le panneau
+   "feuille de match" à côté du plateau plutôt qu'en dessous, et agrandir
+   légèrement le plateau pour qu'il ne reste pas perdu dans l'espace. */
+@media (min-width: 860px){
+  .game-layout{
+    flex-direction:row;
+    align-items:flex-start;
+    justify-content:center;
+    gap:32px;
+  }
+
+  .game-main{ max-width:520px; }
+
+  .game-sidebar{
+    display:flex;
+    margin-top: 4px;
+  }
+
+  .setup-text{ text-align:left; }
+  .setup-preview{ display:flex; }
 }
 
 /* ---------- COMPTE / AUTH ---------- */

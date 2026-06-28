@@ -50,6 +50,41 @@ supabase/        migrations SQL
 tests/           suite de tests du moteur (31 tests)
 ```
 
+## Mettre l'app en ligne (déploiement réel)
+
+Le projet est prêt pour Vercel ou Netlify (configs déjà incluses : `vercel.json`,
+`netlify.toml`). Les deux ont un plan gratuit suffisant pour démarrer.
+
+### Option Vercel (recommandée, la plus simple)
+
+1. Crée un compte sur [vercel.com](https://vercel.com) (gratuit, connexion via GitHub possible)
+2. Installe leur CLI : `npm install -g vercel` (si npm est accessible chez toi)
+3. Depuis le dossier racine du projet : `vercel`
+4. Réponds aux quelques questions (nom du projet, etc.) — accepte les valeurs par défaut
+5. Vercel détecte `vercel.json`, exécute `node build.js`, publie `public/`
+6. Tu obtiens une URL publique du type `https://plateau-foot-xxxx.vercel.app`
+
+Pour les mises à jour suivantes : `vercel --prod` republie en production.
+
+### Option sans CLI (interface web uniquement)
+
+1. Mets le code sur GitHub (crée un dépôt, pousse ce dossier)
+2. Sur [vercel.com](https://vercel.com) → "Add New Project" → importe le dépôt GitHub
+3. Vercel lit automatiquement `vercel.json` et déploie
+
+Netlify fonctionne de façon identique via [netlify.com](https://netlify.com),
+soit en CLI (`npx netlify-cli deploy`), soit en glissant le dossier du projet
+directement sur leur interface "Deploy manually".
+
+### Variables à ne pas oublier après déploiement
+
+Le fichier `public/config.js` contient déjà ta clé Supabase `anon` (publique
+par design, pas un risque de sécurité). Aucune variable d'environnement
+supplémentaire n'est nécessaire pour cette étape — uniquement quand Stripe
+sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
+
+
+
 ## Tester le flux compte + boutique
 
 1. Lance le serveur local (voir ci-dessus) et ouvre l'app
@@ -69,8 +104,14 @@ tests/           suite de tests du moteur (31 tests)
 
 - ✅ Moteur de jeu testé et robuste (règles, immutabilité, anti-régression) — 31 tests automatisés
 - ✅ UI reconnectée au moteur, jouable même si Supabase est indisponible
+- ✅ Mise en page responsive réelle : layout deux colonnes sur desktop (plateau +
+  panneau "feuille de match"), hero avec aperçu visuel sur l'accueil, grille
+  boutique qui utilise correctement l'espace large — plus seulement pensé mobile
 - ✅ Schéma Supabase posé avec sécurité RLS stricte
 - ✅ Système de thèmes (4 thèmes en base, 1 gratuit + 3 payants à 1,99€)
+- ✅ Catalogue de secours affiché si la connexion à Supabase échoue (au lieu d'un
+  écran vide), avec avertissement clair que les achats ne fonctionneront pas
+  tant que la connexion n'est pas rétablie
 - ✅ Paiement mocké fonctionnel (achat simulé, pas de vrai argent)
 - ✅ Connexion / inscription / déconnexion via Supabase Auth (email + mot de passe)
 - ⏳ Application visuelle effective d'un thème acheté sur le plateau de jeu :
@@ -83,11 +124,3 @@ tests/           suite de tests du moteur (31 tests)
   (le sandbox de développement n'a pas accès réseau à ton projet — à valider
   toi-même en local avec les étapes ci-dessus)
 
-## Prochaines étapes suggérées
-
-1. Tester ce package en local avec les étapes "Tester le flux compte + boutique" ci-dessus
-2. Me dire ce qui fonctionne ou pas (en particulier : la confirmation email
-   Supabase est-elle activée ? ça change le parcours)
-3. Une fois le compte + achat validés : persister le thème choisi pour qu'il
-   s'applique automatiquement à la prochaine ouverture du jeu
-4. Stripe quand tu auras le compte (le code est prêt à brancher, ~30 min de travail estimées)

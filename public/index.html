@@ -23,70 +23,121 @@
 
   <!-- ECRAN DE CONFIGURATION -->
   <div class="setup-screen" id="setupScreen">
-    <div class="logo-title">PLATEAU<br><span>FOOT</span></div>
-    <div class="logo-sub">Le foot se joue aussi assis</div>
+    <div class="setup-hero">
+      <div class="setup-text">
+        <div class="logo-title">PLATEAU<br><span>FOOT</span></div>
+        <div class="logo-sub">Le foot se joue aussi assis</div>
 
-    <div class="setup-field">
-      <span class="setup-label">Buts pour gagner</span>
-      <div class="setup-options" id="goalOptions">
-        <div class="setup-option" data-val="1">1</div>
-        <div class="setup-option active" data-val="3">3</div>
-        <div class="setup-option" data-val="5">5</div>
-        <div class="setup-option" data-val="99">Libre</div>
+        <div class="setup-field">
+          <span class="setup-label">Buts pour gagner</span>
+          <div class="setup-options" id="goalOptions">
+            <div class="setup-option" data-val="1">1</div>
+            <div class="setup-option active" data-val="3">3</div>
+            <div class="setup-option" data-val="5">5</div>
+            <div class="setup-option" data-val="99">Libre</div>
+          </div>
+        </div>
+
+        <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
+      </div>
+
+      <div class="setup-preview" aria-hidden="true">
+        <div class="preview-row">
+          <span class="preview-token rouge"></span>
+          <span class="preview-token rouge"></span>
+          <span class="preview-token rouge"></span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-ball"></span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-token bleu"></span>
+          <span class="preview-token bleu"></span>
+          <span class="preview-token bleu"></span>
+        </div>
       </div>
     </div>
-
-    <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
   </div>
 
   <!-- ECRAN DE JEU -->
-  <div id="gameScreen" class="hidden screen-col">
+  <div id="gameScreen" class="hidden game-layout">
 
-    <div class="scoreboard">
-      <div class="team-block">
-        <span class="team-dot bleu"></span>
-        <span class="team-name">Bleu</span>
+    <div class="game-main">
+      <div class="scoreboard">
+        <div class="team-block">
+          <span class="team-dot bleu"></span>
+          <span class="team-name">Bleu</span>
+        </div>
+        <div class="score-center">
+          <span class="score-num" id="scoreBleu">0</span>
+          <span class="score-sep">–</span>
+          <span class="score-num" id="scoreRouge">0</span>
+        </div>
+        <div class="team-block right">
+          <span class="team-dot rouge"></span>
+          <span class="team-name">Rouge</span>
+        </div>
       </div>
-      <div class="score-center">
-        <span class="score-num" id="scoreBleu">0</span>
-        <span class="score-sep">–</span>
-        <span class="score-num" id="scoreRouge">0</span>
+
+      <div class="turn-banner" id="turnBanner">Au tour de bleu</div>
+
+      <div class="board-wrap">
+        <div class="pitch-lines">
+          <div class="goal-line-top"></div>
+          <div class="goal-line-bottom"></div>
+          <div class="goal-box-top"></div>
+          <div class="goal-box-bottom"></div>
+          <div class="center-line"></div>
+          <div class="center-mark"></div>
+        </div>
+        <div class="board-grid" id="boardGrid"></div>
       </div>
-      <div class="team-block right">
-        <span class="team-dot rouge"></span>
-        <span class="team-name">Rouge</span>
+
+      <div class="controls">
+        <div class="hint-bar" id="hintBar">Choisis un pion à déplacer</div>
+        <div class="btn-row">
+          <button class="btn" id="cancelBtn">Annuler le coup</button>
+          <button class="btn" id="restartBtn">Nouvelle partie</button>
+        </div>
       </div>
     </div>
 
-    <div class="turn-banner" id="turnBanner">Au tour de bleu</div>
-
-    <div class="board-wrap">
-      <div class="pitch-lines">
-        <div class="goal-line-top"></div>
-        <div class="goal-line-bottom"></div>
-        <div class="goal-box-top"></div>
-        <div class="goal-box-bottom"></div>
-        <div class="center-line"></div>
-        <div class="center-mark"></div>
+    <aside class="game-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">Feuille de match</div>
+        <dl class="sidebar-stats">
+          <div class="sidebar-stat">
+            <dt>Score</dt>
+            <dd><span id="sidebarScoreBleu">0</span> – <span id="sidebarScoreRouge">0</span></dd>
+          </div>
+          <div class="sidebar-stat">
+            <dt>Au tour de</dt>
+            <dd id="sidebarTurn">Bleu</dd>
+          </div>
+        </dl>
       </div>
-      <div class="board-grid" id="boardGrid"></div>
-    </div>
 
-    <div class="controls">
-      <div class="hint-bar" id="hintBar">Choisis un pion à déplacer</div>
-      <div class="btn-row">
-        <button class="btn" id="cancelBtn">Annuler le coup</button>
-        <button class="btn" id="restartBtn">Nouvelle partie</button>
+      <div class="sidebar-card">
+        <div class="sidebar-title">Rappel des règles</div>
+        <ul class="sidebar-rules">
+          <li>Déplace un pion d'une case, dans n'importe quelle direction.</li>
+          <li>Adjacent au ballon ? Pousse-le en ligne droite aussi loin que tu veux.</li>
+          <li>Le gardien reste cantonné à sa zone de cage.</li>
+          <li>Premier arrivé au nombre de buts fixé gagne la partie.</li>
+        </ul>
       </div>
-    </div>
+    </aside>
 
   </div>
 
   <!-- ECRAN BOUTIQUE -->
-  <div id="shopScreen" class="hidden screen-col">
-    <div class="shop-header">
+  <div id="shopScreen" class="hidden shop-layout">
+    <div class="shop-hero">
       <button class="btn" id="shopBackBtn">← Retour</button>
-      <div class="shop-title">Boutique de thèmes</div>
+      <div class="shop-hero-text">
+        <div class="shop-title">Boutique de thèmes</div>
+        <p class="shop-subtitle">Change l'ambiance du terrain. Un thème acheté reste débloqué pour toujours.</p>
+      </div>
     </div>
     <div class="shop-grid" id="shopGrid"></div>
   </div>
@@ -135,6 +186,6 @@
 <!-- SDK Supabase via CDN (pas de bundler en place pour cette v1) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
-<script type="module" src="../src/ui/main.js"></script>
+<script type="module" src="src/ui/main.js"></script>
 </body>
 </html>

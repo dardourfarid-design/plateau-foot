@@ -1,0 +1,9 @@
+{
+  "name": "plateau-foot",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Plateau Foot - jeu de stratégie façon dames/foot, moteur de jeu + UI web",
+  "scripts": {
+    "test": "node tests/run-tests.js"
+  }
+}

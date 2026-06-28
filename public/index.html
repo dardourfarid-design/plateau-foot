@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plateau Foot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- BARRE SUPÉRIEURE : compte + boutique, visible partout -->
+  <div class="topbar">
+    <button class="topbar-link" id="accountBtn">
+      <span id="accountStatus">Non connecté</span>
+    </button>
+    <button class="topbar-link" id="shopBtn">Boutique de thèmes</button>
+  </div>
+
+  <!-- ECRAN DE CONFIGURATION -->
+  <div class="setup-screen" id="setupScreen">
+    <div class="logo-title">PLATEAU<br><span>FOOT</span></div>
+    <div class="logo-sub">Le foot se joue aussi assis</div>
+
+    <div class="setup-field">
+      <span class="setup-label">Buts pour gagner</span>
+      <div class="setup-options" id="goalOptions">
+        <div class="setup-option" data-val="1">1</div>
+        <div class="setup-option active" data-val="3">3</div>
+        <div class="setup-option" data-val="5">5</div>
+        <div class="setup-option" data-val="99">Libre</div>
+      </div>
+    </div>
+
+    <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
+  </div>
+
+  <!-- ECRAN DE JEU -->
+  <div id="gameScreen" class="hidden screen-col">
+
+    <div class="scoreboard">
+      <div class="team-block">
+        <span class="team-dot bleu"></span>
+        <span class="team-name">Bleu</span>
+      </div>
+      <div class="score-center">
+        <span class="score-num" id="scoreBleu">0</span>
+        <span class="score-sep">–</span>
+        <span class="score-num" id="scoreRouge">0</span>
+      </div>
+      <div class="team-block right">
+        <span class="team-dot rouge"></span>
+        <span class="team-name">Rouge</span>
+      </div>
+    </div>
+
+    <div class="turn-banner" id="turnBanner">Au tour de bleu</div>
+
+    <div class="board-wrap">
+      <div class="pitch-lines">
+        <div class="goal-line-top"></div>
+        <div class="goal-line-bottom"></div>
+        <div class="goal-box-top"></div>
+        <div class="goal-box-bottom"></div>
+        <div class="center-line"></div>
+        <div class="center-mark"></div>
+      </div>
+      <div class="board-grid" id="boardGrid"></div>
+    </div>
+
+    <div class="controls">
+      <div class="hint-bar" id="hintBar">Choisis un pion à déplacer</div>
+      <div class="btn-row">
+        <button class="btn" id="cancelBtn">Annuler le coup</button>
+        <button class="btn" id="restartBtn">Nouvelle partie</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ECRAN BOUTIQUE -->
+  <div id="shopScreen" class="hidden screen-col">
+    <div class="shop-header">
+      <button class="btn" id="shopBackBtn">← Retour</button>
+      <div class="shop-title">Boutique de thèmes</div>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+
+</div>
+
+<!-- OVERLAY BUT -->
+<div class="overlay" id="goalOverlay">
+  <div class="overlay-card">
+    <div class="overlay-title" id="goalTitle">BUT !</div>
+    <div class="overlay-sub" id="goalSub">L'équipe bleue marque</div>
+    <button class="btn primary" id="continueBtn">Continuer</button>
+  </div>
+</div>
+
+<!-- OVERLAY FIN DE PARTIE -->
+<div class="overlay" id="endOverlay">
+  <div class="overlay-card">
+    <div class="overlay-title" id="endTitle">VICTOIRE</div>
+    <div class="overlay-sub" id="endSub">Bleu gagne 3 – 1</div>
+    <button class="btn primary" id="newGameBtn">Rejouer</button>
+  </div>
+</div>
+
+<!-- OVERLAY COMPTE (connexion / inscription / déconnexion) -->
+<div class="overlay" id="accountOverlay">
+  <div class="overlay-card account-card">
+    <div id="accountLoggedOutView">
+      <div class="overlay-title account-title" id="authTitle">Connexion</div>
+      <p class="overlay-sub account-sub" id="authError"></p>
+      <input class="auth-input" type="text" id="authDisplayName" placeholder="Pseudo" style="display:none;">
+      <input class="auth-input" type="email" id="authEmail" placeholder="Email">
+      <input class="auth-input" type="password" id="authPassword" placeholder="Mot de passe">
+      <button class="btn primary account-submit" id="authSubmitBtn">Se connecter</button>
+      <button class="topbar-link account-switch" id="authSwitchBtn">Pas encore de compte ? Créer un compte</button>
+    </div>
+    <div id="accountLoggedInView" class="hidden">
+      <div class="overlay-title account-title">Mon compte</div>
+      <p class="overlay-sub account-sub" id="accountEmailDisplay"></p>
+      <button class="btn account-submit" id="signOutBtn">Se déconnecter</button>
+    </div>
+    <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>
+  </div>
+</div>
+
+<!-- SDK Supabase via CDN (pas de bundler en place pour cette v1) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script type="module" src="../src/ui/main.js"></script>
+</body>
+</html>

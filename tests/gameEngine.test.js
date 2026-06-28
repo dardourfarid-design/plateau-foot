@@ -198,6 +198,16 @@ describe('resetBallAfterGoal', () => {
     expect(next.ball).toEqual({ row: CENTER.row, col: CENTER.col });
   });
 
+  test('remet aussi tous les pions à leur formation de départ', () => {
+    let state = createGame({ goalsToWin: 99 });
+    const original = JSON.parse(JSON.stringify(state.tokens));
+    // Simule des pions déplacés n'importe où, comme en fin de séquence de jeu
+    const movedTokens = state.tokens.map(t => ({ ...t, row: 4, col: 3 }));
+    state = { ...state, tokens: movedTokens, lastGoalBy: TEAMS.BLEU };
+    const next = resetBallAfterGoal(state);
+    expect(next.tokens).toEqual(original);
+  });
+
   test('ne fait rien si la partie est terminée', () => {
     let state = createGame({ goalsToWin: 1 });
     state = { ...state, gameOver: true, winner: TEAMS.BLEU, ball: { row: 0, col: 3 } };

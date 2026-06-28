@@ -246,15 +246,18 @@ function registerGoal(state, scoringTeam) {
 }
 
 /**
- * Remet le ballon au centre après confirmation visuelle d'un but (appelé par l'UI
- * une fois l'overlay "BUT !" fermé). Sépare la règle (qui marque, qui engage)
- * de la temporalité d'affichage.
+ * Remet le ballon au centre ET tous les pions à leur formation de départ
+ * après confirmation visuelle d'un but (appelé par l'UI une fois l'overlay
+ * "BUT !" fermé). Comme au coup d'envoi : on ne garde que le score et le
+ * tour (déjà mis à jour par registerGoal), tout le reste de la disposition
+ * de jeu redémarre à zéro pour que chaque reprise reste claire et lisible.
  */
 export function resetBallAfterGoal(state) {
   if (state.gameOver) return state;
   return Object.freeze({
     ...state,
-    ball: { row: CENTER.row, col: CENTER.col }
+    ball: { row: CENTER.row, col: CENTER.col },
+    tokens: buildStartingFormation()
   });
 }
 

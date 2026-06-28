@@ -32,6 +32,9 @@ const els = {};
 
 function cacheDomRefs() {
   els.setupScreen = document.getElementById('setupScreen');
+  els.configScreen = document.getElementById('configScreen');
+  els.goToSetupBtn = document.getElementById('goToSetupBtn');
+  els.configBackBtn = document.getElementById('configBackBtn');
   els.gameScreen = document.getElementById('gameScreen');
   els.boardGrid = document.getElementById('boardGrid');
   els.scoreBleu = document.getElementById('scoreBleu');
@@ -223,10 +226,10 @@ function backToSetup() {
   els.gameScreen.classList.add('hidden');
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
-  els.setupScreen.classList.remove('hidden');
+  els.configScreen.classList.remove('hidden');
 }
 
-// ---------- Écran de configuration ----------
+// ---------- Écran d'accueil et configuration ----------
 
 function wireSetupScreen() {
   let selectedGoals = 3;
@@ -239,6 +242,16 @@ function wireSetupScreen() {
     });
   });
   els.startBtn.addEventListener('click', () => startGame(selectedGoals));
+
+  els.goToSetupBtn.addEventListener('click', () => {
+    els.setupScreen.classList.add('hidden');
+    els.configScreen.classList.remove('hidden');
+  });
+
+  els.configBackBtn.addEventListener('click', () => {
+    els.configScreen.classList.add('hidden');
+    els.setupScreen.classList.remove('hidden');
+  });
 }
 
 function wireGameControls() {
@@ -376,8 +389,15 @@ async function handlePurchase(theme) {
 
 function wireShop() {
   els.shopBtn?.addEventListener('click', async () => {
-    screenBeforeShop = els.gameScreen.classList.contains('hidden') ? 'setup' : 'game';
+    if (!els.gameScreen.classList.contains('hidden')) {
+      screenBeforeShop = 'game';
+    } else if (!els.configScreen.classList.contains('hidden')) {
+      screenBeforeShop = 'config';
+    } else {
+      screenBeforeShop = 'setup';
+    }
     els.setupScreen.classList.add('hidden');
+    els.configScreen.classList.add('hidden');
     els.gameScreen.classList.add('hidden');
     els.shopScreen.classList.remove('hidden');
     const usedFallback = await refreshThemeData();
@@ -387,6 +407,8 @@ function wireShop() {
     els.shopScreen.classList.add('hidden');
     if (screenBeforeShop === 'game') {
       els.gameScreen.classList.remove('hidden');
+    } else if (screenBeforeShop === 'config') {
+      els.configScreen.classList.remove('hidden');
     } else {
       els.setupScreen.classList.remove('hidden');
     }

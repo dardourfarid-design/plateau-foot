@@ -21,24 +21,18 @@
     <button class="topbar-link" id="shopBtn">Boutique de thèmes</button>
   </div>
 
-  <!-- ECRAN DE CONFIGURATION -->
+  <!-- ECRAN D'ACCUEIL / VENTE -->
   <div class="setup-screen" id="setupScreen">
     <div class="setup-hero">
       <div class="setup-text">
         <div class="logo-title">PLATEAU<br><span>FOOT</span></div>
         <div class="logo-sub">Le foot se joue aussi assis</div>
-
-        <div class="setup-field">
-          <span class="setup-label">Buts pour gagner</span>
-          <div class="setup-options" id="goalOptions">
-            <div class="setup-option" data-val="1">1</div>
-            <div class="setup-option active" data-val="3">3</div>
-            <div class="setup-option" data-val="5">5</div>
-            <div class="setup-option" data-val="99">Libre</div>
-          </div>
-        </div>
-
-        <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
+        <p class="hero-pitch">
+          Un plateau comme les dames, un ballon qui circule comme au foot.
+          Pousse-le case par case jusqu'à la cage adverse, sans aucune règle
+          compliquée à apprendre.
+        </p>
+        <button class="btn primary cta-main" id="goToSetupBtn">Jouer maintenant</button>
       </div>
 
       <div class="setup-preview" aria-hidden="true">
@@ -56,6 +50,42 @@
           <span class="preview-token bleu"></span>
         </div>
       </div>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">♟</div>
+        <div class="feature-title">Aussi simple que les dames</div>
+        <p class="feature-desc">Un pion, une case, dans n'importe quelle direction. Si tu sais jouer aux dames, tu sais déjà jouer.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">●</div>
+        <div class="feature-title">2 joueurs, un seul écran</div>
+        <p class="feature-desc">Face à face, sur le même appareil. Pas de compte requis pour commencer une partie.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">◷</div>
+        <div class="feature-title">Parties de 5 minutes</div>
+        <p class="feature-desc">Premier à 1, 3, 5 buts ou partie libre. Idéal pour une pause rapide.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ECRAN DE CONFIGURATION DE PARTIE -->
+  <div class="config-screen hidden" id="configScreen">
+    <button class="topbar-link config-back" id="configBackBtn">← Retour</button>
+    <div class="config-card">
+      <div class="setup-field">
+        <span class="setup-label">Buts pour gagner</span>
+        <div class="setup-options" id="goalOptions">
+          <div class="setup-option" data-val="1">1</div>
+          <div class="setup-option active" data-val="3">3</div>
+          <div class="setup-option" data-val="5">5</div>
+          <div class="setup-option" data-val="99">Libre</div>
+        </div>
+      </div>
+
+      <button class="btn primary" id="startBtn" style="width:100%; padding:14px; font-size:15px;">Lancer la partie</button>
     </div>
   </div>
 

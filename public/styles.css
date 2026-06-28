@@ -425,10 +425,13 @@ body{
 /* ---------- SETUP ---------- */
 
 .setup-screen{
-  display:flex; align-items:center; justify-content:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
   width:100%;
-  min-height:80vh;
-  padding: 30px 20px;
+  min-height:90vh;
+  padding: 30px 20px 60px;
 }
 
 .setup-hero{
@@ -459,7 +462,21 @@ body{
 .logo-sub{
   font-size:13px; color: var(--craie-att);
   letter-spacing:0.08em; text-transform:uppercase;
-  margin-bottom:36px;
+  margin-bottom:20px;
+}
+
+.hero-pitch{
+  font-size:15px;
+  line-height:1.6;
+  color: var(--craie-att);
+  margin: 0 0 28px;
+  max-width: 380px;
+}
+
+.cta-main{
+  width:100%;
+  padding:16px;
+  font-size:16px;
 }
 
 .setup-field{ width:100%; margin-bottom:20px; text-align:left; }
@@ -512,6 +529,72 @@ body{
   margin: 0 auto;
   background: radial-gradient(circle at 32% 28%, #ffffff 0%, #f1ede0 38%, #d9d3c0 70%, #bfb89f 100%);
   box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+/* ---------- FEATURES (page de vente) ---------- */
+
+.feature-grid{
+  width:100%;
+  max-width:880px;
+  margin: 56px auto 0;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:20px;
+}
+
+.feature-card{
+  background: var(--nuit-clair);
+  border-radius:12px;
+  padding:22px 20px;
+  text-align:left;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.feature-icon{
+  font-size:22px;
+  margin-bottom:10px;
+  color: var(--terre-vif);
+}
+
+.feature-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:16px;
+  text-transform:uppercase;
+  letter-spacing:0.02em;
+  margin-bottom:8px;
+}
+
+.feature-desc{
+  font-size:13px;
+  line-height:1.5;
+  color: var(--craie-att);
+  margin:0;
+}
+
+/* ---------- ÉCRAN DE CONFIGURATION DE PARTIE ---------- */
+
+.config-screen{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:420px;
+  margin: 24px auto 0;
+  min-height:60vh;
+  justify-content:center;
+  position:relative;
+}
+
+.config-back{
+  position:absolute;
+  top:-48px; left:0;
+}
+
+.config-card{
+  width:100%;
+  display:flex;
+  flex-direction:column;
 }
 
 /* ---------- BOUTIQUE ---------- */
@@ -608,6 +691,13 @@ body{
   .logo-title{ font-size:42px; }
   .score-center{ font-size:26px; }
   .team-name{ font-size:12px; }
+}
+
+@media (max-width: 760px){
+  .feature-grid{ grid-template-columns: 1fr; }
+  .setup-hero{ flex-direction:column; gap:32px; text-align:center; }
+  .setup-text{ align-items:center; text-align:center; }
+  .hero-pitch{ text-align:center; }
 }
 
 /* ---------- ADAPTATION GRAND ÉCRAN ---------- */

@@ -15,6 +15,36 @@ import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './th
 import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail } from '../services/supabaseClient.js';
 import { checkoutTheme, isMockPaymentActive } from '../services/payment/paymentProvider.js';
 
+const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
+const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
+
+function loadSavedThemeId() {
+  try {
+    return window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY) || DEFAULT_THEME_ID;
+  } catch (err) {
+    return DEFAULT_THEME_ID;
+  }
+}
+
+function loadSavedThemeConfig() {
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_THEME_CONFIG_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function saveActiveTheme(themeId, config) {
+  try {
+    window.localStorage.setItem(ACTIVE_THEME_STORAGE_KEY, themeId);
+    window.localStorage.setItem(ACTIVE_THEME_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  } catch (err) {
+    // Pas grave si on ne peut pas persister : l'app reste fonctionnelle,
+    // juste sans mémorisation du thème entre deux visites.
+  }
+}
+
 // ---------- État applicatif ----------
 
 let gameState = null;
@@ -22,7 +52,7 @@ let undoSnapshot = null;
 let currentUser = null;
 let availableThemes = [];
 let purchasedThemeIds = [];
-let activeThemeId = DEFAULT_THEME_ID;
+let activeThemeId = loadSavedThemeId();
 let authMode = 'signin'; // 'signin' | 'signup'
 let screenBeforeShop = 'setup';
 
@@ -45,6 +75,7 @@ function cacheDomRefs() {
   els.turnBanner = document.getElementById('turnBanner');
   els.hintBar = document.getElementById('hintBar');
   els.cancelBtn = document.getElementById('cancelBtn');
+  els.endTurnBtn = document.getElementById('endTurnBtn');
   els.restartBtn = document.getElementById('restartBtn');
   els.startBtn = document.getElementById('startBtn');
   els.goalOptions = document.getElementById('goalOptions');
@@ -83,6 +114,7 @@ function startGame(goalsToWin) {
   gameState = createGame({ goalsToWin });
   undoSnapshot = null;
   els.setupScreen.classList.add('hidden');
+  els.configScreen.classList.add('hidden');
   els.gameScreen.classList.remove('hidden');
   buildBoardGrid(els.boardGrid, handleCellClick);
   render();
@@ -106,16 +138,17 @@ function render() {
 
   updateHint();
   updateCancelButton();
+  updateEndTurnButton();
 }
 
 function updateHint() {
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
   if (gameState.phase === PHASES.SELECT) {
     els.hintBar.textContent = gameState.selectedTokenId
-      ? 'Choisis une case pour te déplacer, ou une passe si tu es au contact du ballon'
-      : 'Choisis un de tes pions à déplacer';
+      ? 'Clique une case pour bouger, ou directement le ballon pour le pousser'
+      : 'Touche un de tes pions pour le jouer';
   } else if (gameState.phase === PHASES.MOVED_CAN_PASS) {
-    els.hintBar.textContent = 'Tu es au contact du ballon : fais une passe, ou termine ton tour';
+    els.hintBar.textContent = 'Tu touches le ballon : pousse-le, ou clique « Terminer le tour »';
   }
 }
 
@@ -126,6 +159,11 @@ function updateCancelButton() {
     gameState.canUndo === true;
   els.cancelBtn.style.opacity = canCancel ? '1' : '0.45';
   els.cancelBtn.style.pointerEvents = canCancel ? 'auto' : 'none';
+}
+
+function updateEndTurnButton() {
+  const shouldShow = gameState.phase === PHASES.MOVED_CAN_PASS;
+  els.endTurnBtn.classList.toggle('hidden', !shouldShow);
 }
 
 // ---------- Interactions plateau ----------
@@ -256,9 +294,16 @@ function wireSetupScreen() {
 
 function wireGameControls() {
   els.cancelBtn.addEventListener('click', handleCancel);
+  els.endTurnBtn.addEventListener('click', handleEndTurnClick);
   els.restartBtn.addEventListener('click', backToSetup);
   els.continueBtn.addEventListener('click', hideGoalOverlayAndResume);
   els.newGameBtn.addEventListener('click', backToSetup);
+}
+
+function handleEndTurnClick() {
+  const before = gameState;
+  gameState = passTurn(gameState);
+  handlePostActionEffects(before);
 }
 
 // ---------- Boutique de thèmes ----------
@@ -268,10 +313,14 @@ function wireGameControls() {
 // présentable plutôt que vide, même si les achats ne pourront pas être validés
 // dans cet état (l'utilisateur verra l'erreur au moment d'acheter, pas avant).
 const FALLBACK_THEMES = [
-  { id: 'classique', name: 'Classique', description: 'Le terrain vert historique de Plateau Foot.', price_cents: 0, currency: 'eur', config: { vertTerrain: '#1F3D2B', bleuEquipe: '#3A6EA5', rougeEquipe: '#C84B31' } },
-  { id: 'neon', name: 'Néon', description: 'Un terrain électrique pour les soirées arcade.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0D1B2A', bleuEquipe: '#00E5FF', rougeEquipe: '#FF2D75' } },
-  { id: 'neige', name: 'Neige', description: 'Le grand froid s’abat sur le terrain.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#E8EEF3', bleuEquipe: '#2C5C8A', rougeEquipe: '#A23B3B' } },
-  { id: 'terre-battue', name: 'Terre battue', description: 'Ambiance Roland-Garros, mais au foot.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#A8542E', bleuEquipe: '#2B4C7E', rougeEquipe: '#7E2B2B' } }
+  { id: 'classique', name: 'Classique', description: 'Le terrain vert historique de Plateau Foot.', price_cents: 0, currency: 'eur', config: { vertTerrain: '#1F3D2B', vertTerrainClair: '#28492F', bleuEquipe: '#3A6EA5', rougeEquipe: '#C84B31', accent: '#C97B4A' } },
+  { id: 'neon', name: 'Néon', description: 'Un terrain électrique pour les soirées arcade.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0D1B2A', vertTerrainClair: '#15263B', bleuEquipe: '#00E5FF', rougeEquipe: '#FF2D75', accent: '#FFD600' } },
+  { id: 'neige', name: 'Neige', description: 'Le grand froid s’abat sur le terrain.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#E8EEF3', vertTerrainClair: '#F4F8FB', bleuEquipe: '#2C5C8A', rougeEquipe: '#A23B3B', accent: '#6FA8D6' } },
+  { id: 'terre-battue', name: 'Terre battue', description: 'Ambiance Roland-Garros, mais au foot.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#A8542E', vertTerrainClair: '#BD663C', bleuEquipe: '#2B4C7E', rougeEquipe: '#7E2B2B', accent: '#F2C572' } },
+  { id: 'nuit-stade', name: 'Nuit de stade', description: 'Sous les projecteurs, ambiance match en nocturne.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0B2818', vertTerrainClair: '#123420', bleuEquipe: '#4FC3F7', rougeEquipe: '#FFB74D', accent: '#FFD54F' } },
+  { id: 'retro-8bit', name: 'Rétro 8-bit', description: 'L’esprit jeu vidéo des années 80, en plein écran.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#1A1A2E', vertTerrainClair: '#22223B', bleuEquipe: '#4ECDC4', rougeEquipe: '#FF6B6B', accent: '#FFE66D' } },
+  { id: 'jungle', name: 'Jungle', description: 'Un terrain englouti par la végétation tropicale.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#1B4332', vertTerrainClair: '#2D6A4F', bleuEquipe: '#52B788', rougeEquipe: '#D4A017', accent: '#95D5B2' } },
+  { id: 'crepuscule', name: 'Crépuscule', description: 'Les dernières lueurs du jour sur la pelouse.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#3D2645', vertTerrainClair: '#4F3358', bleuEquipe: '#7C9EFF', rougeEquipe: '#FF7C7C', accent: '#FFA552' } }
 ];
 
 async function refreshThemeData() {
@@ -342,6 +391,7 @@ function renderShop(usedFallback = false) {
       action.addEventListener('click', () => {
         activeThemeId = theme.id;
         applyTheme(theme.config);
+        saveActiveTheme(theme.id, theme.config);
         renderShop();
       });
     } else {
@@ -380,6 +430,9 @@ async function handlePurchase(theme) {
     }
     if (result.immediate) {
       const usedFallback = await refreshThemeData();
+      activeThemeId = theme.id;
+      applyTheme(theme.config);
+      saveActiveTheme(theme.id, theme.config);
       renderShop(usedFallback);
     }
   } catch (err) {
@@ -516,6 +569,15 @@ function wireAccount() {
 
 function init() {
   cacheDomRefs();
+
+  // Applique immédiatement le thème mémorisé (avant tout appel réseau),
+  // pour que le visiteur revoie instantanément l'ambiance qu'il a choisie,
+  // même hors-ligne ou avant que Supabase ait répondu.
+  const savedConfig = loadSavedThemeConfig();
+  if (savedConfig) {
+    applyTheme(savedConfig);
+  }
+
   wireSetupScreen();
   wireGameControls();
   wireShop();

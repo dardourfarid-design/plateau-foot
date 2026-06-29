@@ -1708,7 +1708,17 @@ function wireMercato() {
 
 async function loadMercatoPanel() {
   els.friendRequestError.textContent = '';
-  await Promise.all([renderFriendshipsSection(), renderMercatoOffersSection()]);
+  try {
+    await Promise.all([renderFriendshipsSection(), renderMercatoOffersSection()]);
+  } catch (err) {
+    // Filet de sécurité : si une erreur inattendue remonte malgré les
+    // try/catch internes à chaque section (ex: erreur avant même d'y
+    // entrer), on l'affiche au lieu de la laisser disparaître en silence
+    // — c'est exactement ce qui produisait un onglet vide sans aucun
+    // message ni log, avant ce correctif.
+    console.error('Erreur de chargement du panneau mercato :', err);
+    els.friendRequestError.textContent = 'Une erreur est survenue au chargement (' + (err.message || 'inconnue') + ').';
+  }
 }
 
 async function renderFriendshipsSection() {

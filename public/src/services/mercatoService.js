@@ -33,22 +33,19 @@ export async function respondFriendRequest(requesterId, accept) {
 
 /**
  * Renvoie { friends, pendingReceived, pendingSent } pour l'utilisateur
- * courant, avec le pseudo de l'autre personne déjà joint (évite à l'UI de
- * faire des allers-retours supplémentaires pour afficher un nom).
+ * courant, avec le pseudo de l'autre personne déjà joint. Passe par
+ * fetch_my_friendships() (jointure faite en SQL côté serveur) plutôt que
+ * par une requête PostgREST avec noms de contraintes explicites — plus
+ * fiable, ne dépend pas d'une convention de nommage qui peut varier.
  */
 export async function fetchMyFriendships() {
   const client = requireClient();
-  const user = (await client.auth.getUser()).data.user;
-  if (!user) return { friends: [], pendingReceived: [], pendingSent: [] };
-
-  const { data, error } = await client
-    .from('friendships')
-    .select('*, friend:profiles!friendships_friend_id_fkey(display_name), requester:profiles!friendships_user_id_fkey(display_name)');
+  const { data, error } = await client.rpc('fetch_my_friendships');
   if (error) throw error;
 
-  const friends = data.filter(f => f.status === 'accepted' && f.user_id === user.id);
-  const pendingSent = data.filter(f => f.status === 'pending' && f.user_id === user.id);
-  const pendingReceived = data.filter(f => f.status === 'pending' && f.friend_id === user.id);
+  const friends = data.filter(f => f.status === 'accepted');
+  const pendingSent = data.filter(f => f.status === 'pending' && f.direction === 'sent');
+  const pendingReceived = data.filter(f => f.status === 'pending' && f.direction === 'received');
 
   return { friends, pendingSent, pendingReceived };
 }

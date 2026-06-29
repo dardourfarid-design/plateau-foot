@@ -1725,7 +1725,7 @@ async function renderFriendshipsSection() {
       pendingReceived.forEach(req => {
         const row = document.createElement('div');
         row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${req.requester?.display_name || 'Joueur'}</span>`;
+        row.innerHTML = `<span class="friend-row-name">${req.other_pseudo || 'Joueur'}</span>`;
         const actions = document.createElement('div');
         actions.className = 'friend-row-actions';
         const acceptBtn = document.createElement('button');
@@ -1755,11 +1755,12 @@ async function renderFriendshipsSection() {
       friends.forEach(friendship => {
         const row = document.createElement('div');
         row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${friendship.friend?.display_name || 'Joueur'}</span>`;
+        row.innerHTML = `<span class="friend-row-name">${friendship.other_pseudo || 'Joueur'}</span>`;
         const tradeBtn = document.createElement('button');
         tradeBtn.className = 'btn-small primary';
         tradeBtn.textContent = 'Proposer un échange';
-        tradeBtn.addEventListener('click', () => openMercatoOfferModal(friendship.friend_id, friendship.friend?.display_name));
+        const otherUserId = friendship.direction === 'sent' ? friendship.friend_id : friendship.user_id;
+        tradeBtn.addEventListener('click', () => openMercatoOfferModal(otherUserId, friendship.other_pseudo));
         row.appendChild(tradeBtn);
         els.friendsList.appendChild(row);
       });

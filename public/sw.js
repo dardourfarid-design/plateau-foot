@@ -1,14 +1,20 @@
 // ===================== SERVICE WORKER =====================
-// Cache uniquement les fichiers statiques (HTML/CSS/JS/icônes) pour que
-// l'app s'installe et se relance rapidement, y compris hors-ligne pour
-// l'écran d'accueil et le jeu local/IA (qui ne dépendent pas du réseau).
+// Stratégie "network-first" : toujours essayer le réseau en premier, ne
+// retomber sur le cache qu'en cas d'échec réseau (vraiment hors-ligne).
+//
+// Choix délibéré, différent d'un cache-first classique : pendant que ce
+// projet est en développement actif avec des mises à jour fréquentes, un
+// cache-first peut servir indéfiniment une ancienne version du jeu sans
+// que rien (rechargement forcé inclus) ne le détecte — c'est exactement ce
+// qui s'est produit ici. Network-first élimine ce risque : la version la
+// plus récente est utilisée dès que le réseau répond, le cache ne sert
+// que de filet de secours hors-ligne.
 //
 // Ne met JAMAIS en cache les appels Supabase (auth, boutique, multijoueur,
-// profil) : ces requêtes passent toutes par des domaines externes
-// (supabase.co) non interceptés ici, donc elles restent toujours fraîches
-// et fonctionnent normalement dès que le réseau est disponible.
+// profil) : ces requêtes passent par un domaine externe (supabase.co) non
+// intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v1';
+const CACHE_NAME = 'tactic-master-v2'; // incrémenté pour invalider l'ancien cache v1 chez les utilisateurs déjà installés
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -45,21 +51,17 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Ne jamais intercepter les appels vers des domaines externes (Supabase,
-  // CDN de polices/scripts) — uniquement le cache-first sur nos propres
-  // fichiers statiques, servis depuis la même origine que l'app.
   if (url.origin !== self.location.origin) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
+    fetch(event.request)
+      .then(response => {
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
         return response;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });

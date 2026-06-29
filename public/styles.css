@@ -923,6 +923,73 @@ body{
   border-bottom: 1px solid rgba(245,242,232,0.06);
 }
 
+/* ---------- AMIS & MERCATO ---------- */
+
+.mercato-section{ margin-bottom:28px; }
+
+.friend-row, .offer-row{
+  background: var(--nuit-clair);
+  border-radius:10px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.friend-row-name, .offer-row-desc{ font-size:14px; color: var(--craie); }
+.offer-row-desc strong{ color: var(--terre-vif); }
+
+.friend-row-actions, .offer-row-actions{ display:flex; gap:8px; flex-shrink:0; }
+
+.btn-small{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:11px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  padding:6px 12px;
+  border-radius:6px;
+  border:1px solid rgba(245,242,232,0.14);
+  background: var(--nuit);
+  color: var(--craie);
+  cursor:pointer;
+}
+.btn-small.primary{ background: var(--terre); border-color: var(--terre); color:#1A1208; }
+.btn-small.danger{ background: rgba(200,75,49,0.15); border-color: rgba(200,75,49,0.4); color: var(--rouge-equipe-clair); }
+
+.mercato-offer-card{ max-width:480px; }
+.mercato-offer-columns{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.mercato-offer-column{ flex:1; }
+.mercato-offer-arrow{ font-size:24px; color: var(--terre-vif); flex-shrink:0; margin-top:18px; }
+
+.mercato-player-select{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:220px;
+  overflow-y:auto;
+  margin-top:8px;
+}
+
+.mercato-player-option{
+  background: var(--nuit);
+  border: 1px solid rgba(245,242,232,0.1);
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:12px;
+  color: var(--craie);
+  cursor:pointer;
+  text-align:left;
+}
+.mercato-player-option.selected{ border-color: var(--terre-vif); background: rgba(244,211,94,0.08); }
+
 /* ---------- BOUTIQUE ---------- */
 
 .shop-layout{

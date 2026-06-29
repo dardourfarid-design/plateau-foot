@@ -48,6 +48,8 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 10. `0010_leaderboard.sql` — vue de classement
 11. `0011_notification_consent.sql` — ajoute la finalité notifications au système de consentement
 12. `0012_custom_players.sql` — joueurs personnalisés (freemium : 1 gratuit, le reste payant)
+13. `0013_fix_lineup_custom_players.sql` — correctif pour permettre l'alignement de joueurs personnalisés
+14. `0014_friends_and_mercato_offers.sql` — système d'amis et offres de mercato avec consentement
 
 ## Tester l'installation PWA
 
@@ -165,6 +167,18 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Système d'amis et mercato avec consentement** : ajout d'ami par
+  pseudo exact, acceptation/refus de demande, puis proposition d'échange
+  entre amis qui nécessite l'acceptation explicite du destinataire — jamais
+  d'échange direct sans consentement (l'ancienne fonction
+  `execute_mercato_trade`, qui permettait ça, n'est plus appelée par aucun
+  code client). Nouvel onglet "Amis & Mercato" dans Mon Profil.
+  ⚠️ **Les pouvoirs spéciaux de pion liés au mercato (façon Uno : passer le
+  tour adverse, jouer deux fois) ne sont PAS encore implémentés** — décision
+  prise de les traiter comme un sprint séparé, parce qu'ils touchent le
+  moteur de jeu central (déjà très testé) et posent une vraie question
+  d'équilibre entre joueurs avec et sans collection. Le mercato actuel reste
+  purement cosmétique, comme le reste du système de collection.
 - 🆕 **PWA (installable sur écran d'accueil iOS/Android)** : manifest
   (`public/manifest.json`), service worker (`public/sw.js`, cache uniquement
   les fichiers statiques — jamais les appels Supabase, qui restent toujours

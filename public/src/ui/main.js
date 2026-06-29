@@ -23,6 +23,10 @@ import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboa
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, deleteCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID } from '../services/customPlayerService.js';
+import {
+  sendFriendRequest, respondFriendRequest, fetchMyFriendships,
+  createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
+} from '../services/mercatoService.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -166,6 +170,21 @@ function cacheDomRefs() {
   els.newPlayerAccessoryOptions = document.getElementById('newPlayerAccessoryOptions');
   els.confirmCreatePlayerBtn = document.getElementById('confirmCreatePlayerBtn');
   els.closeCreatePlayerBtn = document.getElementById('closeCreatePlayerBtn');
+  els.panelMercato = document.getElementById('panelMercato');
+  els.friendPseudoInput = document.getElementById('friendPseudoInput');
+  els.sendFriendRequestBtn = document.getElementById('sendFriendRequestBtn');
+  els.friendRequestError = document.getElementById('friendRequestError');
+  els.pendingFriendRequests = document.getElementById('pendingFriendRequests');
+  els.friendsList = document.getElementById('friendsList');
+  els.mercatoOffersReceived = document.getElementById('mercatoOffersReceived');
+  els.mercatoOffersSent = document.getElementById('mercatoOffersSent');
+  els.mercatoOfferOverlay = document.getElementById('mercatoOfferOverlay');
+  els.mercatoOfferError = document.getElementById('mercatoOfferError');
+  els.myPlayerSelect = document.getElementById('myPlayerSelect');
+  els.friendPlayerSelect = document.getElementById('friendPlayerSelect');
+  els.friendPlayerSelectLabel = document.getElementById('friendPlayerSelectLabel');
+  els.confirmMercatoOfferBtn = document.getElementById('confirmMercatoOfferBtn');
+  els.closeMercatoOfferBtn = document.getElementById('closeMercatoOfferBtn');
   els.leaderboardBody = document.getElementById('leaderboardBody');
   els.shopGrid = document.getElementById('shopGrid');
   els.shopBackBtn = document.getElementById('shopBackBtn');
@@ -1233,10 +1252,12 @@ function switchProfileTab(tabName) {
   els.panelProgress.classList.toggle('hidden', tabName !== 'progress');
   els.panelChallenges.classList.toggle('hidden', tabName !== 'challenges');
   els.panelTeam.classList.toggle('hidden', tabName !== 'team');
+  els.panelMercato.classList.toggle('hidden', tabName !== 'mercato');
   els.panelLeaderboard.classList.toggle('hidden', tabName !== 'leaderboard');
 
   if (tabName === 'challenges') loadChallengesPanel();
   if (tabName === 'team') loadTeamPanel();
+  if (tabName === 'mercato') loadMercatoPanel();
   if (tabName === 'leaderboard') loadLeaderboardPanel();
 }
 
@@ -1667,6 +1688,243 @@ async function offerCustomPlayerSlotPurchase() {
   }
 }
 
+// ---------- Amis & Mercato ----------
+
+let mercatoOfferContext = null; // { friendUserId, friendOwnershipId } pendant la création d'une offre
+let mercatoMySelectedOwnershipId = null;
+let mercatoFriendSelectedOwnershipId = null;
+let myFriendsCache = [];
+
+function wireMercato() {
+  els.sendFriendRequestBtn?.addEventListener('click', handleSendFriendRequest);
+  els.friendPseudoInput?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSendFriendRequest();
+  });
+  els.closeMercatoOfferBtn?.addEventListener('click', () => {
+    els.mercatoOfferOverlay.classList.remove('show');
+  });
+  els.confirmMercatoOfferBtn?.addEventListener('click', handleConfirmMercatoOffer);
+}
+
+async function loadMercatoPanel() {
+  els.friendRequestError.textContent = '';
+  await Promise.all([renderFriendshipsSection(), renderMercatoOffersSection()]);
+}
+
+async function renderFriendshipsSection() {
+  els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  els.friendsList.innerHTML = '';
+  try {
+    const { friends, pendingReceived } = await fetchMyFriendships();
+    myFriendsCache = friends;
+
+    els.pendingFriendRequests.innerHTML = '';
+    if (pendingReceived.length === 0) {
+      els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Aucune demande en attente.</p>';
+    } else {
+      pendingReceived.forEach(req => {
+        const row = document.createElement('div');
+        row.className = 'friend-row';
+        row.innerHTML = `<span class="friend-row-name">${req.requester?.display_name || 'Joueur'}</span>`;
+        const actions = document.createElement('div');
+        actions.className = 'friend-row-actions';
+        const acceptBtn = document.createElement('button');
+        acceptBtn.className = 'btn-small primary';
+        acceptBtn.textContent = 'Accepter';
+        acceptBtn.addEventListener('click', async () => {
+          await respondFriendRequest(req.user_id, true);
+          await renderFriendshipsSection();
+        });
+        const declineBtn = document.createElement('button');
+        declineBtn.className = 'btn-small danger';
+        declineBtn.textContent = 'Refuser';
+        declineBtn.addEventListener('click', async () => {
+          await respondFriendRequest(req.user_id, false);
+          await renderFriendshipsSection();
+        });
+        actions.appendChild(acceptBtn);
+        actions.appendChild(declineBtn);
+        row.appendChild(actions);
+        els.pendingFriendRequests.appendChild(row);
+      });
+    }
+
+    if (friends.length === 0) {
+      els.friendsList.innerHTML = '<p class="profile-empty-note">Aucun ami pour le moment. Ajoute quelqu\'un par son pseudo ci-dessus.</p>';
+    } else {
+      friends.forEach(friendship => {
+        const row = document.createElement('div');
+        row.className = 'friend-row';
+        row.innerHTML = `<span class="friend-row-name">${friendship.friend?.display_name || 'Joueur'}</span>`;
+        const tradeBtn = document.createElement('button');
+        tradeBtn.className = 'btn-small primary';
+        tradeBtn.textContent = 'Proposer un échange';
+        tradeBtn.addEventListener('click', () => openMercatoOfferModal(friendship.friend_id, friendship.friend?.display_name));
+        row.appendChild(tradeBtn);
+        els.friendsList.appendChild(row);
+      });
+    }
+  } catch (err) {
+    els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Amis indisponibles pour le moment.</p>';
+  }
+}
+
+async function handleSendFriendRequest() {
+  const pseudo = els.friendPseudoInput.value.trim();
+  els.friendRequestError.textContent = '';
+  if (!pseudo) return;
+  try {
+    await sendFriendRequest(pseudo);
+    els.friendPseudoInput.value = '';
+    await renderFriendshipsSection();
+  } catch (err) {
+    els.friendRequestError.textContent = err.message || 'Demande impossible pour le moment.';
+  }
+}
+
+async function renderMercatoOffersSection() {
+  els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  els.mercatoOffersSent.innerHTML = '';
+  try {
+    const { received, sent } = await fetchMyMercatoOffers();
+
+    els.mercatoOffersReceived.innerHTML = '';
+    if (received.length === 0) {
+      els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Aucune offre reçue.</p>';
+    } else {
+      received.forEach(offer => {
+        const row = document.createElement('div');
+        row.className = 'offer-row';
+        row.innerHTML = `<span class="offer-row-desc">Échange proposé</span>`;
+        const actions = document.createElement('div');
+        actions.className = 'offer-row-actions';
+        const acceptBtn = document.createElement('button');
+        acceptBtn.className = 'btn-small primary';
+        acceptBtn.textContent = 'Accepter';
+        acceptBtn.addEventListener('click', async () => {
+          try {
+            await respondMercatoOffer(offer.id, true);
+            await renderMercatoOffersSection();
+          } catch (err) {
+            alert(err.message || 'Échange impossible pour le moment.');
+          }
+        });
+        const declineBtn = document.createElement('button');
+        declineBtn.className = 'btn-small danger';
+        declineBtn.textContent = 'Refuser';
+        declineBtn.addEventListener('click', async () => {
+          await respondMercatoOffer(offer.id, false);
+          await renderMercatoOffersSection();
+        });
+        actions.appendChild(acceptBtn);
+        actions.appendChild(declineBtn);
+        row.appendChild(actions);
+        els.mercatoOffersReceived.appendChild(row);
+      });
+    }
+
+    els.mercatoOffersSent.innerHTML = '';
+    if (sent.length === 0) {
+      els.mercatoOffersSent.innerHTML = '<p class="profile-empty-note">Aucune offre envoyée.</p>';
+    } else {
+      sent.forEach(offer => {
+        const row = document.createElement('div');
+        row.className = 'offer-row';
+        row.innerHTML = `<span class="offer-row-desc">En attente de réponse</span>`;
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn-small danger';
+        cancelBtn.textContent = 'Annuler';
+        cancelBtn.addEventListener('click', async () => {
+          await cancelMercatoOffer(offer.id);
+          await renderMercatoOffersSection();
+        });
+        row.appendChild(cancelBtn);
+        els.mercatoOffersSent.appendChild(row);
+      });
+    }
+  } catch (err) {
+    els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Offres indisponibles pour le moment.</p>';
+  }
+}
+
+async function openMercatoOfferModal(friendUserId, friendName) {
+  mercatoOfferContext = { friendUserId };
+  mercatoMySelectedOwnershipId = null;
+  mercatoFriendSelectedOwnershipId = null;
+  els.mercatoOfferError.textContent = '';
+  els.friendPlayerSelectLabel.textContent = `Tu demandes à ${friendName || 'ton ami'}`;
+  els.myPlayerSelect.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  els.friendPlayerSelect.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  els.mercatoOfferOverlay.classList.add('show');
+
+  try {
+    const [myCollection, myCustom, friendCollection] = await Promise.all([
+      fetchMyCollection(), fetchMyCustomPlayers(), fetchFriendCollection(friendUserId)
+    ]);
+    const myAllOwned = [...myCollection, ...myCustom.map(toOwnedShape)];
+    renderMercatoPlayerOptions(els.myPlayerSelect, myAllOwned, ownershipId => {
+      mercatoMySelectedOwnershipId = ownershipId;
+    });
+    renderMercatoFriendOptions(friendCollection);
+  } catch (err) {
+    els.mercatoOfferError.textContent = err.message || 'Collections indisponibles pour le moment.';
+  }
+}
+
+function renderMercatoPlayerOptions(container, owned, onSelect) {
+  container.innerHTML = '';
+  if (owned.length === 0) {
+    container.innerHTML = '<p class="profile-empty-note">Aucun joueur disponible.</p>';
+    return;
+  }
+  owned.forEach(o => {
+    const opt = document.createElement('div');
+    opt.className = 'mercato-player-option';
+    opt.textContent = o.custom_name || (o.isCustom ? o.name : o.fictional_players.name);
+    opt.addEventListener('click', () => {
+      container.querySelectorAll('.mercato-player-option').forEach(el => el.classList.remove('selected'));
+      opt.classList.add('selected');
+      onSelect(o.id);
+    });
+    container.appendChild(opt);
+  });
+}
+
+function renderMercatoFriendOptions(friendCollection) {
+  els.friendPlayerSelect.innerHTML = '';
+  if (friendCollection.length === 0) {
+    els.friendPlayerSelect.innerHTML = '<p class="profile-empty-note">Cet ami n\'a aucun joueur.</p>';
+    return;
+  }
+  friendCollection.forEach(p => {
+    const opt = document.createElement('div');
+    opt.className = 'mercato-player-option';
+    opt.textContent = p.custom_name || p.player_name;
+    opt.addEventListener('click', () => {
+      els.friendPlayerSelect.querySelectorAll('.mercato-player-option').forEach(el => el.classList.remove('selected'));
+      opt.classList.add('selected');
+      mercatoFriendSelectedOwnershipId = p.id;
+    });
+    els.friendPlayerSelect.appendChild(opt);
+  });
+}
+
+async function handleConfirmMercatoOffer() {
+  els.mercatoOfferError.textContent = '';
+  if (!mercatoMySelectedOwnershipId || !mercatoFriendSelectedOwnershipId) {
+    els.mercatoOfferError.textContent = 'Choisis un joueur de chaque côté.';
+    return;
+  }
+  try {
+    await createMercatoOffer(mercatoOfferContext.friendUserId, mercatoMySelectedOwnershipId, mercatoFriendSelectedOwnershipId);
+    els.mercatoOfferOverlay.classList.remove('show');
+    await renderMercatoOffersSection();
+    alert('Offre envoyée ! Ton ami doit l\'accepter pour que l\'échange se fasse.');
+  } catch (err) {
+    els.mercatoOfferError.textContent = err.message || 'Offre impossible pour le moment.';
+  }
+}
+
 async function loadLeaderboardPanel() {
   els.leaderboardBody.innerHTML = '<tr><td colspan="5">Chargement…</td></tr>';
   try {
@@ -1711,6 +1969,7 @@ function init() {
   wireShop();
   wireProfileScreen();
   wireCreatePlayer();
+  wireMercato();
   wireAccount();
   wireTutorial();
   registerServiceWorker();

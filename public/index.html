@@ -259,6 +259,7 @@
       <button class="profile-tab active" data-tab="progress">Progression</button>
       <button class="profile-tab" data-tab="challenges">Défis du jour</button>
       <button class="profile-tab" data-tab="team">Mon équipe</button>
+      <button class="profile-tab" data-tab="mercato">Amis &amp; Mercato</button>
       <button class="profile-tab" data-tab="leaderboard">Classement</button>
     </div>
 
@@ -352,6 +353,61 @@
     </div>
 
     <!-- Onglet Classement -->
+    <!-- Onglet Amis & Mercato -->
+    <div class="profile-panel hidden" id="panelMercato">
+      <div class="mercato-section">
+        <div class="sidebar-title">Ajouter un ami</div>
+        <div class="join-code-row">
+          <input class="auth-input join-code-input" type="text" id="friendPseudoInput" placeholder="Pseudo exact de ton ami" style="text-transform:none;">
+          <button class="btn primary" id="sendFriendRequestBtn">Ajouter</button>
+        </div>
+        <p class="online-error" id="friendRequestError"></p>
+      </div>
+
+      <div class="mercato-section">
+        <div class="sidebar-title">Demandes reçues</div>
+        <div id="pendingFriendRequests"></div>
+      </div>
+
+      <div class="mercato-section">
+        <div class="sidebar-title">Mes amis</div>
+        <div id="friendsList"></div>
+      </div>
+
+      <div class="mercato-section">
+        <div class="sidebar-title">Offres d'échange reçues</div>
+        <div id="mercatoOffersReceived"></div>
+      </div>
+
+      <div class="mercato-section">
+        <div class="sidebar-title">Mes offres envoyées</div>
+        <div id="mercatoOffersSent"></div>
+      </div>
+    </div>
+
+    <!-- OVERLAY PROPOSITION D'ÉCHANGE -->
+    <div class="overlay" id="mercatoOfferOverlay">
+      <div class="overlay-card mercato-offer-card">
+        <div class="overlay-title" style="font-size:22px;">Proposer un échange</div>
+        <p class="overlay-sub" id="mercatoOfferError"></p>
+
+        <div class="mercato-offer-columns">
+          <div class="mercato-offer-column">
+            <span class="setup-label">Tu proposes</span>
+            <div class="mercato-player-select" id="myPlayerSelect"></div>
+          </div>
+          <div class="mercato-offer-arrow">⇄</div>
+          <div class="mercato-offer-column">
+            <span class="setup-label" id="friendPlayerSelectLabel">Tu demandes</span>
+            <div class="mercato-player-select" id="friendPlayerSelect"></div>
+          </div>
+        </div>
+
+        <button class="btn primary account-submit" id="confirmMercatoOfferBtn" style="margin-top:18px;">Envoyer l'offre</button>
+        <button class="topbar-link account-close" id="closeMercatoOfferBtn">Annuler</button>
+      </div>
+    </div>
+
     <div class="profile-panel hidden" id="panelLeaderboard">
       <table class="leaderboard-table" id="leaderboardTable">
         <thead>

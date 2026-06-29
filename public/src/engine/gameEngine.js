@@ -174,6 +174,12 @@ export function moveSelectedToken(state, row, col) {
  * depuis l'état courant. Gère but / fin de tour ensuite.
  */
 export function passBall(state, row, col) {
+  // Le mouvement bonus accordé par le pouvoir Relais n'autorise qu'un
+  // déplacement de pion, jamais une seconde passe — sinon un même joueur
+  // pourrait enchaîner deux poussées de ballon en un seul tour, ce qui
+  // dépasse largement l'intention du pouvoir tel que conçu.
+  if (state.relaisBonusMoveAvailable) return state;
+
   const inSelectPhaseAdjacent =
     state.phase === PHASES.SELECT &&
     state.selectedTokenId &&
@@ -189,6 +195,19 @@ export function passBall(state, row, col) {
   const validPasses = getPassDestinations(state);
   if (!cellInList(validPasses.map(p => [p[0], p[1]]), row, col)) return state;
 
+  return applyBallMovement(state, row, col);
+}
+
+/**
+ * Applique un déplacement de ballon déjà validé (but, fin de tour) sans
+ * revérifier la liste des destinations normales — utilisée par passBall()
+ * ci-dessus pour le cas normal, et par les pouvoirs (Tir Puissant) qui
+ * autorisent des destinations qu'une passe normale n'autoriserait pas
+ * (traverser un pion). La validité du coup doit être garantie par
+ * l'appelant AVANT d'appeler cette fonction — elle ne fait que matérialiser
+ * un mouvement déjà jugé légal dans son contexte.
+ */
+export function applyBallMovement(state, row, col) {
   const newState = {
     ...state,
     ball: { row, col },
@@ -216,6 +235,20 @@ export function passTurn(state) {
 }
 
 function endTurn(state) {
+  // Si un bonus de second mouvement (Relais) est disponible, ce tour-ci ne
+  // change pas de camp : on consomme juste le bonus, le déplacement qui
+  // vient d'être joué EST le second mouvement accordé par le pouvoir.
+  if (state.relaisBonusMoveAvailable) {
+    const { relaisBonusMoveAvailable, ...rest } = state;
+    return Object.freeze({
+      ...rest,
+      selectedTokenId: null,
+      phase: PHASES.SELECT,
+      movedTokenPos: null,
+      canUndo: true
+    });
+  }
+
   return Object.freeze({
     ...state,
     selectedTokenId: null,

@@ -95,6 +95,14 @@ function renderToken(state, tok, lineupsByTeam) {
     div.appendChild(label);
   }
 
+  if (tok.power) {
+    const badge = document.createElement('span');
+    badge.className = 'token-power-badge' + (tok.powerUsed ? ' used' : '');
+    badge.textContent = '★';
+    badge.title = tok.powerUsed ? 'Pouvoir déjà utilisé' : 'Pouvoir disponible';
+    div.appendChild(badge);
+  }
+
   return div;
 }
 

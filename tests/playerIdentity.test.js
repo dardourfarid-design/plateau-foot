@@ -21,12 +21,14 @@ describe('resolveLineup', () => {
   test('résout correctement les slots avec le nom personnalisé en priorité', () => {
     const lineupRow = { slot_gk: 'own-1', slot_att0: 'own-2' };
     const collection = [
-      { id: 'own-1', custom_name: 'Le Mur', fictional_players: { name: 'Theo Vasquez', style: 'costaud', rarity: 'commun' } },
-      { id: 'own-2', custom_name: null, fictional_players: { name: 'Diego Salaz', style: 'rapide', rarity: 'commun' } }
+      { id: 'own-1', custom_name: 'Le Mur', fictional_players: { name: 'Theo Vasquez', style: 'costaud', rarity: 'commun', power: null } },
+      { id: 'own-2', custom_name: null, fictional_players: { name: 'Diego Salaz', style: 'rapide', rarity: 'rare', power: 'sprint' } }
     ];
     const resolved = resolveLineup(lineupRow, collection);
     expect(resolved.gk.displayName).toBe('Le Mur');
     expect(resolved.att0.displayName).toBe('Diego Salaz');
+    expect(resolved.att0.power).toBe('sprint');
+    expect(resolved.gk.power).toBe(null);
   });
 
   test('résout correctement un joueur personnalisé (structure différente du catalogue)', () => {

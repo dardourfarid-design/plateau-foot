@@ -50,6 +50,8 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 12. `0012_custom_players.sql` — joueurs personnalisés (freemium : 1 gratuit, le reste payant)
 13. `0013_fix_lineup_custom_players.sql` — correctif pour permettre l'alignement de joueurs personnalisés
 14. `0014_friends_and_mercato_offers.sql` — système d'amis et offres de mercato avec consentement
+15. `0015_fix_friendships_query.sql` — correctif de fiabilité pour la lecture des amitiés
+16. `0016_pawn_powers.sql` — pouvoirs de pion sur les joueurs rares/légendaires
 
 ## Tester l'installation PWA
 
@@ -167,18 +169,27 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Pouvoirs de pion (sprint dédié, mécanique terminée)** : 5 pouvoirs
+  réservés aux joueurs rares/légendaires du mercato (jamais sur la
+  formation de départ ni le starter pack gratuit), chacun activable une
+  fois par partie — voir `src/engine/powers.js` (21 tests dédiés, dont un
+  scénario d'intégration complet pour Relais) :
+  - **Tir Puissant** : traverse un pion adverse sur la trajectoire de passe
+  - **Sprint** : déplacement de 2 cases au lieu d'1
+  - **Mur** : bloque les trajectoires diagonales pendant le tour adverse suivant
+  - **Relais** : un second déplacement de pion après la passe (jamais une seconde passe)
+  - **Repli adverse** : force un pion ennemi à reculer d'une case
+  Badge violet (★) affiché sur les pions concernés, grisé une fois utilisé.
+  Bouton "Utiliser le pouvoir" dans les contrôles de jeu quand applicable.
+  ⚠️ **L'IA n'utilise jamais les pouvoirs pour cette V1** (elle continue de
+  jouer normalement même avec un pion qui en porte un — pas de régression,
+  juste une limite connue à traiter plus tard si besoin).
 - 🆕 **Système d'amis et mercato avec consentement** : ajout d'ami par
   pseudo exact, acceptation/refus de demande, puis proposition d'échange
   entre amis qui nécessite l'acceptation explicite du destinataire — jamais
   d'échange direct sans consentement (l'ancienne fonction
   `execute_mercato_trade`, qui permettait ça, n'est plus appelée par aucun
   code client). Nouvel onglet "Amis & Mercato" dans Mon Profil.
-  ⚠️ **Les pouvoirs spéciaux de pion liés au mercato (façon Uno : passer le
-  tour adverse, jouer deux fois) ne sont PAS encore implémentés** — décision
-  prise de les traiter comme un sprint séparé, parce qu'ils touchent le
-  moteur de jeu central (déjà très testé) et posent une vraie question
-  d'équilibre entre joueurs avec et sans collection. Le mercato actuel reste
-  purement cosmétique, comme le reste du système de collection.
 - 🆕 **PWA (installable sur écran d'accueil iOS/Android)** : manifest
   (`public/manifest.json`), service worker (`public/sw.js`, cache uniquement
   les fichiers statiques — jamais les appels Supabase, qui restent toujours

@@ -9,6 +9,7 @@ await import('./ai.test.js');
 await import('./multiplayer-protocol.test.js');
 await import('./playerIdentity.test.js');
 await import('./playerAvatar.test.js');
+await import('./powers.test.js');
 
 const success = printSummary();
 process.exit(success ? 0 : 1);

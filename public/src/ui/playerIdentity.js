@@ -36,11 +36,13 @@ export function resolveLineup(lineupRow, collection) {
     const baseName = owned.isCustom ? owned.name : owned.fictional_players?.name;
     const style = owned.isCustom ? owned.style : owned.fictional_players?.style;
     const rarity = owned.isCustom ? 'personnalise' : owned.fictional_players?.rarity;
+    const power = owned.isCustom ? owned.power : owned.fictional_players?.power;
 
     bySlot[slot] = {
       displayName: owned.custom_name || baseName,
       style,
-      rarity
+      rarity,
+      power: power || null
     };
   });
 

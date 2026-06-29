@@ -7,10 +7,15 @@
 
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
-  resetBallAfterGoal, applyMove, getMoveDestinations, PHASES
+  resetBallAfterGoal, applyMove, getMoveDestinations, applyBallMovement, PHASES
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
+import {
+  POWER_TYPES, POWER_LABELS, canActivatePower, getPowerShotDestinations, activateTirPuissant,
+  getSprintDestinations, activateSprint, activateMur, activateRelais, confirmRelaisAfterPass,
+  getValidRepliTargets, activateRepliAdverse, expireWallIfNeeded
+} from '../engine/powers.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail } from '../services/supabaseClient.js';
@@ -79,6 +84,11 @@ let onlineSessionId = null;
 // par coup). null si pas de compte ou pas encore de composition choisie —
 // dans ce cas l'affichage reste strictement identique à avant ce système.
 let myResolvedLineup = null;
+
+// Mode d'activation de pouvoir : quand non-null, le prochain clic sur une
+// case du plateau est interprété comme la destination du pouvoir en cours
+// d'activation (Tir Puissant, Sprint), plutôt qu'un déplacement normal.
+let pendingPowerActivation = null; // { tokenId, power } | null
 let myTeam = TEAMS.BLEU;
 let unsubscribeFromSession = null;
 
@@ -108,6 +118,10 @@ function cacheDomRefs() {
   els.hintBar = document.getElementById('hintBar');
   els.cancelBtn = document.getElementById('cancelBtn');
   els.endTurnBtn = document.getElementById('endTurnBtn');
+  els.activatePowerBtn = document.getElementById('activatePowerBtn');
+  els.powerTargetOverlay = document.getElementById('powerTargetOverlay');
+  els.powerTargetList = document.getElementById('powerTargetList');
+  els.cancelPowerTargetBtn = document.getElementById('cancelPowerTargetBtn');
   els.restartBtn = document.getElementById('restartBtn');
   els.startBtn = document.getElementById('startBtn');
   els.goalOptions = document.getElementById('goalOptions');
@@ -226,6 +240,7 @@ async function loadMyLineupForGame() {
     ]);
     const allOwned = [...collection, ...customPlayers.map(toOwnedShape)];
     myResolvedLineup = resolveLineup(lineupRow, allOwned);
+    applyPowersToGameState();
   } catch (err) {
     // Ne bloque jamais une partie si la lineup ne peut pas être chargée
     // (hors-ligne, pas encore de composition choisie, etc.) — le jeu reste
@@ -233,6 +248,28 @@ async function loadMyLineupForGame() {
     console.error('Lineup non chargée :', err);
     myResolvedLineup = null;
   }
+}
+
+/**
+ * Reporte les pouvoirs de la lineup résolue (équipe Bleu uniquement) sur
+ * les tokens réels du gameState — ajoute `power` et `powerUsed: false` sur
+ * les pions concernés. Appelé une seule fois par partie, juste après la
+ * résolution de la lineup.
+ */
+function applyPowersToGameState() {
+  if (!myResolvedLineup || !gameState) return;
+  const slotKeys = ['gk', 'def0', 'def1', 'att0', 'att1', 'att2'];
+  gameState = {
+    ...gameState,
+    tokens: gameState.tokens.map(t => {
+      if (!t.id.startsWith('b-')) return t;
+      const slot = t.id.slice(2);
+      if (!slotKeys.includes(slot)) return t;
+      const power = myResolvedLineup[slot]?.power;
+      if (!power) return t;
+      return { ...t, power, powerUsed: false };
+    })
+  };
 }
 
 function startGame(goalsToWin) {
@@ -267,6 +304,7 @@ function render() {
   updateHint();
   updateCancelButton();
   updateEndTurnButton();
+  updatePowerButton();
 }
 
 function updateHint() {
@@ -307,11 +345,35 @@ function updateEndTurnButton() {
   els.endTurnBtn.classList.toggle('hidden', !shouldShow);
 }
 
+/**
+ * Affiche le bouton "Utiliser le pouvoir" uniquement quand le pion
+ * sélectionné a un pouvoir disponible et que les conditions de contexte
+ * sont remplies (Tir Puissant/Relais demandent d'être déjà adjacent au
+ * ballon, comme une vraie passe).
+ */
+function updatePowerButton() {
+  if (gameMode === 'online' && gameState.turn !== myTeam) {
+    els.activatePowerBtn.classList.add('hidden');
+    return;
+  }
+  const token = gameState.tokens.find(t => t.id === gameState.selectedTokenId);
+  const canShow = token && canActivatePower(gameState, token) && !pendingPowerActivation;
+  els.activatePowerBtn.classList.toggle('hidden', !canShow);
+  if (canShow) {
+    els.activatePowerBtn.textContent = `Utiliser : ${POWER_LABELS[token.power]}`;
+  }
+}
+
 // ---------- Interactions plateau ----------
 
 function handleCellClick(row, col) {
   if (gameState.gameOver || aiThinking) return;
   if (gameMode === 'online' && gameState.turn !== myTeam) return;
+
+  if (pendingPowerActivation) {
+    handlePowerDestinationClick(row, col);
+    return;
+  }
 
   if (gameState.phase === PHASES.SELECT) {
     const tok = gameState.tokens.find(t => t.row === row && t.col === col);
@@ -394,6 +456,18 @@ function handlePostActionEffects(previousState) {
     }
     return; // pas d'IA pendant le tutoriel
   }
+
+  // Si une passe venait de se jouer et qu'un Relais était en attente sur le
+  // pion qui a tiré, on confirme le bonus de second mouvement maintenant
+  // (jamais avant un but, traité dans la branche ci-dessus séparément).
+  if (gameState.relaisPendingForTeam) {
+    gameState = confirmRelaisAfterPass(gameState);
+    render();
+  }
+
+  // Le Mur ne protège qu'un seul tour adverse : on vérifie l'expiration à
+  // chaque fin de tour, pas seulement lors de son activation.
+  gameState = expireWallIfNeeded(gameState);
 
   maybeTriggerAiTurn();
 }
@@ -486,7 +560,12 @@ function backToSetup() {
     unsubscribeFromSession = null;
   }
   onlineSessionId = null;
-  gameMode = 'local';
+  // gameMode n'est plus réinitialisé ici : le sélecteur visuel ("2 joueurs"
+  // / "Ordinateur" / "En ligne") reste affiché tel que l'utilisateur l'a
+  // choisi, donc la variable réelle doit rester cohérente avec lui. La
+  // remettre à 'local' systématiquement créait une partie à 2 joueurs
+  // silencieuse après une partie contre l'IA, sans que rien à l'écran ne
+  // le laisse deviner.
   els.gameScreen.classList.add('hidden');
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
@@ -662,6 +741,122 @@ async function syncOnlineStateIfNeeded() {
   } catch (err) {
     console.error('Échec de synchronisation multijoueur :', err);
   }
+}
+
+// ---------- Pouvoirs de pion ----------
+
+function wirePowers() {
+  els.activatePowerBtn?.addEventListener('click', handleActivatePowerClick);
+  els.cancelPowerTargetBtn?.addEventListener('click', () => {
+    els.powerTargetOverlay.classList.remove('show');
+    pendingPowerActivation = null;
+  });
+}
+
+function handleActivatePowerClick() {
+  const token = gameState.tokens.find(t => t.id === gameState.selectedTokenId);
+  if (!token || !canActivatePower(gameState, token)) return;
+
+  switch (token.power) {
+    case POWER_TYPES.TIR_PUISSANT:
+    case POWER_TYPES.SPRINT:
+      // Ces deux pouvoirs ont besoin d'une destination : on bascule en mode
+      // ciblage, le prochain clic plateau sera intercepté par
+      // handlePowerDestinationClick() plutôt que traité normalement.
+      pendingPowerActivation = { tokenId: token.id, power: token.power };
+      highlightPowerDestinations(token);
+      els.hintBar.textContent = `${POWER_LABELS[token.power]} : choisis une case.`;
+      break;
+
+    case POWER_TYPES.MUR: {
+      const before = gameState;
+      gameState = activateMur(gameState, token.id);
+      handlePostActionEffects(before);
+      break;
+    }
+
+    case POWER_TYPES.RELAIS: {
+      const before = gameState;
+      gameState = activateRelais(gameState, token.id);
+      // Pas de fin de tour ici : le joueur doit maintenant effectuer une
+      // vraie passe normalement, confirmRelaisAfterPass() prendra le relais
+      // au bon moment dans handlePostActionEffects.
+      render();
+      els.hintBar.textContent = 'Relais activé : pousse le ballon, tu pourras ensuite déplacer un second pion.';
+      break;
+    }
+
+    case POWER_TYPES.REPLI_ADVERSE:
+      openPowerTargetSelection(token);
+      break;
+  }
+}
+
+/**
+ * Affiche les cases atteignables par Tir Puissant ou Sprint comme des
+ * destinations spéciales (réutilise les classes CSS existantes des
+ * marqueurs de déplacement/passe pour rester visuellement cohérent).
+ */
+function highlightPowerDestinations(token) {
+  const dests = token.power === POWER_TYPES.TIR_PUISSANT
+    ? getPowerShotDestinations(gameState)
+    : getSprintDestinations(gameState, token);
+
+  document.querySelectorAll('.cell').forEach(cell => {
+    const r = parseInt(cell.dataset.row, 10);
+    const c = parseInt(cell.dataset.col, 10);
+    const isDest = dests.some(([dr, dc]) => dr === r && dc === c);
+    cell.classList.toggle('dest-power', isDest);
+  });
+}
+
+function handlePowerDestinationClick(row, col) {
+  const { tokenId, power } = pendingPowerActivation;
+  const before = gameState;
+
+  if (power === POWER_TYPES.TIR_PUISSANT) {
+    gameState = activateTirPuissant(gameState, tokenId, row, col, applyBallMovement);
+  } else if (power === POWER_TYPES.SPRINT) {
+    gameState = activateSprint(gameState, tokenId, row, col, moveSelectedToken);
+  }
+
+  document.querySelectorAll('.dest-power').forEach(cell => cell.classList.remove('dest-power'));
+  pendingPowerActivation = null;
+
+  if (gameState === before) {
+    // Coup invalide (case hors des destinations autorisées) : on reste en
+    // mode normal plutôt que de bloquer le joueur silencieusement.
+    render();
+    return;
+  }
+
+  handlePostActionEffects(before);
+}
+
+function openPowerTargetSelection(token) {
+  const targets = getValidRepliTargets(gameState, token.team);
+  els.powerTargetList.innerHTML = '';
+
+  if (targets.length === 0) {
+    els.powerTargetList.innerHTML = '<p class="profile-empty-note">Aucune cible valide.</p>';
+  } else {
+    targets.forEach(target => {
+      const opt = document.createElement('div');
+      opt.className = 'mercato-player-option';
+      opt.textContent = displayNameForToken(target.id, myResolvedLineup ? { [myTeam]: myResolvedLineup } : null)
+        || (target.isGK ? 'Gardien' : `Pion ${target.team}`);
+      opt.addEventListener('click', () => {
+        const before = gameState;
+        gameState = activateRepliAdverse(gameState, token.id, target.id);
+        els.powerTargetOverlay.classList.remove('show');
+        pendingPowerActivation = null;
+        handlePostActionEffects(before);
+      });
+      els.powerTargetList.appendChild(opt);
+    });
+  }
+
+  els.powerTargetOverlay.classList.add('show');
 }
 
 function wireGameControls() {
@@ -1981,6 +2176,7 @@ function init() {
   wireProfileScreen();
   wireCreatePlayer();
   wireMercato();
+  wirePowers();
   wireAccount();
   wireTutorial();
   registerServiceWorker();

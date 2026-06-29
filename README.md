@@ -49,6 +49,34 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 11. `0011_notification_consent.sql` — ajoute la finalité notifications au système de consentement
 12. `0012_custom_players.sql` — joueurs personnalisés (freemium : 1 gratuit, le reste payant)
 
+## Tester l'installation PWA
+
+Une fois le site déployé (Vercel sert déjà tout en HTTPS, condition
+obligatoire pour qu'une PWA s'installe) :
+
+**Sur Android (Chrome) :**
+1. Ouvre le site dans Chrome
+2. Un bandeau "Ajouter à l'écran d'accueil" devrait apparaître automatiquement,
+   ou via le menu ⋮ → "Installer l'application"
+3. L'icône Tactic Master apparaît sur l'écran d'accueil, s'ouvre en plein
+   écran sans barre de navigateur
+
+**Sur iOS (Safari, obligatoire — Chrome iOS ne supporte pas l'installation) :**
+1. Ouvre le site dans Safari
+2. Bouton de partage (carré avec flèche) → "Sur l'écran d'accueil"
+3. Confirme le nom → l'icône apparaît, s'ouvre en plein écran
+
+**Vérification rapide depuis un ordinateur (Chrome DevTools)** : ouvre le
+site, `F12` → onglet **Application** → **Manifest** : doit afficher le nom,
+les icônes, et "Service Workers" doit montrer le worker comme actif.
+
+**Limite connue** : c'est une PWA, pas une app native — pas de fiche App
+Store/Google Play. Si une vraie présence sur les stores devient nécessaire,
+Capacitor (https://capacitorjs.com) peut embarquer ce même code presque tel
+quel ; ça demande un compte développeur Apple (99$/an) et Google (25$ une
+fois), plus Xcode pour publier sur iOS — pas faisable depuis cet
+environnement, à prévoir comme chantier séparé si le besoin se confirme.
+
 ## Activer le multijoueur en ligne
 
 Le multijoueur nécessite en plus de l'auth/boutique déjà configurées :
@@ -137,6 +165,13 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **PWA (installable sur écran d'accueil iOS/Android)** : manifest
+  (`public/manifest.json`), service worker (`public/sw.js`, cache uniquement
+  les fichiers statiques — jamais les appels Supabase, qui restent toujours
+  frais), icônes générées (`public/icons/`). Vérifié : le service worker
+  s'enregistre sans erreur, le jeu fonctionne normalement sur un profil
+  d'appareil iPhone simulé (Playwright). **Pas testé sur un vrai téléphone**
+  — voir la section "Tester l'installation PWA" ci-dessous.
 - 🆕 **Glisser-déposer pour la composition d'équipe** : API HTML5 Drag and
   Drop native, zones de dépôt en surbrillance, possibilité de retirer un
   joueur d'un poste (✕) ou de glisser un nouveau joueur pour remplacer

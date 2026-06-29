@@ -1713,6 +1713,21 @@ function init() {
   wireCreatePlayer();
   wireAccount();
   wireTutorial();
+  registerServiceWorker();
+}
+
+/**
+ * Enregistre le service worker pour permettre l'installation PWA et un
+ * fonctionnement minimal hors-ligne (écran d'accueil, jeu local/IA).
+ * Échoue silencieusement si le navigateur ne supporte pas les service
+ * workers, ou si le fichier est inaccessible — ne doit jamais bloquer le
+ * chargement normal du jeu.
+ */
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('./sw.js').catch(err => {
+    console.error('Service worker non enregistré :', err);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

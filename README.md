@@ -212,6 +212,14 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Début du découpage de main.js (dette technique, Phase 4 du plan)** :
+  extraction de la boutique de thèmes vers `src/ui/shopUI.js` (catalogue,
+  bundle Mondial, achats individuels), -204 lignes sur `main.js`
+  (2398 → 2195). Le module reçoit ses dépendances transverses (compte,
+  navigation d'écran) via un objet `deps` explicite plutôt que d'accéder à
+  des variables globales — pattern à reproduire pour les prochaines
+  extractions (profil, mercato, pouvoirs). Vérifié sans régression
+  (navigation, achat, retour d'écran) ; 89/89 tests toujours au vert.
 - 🐛 **Bug corrigé : le bouton "Tout débloquer" (pack Mondial) ne faisait
   rien avec Stripe actif.** Le handler ne gérait que le cas mock
   (`result.immediate`), jamais `result.redirectUrl` retourné par Stripe —

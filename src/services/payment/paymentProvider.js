@@ -6,9 +6,9 @@
 // (voir PaymentProvider.contract.js).
 
 import * as mockProvider from './mockPaymentProvider.js';
-import * as stripeProvider from './stripePaymentProvider.js'; // décommenter quand Stripe est prêt
+// import * as stripeProvider from './stripePaymentProvider.js'; // décommenter quand Stripe est prêt
 
-const activeProvider = stripeProvider; // <- remplacer par stripeProvider en production
+const activeProvider = mockProvider; // <- remplacer par stripeProvider en production
 
 export const isMockPaymentActive = activeProvider.isMock;
 export const checkoutTheme = activeProvider.checkoutTheme;

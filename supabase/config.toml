@@ -9,5 +9,8 @@
 # create-checkout-session garde la vérification JWT par défaut (true,
 # implicite) : elle doit être appelée par un utilisateur authentifié.
 
+[functions.create-checkout-session]
+verify_jwt = false
+
 [functions.stripe-webhook]
 verify_jwt = false

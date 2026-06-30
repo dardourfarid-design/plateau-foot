@@ -56,6 +56,17 @@ export async function signInWithEmail(email, password) {
   return requireClient().auth.signInWithPassword({ email, password });
 }
 
+/**
+ * Envoie un email contenant un lien de réinitialisation de mot de passe.
+ * Le lien renvoie vers reset-password.html (voir public/), où l'utilisateur
+ * saisit son nouveau mot de passe — Supabase gère la validité/expiration
+ * du jeton inclus dans le lien, ce module ne fait que déclencher l'envoi.
+ */
+export async function sendPasswordResetEmail(email) {
+  const redirectTo = `${window.location.origin}/reset-password.html`;
+  return requireClient().auth.resetPasswordForEmail(email, { redirectTo });
+}
+
 export async function signOut() {
   return requireClient().auth.signOut();
 }

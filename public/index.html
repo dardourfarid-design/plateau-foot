@@ -530,7 +530,17 @@
       </div>
 
       <button class="btn primary account-submit" id="authSubmitBtn">Se connecter</button>
+      <button class="topbar-link account-switch" id="forgotPasswordBtn">Mot de passe oublié ?</button>
       <button class="topbar-link account-switch" id="authSwitchBtn">Pas encore de compte ? Créer un compte</button>
+    </div>
+
+    <div id="forgotPasswordView" class="hidden">
+      <div class="overlay-title account-title">Mot de passe oublié</div>
+      <p class="overlay-sub account-sub" id="forgotPasswordError"></p>
+      <p class="account-required-note">Indique ton email, on t'envoie un lien pour choisir un nouveau mot de passe.</p>
+      <input class="auth-input" type="email" id="forgotPasswordEmail" placeholder="Email">
+      <button class="btn primary account-submit" id="sendResetLinkBtn">Envoyer le lien</button>
+      <button class="topbar-link account-switch" id="backToLoginBtn">Retour à la connexion</button>
     </div>
     <div id="accountLoggedInView" class="hidden">
       <div class="overlay-title account-title">Mon compte</div>

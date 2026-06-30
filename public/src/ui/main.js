@@ -18,7 +18,7 @@ import {
 } from '../engine/powers.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
-import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail } from '../services/supabaseClient.js';
+import { fetchActiveThemes, fetchMyPurchases, getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail, sendPasswordResetEmail } from '../services/supabaseClient.js';
 import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
@@ -220,6 +220,12 @@ function cacheDomRefs() {
   els.authPassword = document.getElementById('authPassword');
   els.authSubmitBtn = document.getElementById('authSubmitBtn');
   els.authSwitchBtn = document.getElementById('authSwitchBtn');
+  els.forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+  els.forgotPasswordView = document.getElementById('forgotPasswordView');
+  els.forgotPasswordError = document.getElementById('forgotPasswordError');
+  els.forgotPasswordEmail = document.getElementById('forgotPasswordEmail');
+  els.sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
+  els.backToLoginBtn = document.getElementById('backToLoginBtn');
   els.accountEmailDisplay = document.getElementById('accountEmailDisplay');
   els.signOutBtn = document.getElementById('signOutBtn');
   els.consentBlock = document.getElementById('consentBlock');
@@ -983,6 +989,8 @@ async function handleBundlePurchase(themeIds) {
     if (result.immediate) {
       const usedFallback = await refreshThemeData();
       renderShop(usedFallback);
+    } else if (result.redirectUrl) {
+      window.location.href = result.redirectUrl;
     }
   } catch (err) {
     alert(err.message || 'Achat groupé impossible pour le moment.');
@@ -1139,6 +1147,7 @@ function renderAccountOverlayContent() {
   } else {
     els.accountLoggedInView.classList.add('hidden');
     els.accountLoggedOutView.classList.remove('hidden');
+    els.forgotPasswordView.classList.add('hidden'); // toujours repartir sur le formulaire de connexion, pas la récupération
     els.authTitle.textContent = authMode === 'signin' ? 'Connexion' : 'Créer un compte';
     els.authSubmitBtn.textContent = authMode === 'signin' ? 'Se connecter' : 'Créer mon compte';
     els.authSwitchBtn.textContent = authMode === 'signin'
@@ -1224,6 +1233,39 @@ function wireAccount() {
   });
 
   els.authSubmitBtn?.addEventListener('click', handleAuthSubmit);
+
+  els.forgotPasswordBtn?.addEventListener('click', () => {
+    els.accountLoggedOutView.classList.add('hidden');
+    els.forgotPasswordView.classList.remove('hidden');
+    els.forgotPasswordError.textContent = '';
+    els.forgotPasswordEmail.value = els.authEmail.value || '';
+  });
+
+  els.backToLoginBtn?.addEventListener('click', () => {
+    els.forgotPasswordView.classList.add('hidden');
+    els.accountLoggedOutView.classList.remove('hidden');
+  });
+
+  els.sendResetLinkBtn?.addEventListener('click', async () => {
+    const email = els.forgotPasswordEmail.value.trim();
+    els.forgotPasswordError.textContent = '';
+    if (!email) {
+      els.forgotPasswordError.textContent = 'Indique ton email.';
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(email);
+      // Message volontairement identique que l'email existe ou non dans la
+      // base : ne jamais révéler si une adresse précise a un compte ou
+      // pas, pour éviter qu'un tiers puisse vérifier l'existence de
+      // comptes par essais successifs (énumération d'utilisateurs).
+      els.forgotPasswordError.style.color = 'var(--craie-att)';
+      els.forgotPasswordError.textContent = 'Si un compte existe avec cet email, un lien de réinitialisation vient d\'être envoyé.';
+    } catch (err) {
+      els.forgotPasswordError.style.color = 'var(--rouge-equipe-clair)';
+      els.forgotPasswordError.textContent = err.message || 'Envoi impossible pour le moment.';
+    }
+  });
 
   els.authPassword?.addEventListener('keydown', e => {
     if (e.key === 'Enter') handleAuthSubmit();

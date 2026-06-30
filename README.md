@@ -57,6 +57,17 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 19. `0019_stripe_foundations.sql` — fonctions serveur pour le webhook Stripe (achat en attente puis confirmation signée)
 20. `0020_fix_pending_purchase_session_update.sql` — correctif : mise à jour du session_id Stripe qui échouait silencieusement sous RLS
 
+## Activer la réinitialisation de mot de passe
+
+Une seule étape de configuration côté Supabase, sinon le lien envoyé par
+email redirigera vers une URL refusée par sécurité :
+
+1. Dashboard Supabase → **Authentication** → **URL Configuration**
+2. Dans **Redirect URLs**, ajoute `https://tactic-master.vercel.app/reset-password.html`
+3. Sauvegarde
+
+Sans cette étape, `resetPasswordForEmail` fonctionne toujours (l'email part), mais Supabase refusera de rediriger vers la page une fois le lien cliqué.
+
 ## Activer Stripe (mode Test permanent, jamais Live)
 
 Décision produit explicite : ce projet reste gratuit. Stripe tourne
@@ -200,6 +211,19 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
    ligne est apparue avec ton user_id et le bon theme_id
 
 ## Statut actuel
+
+- 🐛 **Bug corrigé : le bouton "Tout débloquer" (pack Mondial) ne faisait
+  rien avec Stripe actif.** Le handler ne gérait que le cas mock
+  (`result.immediate`), jamais `result.redirectUrl` retourné par Stripe —
+  contrairement aux achats individuels (thème, joueur, slot) qui géraient
+  déjà ce cas. Corrigé par symétrie avec les autres points d'achat.
+- 🆕 **"Mot de passe oublié ?" à la connexion.** Nouveau lien sous le
+  formulaire de connexion, ouvre un mini-formulaire pour saisir l'email,
+  envoie un lien de réinitialisation via Supabase Auth. Nouvelle page
+  `public/reset-password.html` (destination du lien dans l'email) où
+  l'utilisateur choisit son nouveau mot de passe. Message volontairement
+  identique que l'email existe ou non en base, pour éviter toute
+  énumération de comptes existants.
 
 - 🐛 **Bug corrigé : le paiement réussissait mais rien ne se débloquait.**
   `create-checkout-session` mettait à jour `stripe_session_id` via un

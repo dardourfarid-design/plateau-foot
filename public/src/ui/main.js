@@ -37,9 +37,20 @@ import {
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
 
+// Thèmes retirés du catalogue (désactivés en base ou supprimés du catalogue
+// de secours hors-ligne) mais qui peuvent rester mémorisés dans le
+// localStorage d'un joueur qui les avait sélectionnés avant leur retrait.
+// Sans ce garde-fou, ce joueur continuerait à voir l'ancien thème appliqué
+// indéfiniment au chargement, même si la boutique ne le propose plus —
+// c'est exactement ce qui s'est produit avec "neige" (vert-terrain
+// quasi-blanc, confondu avec un plateau vide/bug d'affichage).
+const RETIRED_THEME_IDS = ['neige'];
+
 function loadSavedThemeId() {
   try {
-    return window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY) || DEFAULT_THEME_ID;
+    const savedId = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
+    if (!savedId || RETIRED_THEME_IDS.includes(savedId)) return DEFAULT_THEME_ID;
+    return savedId;
   } catch (err) {
     return DEFAULT_THEME_ID;
   }
@@ -47,6 +58,8 @@ function loadSavedThemeId() {
 
 function loadSavedThemeConfig() {
   try {
+    const savedId = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
+    if (savedId && RETIRED_THEME_IDS.includes(savedId)) return null; // retombe sur le défaut CSS
     const raw = window.localStorage.getItem(ACTIVE_THEME_CONFIG_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (err) {

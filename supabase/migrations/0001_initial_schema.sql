@@ -100,8 +100,6 @@ insert into public.themes (id, name, description, price_cents, sort_order, confi
     '{"vertTerrain":"#1F3D2B","vertTerrainClair":"#28492F","bleuEquipe":"#3A6EA5","rougeEquipe":"#C84B31","accent":"#C97B4A"}'::jsonb),
   ('neon', 'Néon', 'Un terrain électrique pour les soirées arcade.', 199, 1,
     '{"vertTerrain":"#0D1B2A","vertTerrainClair":"#15263B","bleuEquipe":"#00E5FF","rougeEquipe":"#FF2D75","accent":"#FFD600"}'::jsonb),
-  ('neige', 'Neige', 'Le grand froid s’abat sur le terrain.', 199, 2,
-    '{"vertTerrain":"#E8EEF3","vertTerrainClair":"#F4F8FB","bleuEquipe":"#2C5C8A","rougeEquipe":"#A23B3B","accent":"#6FA8D6"}'::jsonb),
   ('terre-battue', 'Terre battue', 'Ambiance Roland-Garros, mais au foot.', 199, 3,
     '{"vertTerrain":"#A8542E","vertTerrainClair":"#BD663C","bleuEquipe":"#2B4C7E","rougeEquipe":"#7E2B2B","accent":"#F2C572"}'::jsonb)
 on conflict (id) do nothing;

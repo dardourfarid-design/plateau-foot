@@ -1,13 +1,27 @@
 # ===================== CONFIGURATION SUPABASE =====================
-# La fonction stripe-webhook reçoit des requêtes directement depuis les
-# serveurs Stripe, qui ne peuvent fournir aucun JWT Supabase — sa sécurité
-# repose entièrement sur la vérification de signature Stripe (voir le code
-# de la fonction), pas sur l'authentification Supabase standard. Sans ce
-# réglage, Supabase rejetterait systématiquement les requêtes de Stripe
-# avant même qu'elles n'atteignent le code de la fonction.
+# Les deux fonctions ci-dessous désactivent la vérification JWT automatique
+# du gateway Edge Functions, et vérifient elles-mêmes l'authentification
+# dans leur propre code (voir auth.getUser() dans chaque index.ts).
 #
-# create-checkout-session garde la vérification JWT par défaut (true,
-# implicite) : elle doit être appelée par un utilisateur authentifié.
+# Pourquoi pour stripe-webhook : Stripe ne peut fournir aucun JWT Supabase
+# — sa sécurité repose entièrement sur la vérification de signature Stripe.
+#
+# Pourquoi pour create-checkout-session : le gateway Edge Functions a
+# parfois rejeté en pratique des JWT par ailleurs valides (réponse 401 sans
+# qu'aucun log n'apparaisse côté fonction — le rejet se produit avant même
+# que le code ne s'exécute). Plutôt que de dépendre de cette vérification
+# automatique, on la désactive ici et on vérifie l'utilisateur manuellement
+# dans le code via supabase.auth.getUser() avec le JWT transmis dans le
+# header Authorization — même garantie de sécurité, mais sous notre
+# contrôle plutôt que celui (parfois capricieux) du gateway.
+#
+# ⚠️ Si ce fichier ne semble pas pris en compte après déploiement (déjà
+# documenté comme limite connue de Supabase, notamment via déploiement
+# dashboard plutôt que CLI), désactiver aussi manuellement "Verify JWT"
+# dans Dashboard → Edge Functions → <nom de la fonction> → Settings.
+
+[functions.create-checkout-session]
+verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false

@@ -47,6 +47,37 @@ body{
 .hidden{display:none !important;}
 .screen-col{display:flex; flex-direction:column; align-items:center; width:100%;}
 
+/* ---------- TOAST DE CONFIRMATION D'ACHAT ---------- */
+
+.purchase-toast{
+  position:fixed;
+  top:18px;
+  left:50%;
+  transform: translateX(-50%) translateY(-12px);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 22px;
+  border-radius:10px;
+  background: var(--nuit-clair);
+  border: 1px solid rgba(46,158,79,0.4);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  font-family:'Space Grotesk', sans-serif;
+  font-size:14px;
+  color: var(--craie);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.purchase-toast.show{
+  opacity:1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events:auto;
+}
+.purchase-toast.cancelled{ border-color: rgba(245,242,232,0.2); }
+.purchase-toast #purchaseToastIcon{ font-size:18px; }
+
 /* ---------- TOPBAR ---------- */
 
 .topbar{

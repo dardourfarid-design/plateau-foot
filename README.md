@@ -55,6 +55,7 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 17. `0017_player_acquisition.sql` — récompenses de palier de niveau et boutique de joueurs mercato
 18. `0018_fix_purchase_player_architecture.sql` — correctif Phase 0 (audit) : l'achat de joueurs mercato suit désormais le même chemin générique que les thèmes, prêt pour le branchement Stripe
 19. `0019_stripe_foundations.sql` — fonctions serveur pour le webhook Stripe (achat en attente puis confirmation signée)
+20. `0020_fix_pending_purchase_session_update.sql` — correctif : mise à jour du session_id Stripe qui échouait silencieusement sous RLS
 
 ## Activer Stripe (mode Test permanent, jamais Live)
 
@@ -200,6 +201,17 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🐛 **Bug corrigé : le paiement réussissait mais rien ne se débloquait.**
+  `create-checkout-session` mettait à jour `stripe_session_id` via un
+  update direct avec la clé anon — mais `purchases` n'a qu'une policy RLS
+  en lecture, donc cet update échouait silencieusement (0 ligne affectée,
+  aucune erreur visible). Résultat : le webhook recevait bien la
+  confirmation Stripe (200 OK, paiement réussi) mais ne retrouvait jamais
+  la ligne `pending` correspondante, donc ne débloquait jamais l'achat —
+  sans qu'aucune erreur n'apparaisse nulle part pour le révéler. Corrigé
+  via une fonction RPC dédiée (`update_pending_purchase_session_id`,
+  migration `0020`). **Nécessite de redéployer `create-checkout-session`
+  et d'exécuter la migration `0020`.**
 - 🐛 **Bug corrigé : CORS bloquait tous les appels depuis le navigateur.**
   Les Edge Functions ne répondaient à aucune requête `OPTIONS` (préflight)
   et n'envoyaient aucun en-tête `Access-Control-Allow-*` — le navigateur

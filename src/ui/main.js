@@ -154,6 +154,9 @@ function cacheDomRefs() {
   els.endSub = document.getElementById('endSub');
   els.newGameBtn = document.getElementById('newGameBtn');
   els.shopBtn = document.getElementById('shopBtn');
+  els.purchaseToast = document.getElementById('purchaseToast');
+  els.purchaseToastIcon = document.getElementById('purchaseToastIcon');
+  els.purchaseToastText = document.getElementById('purchaseToastText');
   els.shopScreen = document.getElementById('shopScreen');
   els.profileBtn = document.getElementById('profileBtn');
   els.profileScreen = document.getElementById('profileScreen');
@@ -2292,6 +2295,48 @@ function init() {
   wireAccount();
   wireTutorial();
   registerServiceWorker();
+  handlePaymentReturn();
+}
+
+/**
+ * Vérifie si la page vient d'être chargée après un retour de Stripe
+ * Checkout (succès ou annulation), affiche un message adapté, puis
+ * nettoie l'URL pour que le message ne réapparaisse pas à un futur
+ * rechargement de la page par l'utilisateur.
+ */
+function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const checkoutResult = params.get('checkout');
+  if (!checkoutResult) return;
+
+  if (checkoutResult === 'success') {
+    showPurchaseToast('🎉', 'Achat confirmé ! Ton nouveau contenu est débloqué.', false);
+    // Ouvre directement la boutique avec les données fraîches, pour que
+    // l'utilisateur voie immédiatement son achat débloqué sans action
+    // supplémentaire de sa part.
+    els.shopBtn?.click();
+  } else if (checkoutResult === 'cancelled') {
+    showPurchaseToast('↩️', 'Achat annulé — aucun montant n\'a été débité.', true);
+  }
+
+  // Retire le paramètre de l'URL sans recharger la page, pour qu'un
+  // rafraîchissement ultérieur ne réaffiche pas le même message.
+  params.delete('checkout');
+  const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : '');
+  window.history.replaceState({}, '', cleanUrl);
+}
+
+function showPurchaseToast(icon, text, isCancelled) {
+  if (!els.purchaseToast) return;
+  els.purchaseToastIcon.textContent = icon;
+  els.purchaseToastText.textContent = text;
+  els.purchaseToast.classList.toggle('cancelled', isCancelled);
+  els.purchaseToast.classList.add('show');
+  els.purchaseToast.classList.remove('hidden');
+
+  setTimeout(() => {
+    els.purchaseToast.classList.remove('show');
+  }, 5000);
 }
 
 /**

@@ -87,10 +87,20 @@ Deno.serve(async (req) => {
       metadata: { theme_id: themeId }
     });
 
-    await supabase
-      .from('purchases')
-      .update({ stripe_session_id: session.id })
-      .eq('stripe_session_id', tempSessionId);
+    // Remplace l'id temporaire par le vrai id de session Stripe, pour que
+    // le webhook puisse retrouver cette ligne précise à la confirmation.
+    // Passe par une RPC dédiée (security definer) plutôt qu'un update
+    // direct : purchases n'a qu'une policy RLS en lecture, un update
+    // direct avec la clé anon échoue silencieusement (0 ligne affectée,
+    // aucune erreur) — déjà vécu en pratique, voir
+    // 0020_fix_pending_purchase_session_update.sql pour le détail.
+    const { error: updateError } = await supabase.rpc('update_pending_purchase_session_id', {
+      p_old_session_id: tempSessionId,
+      p_new_session_id: session.id
+    });
+    if (updateError) {
+      console.error('Mise à jour du session_id échouée :', updateError.message);
+    }
 
     return jsonResponse({ url: session.url });
   } catch (err) {

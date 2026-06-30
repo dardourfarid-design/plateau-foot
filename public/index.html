@@ -47,6 +47,12 @@
 
 <div class="app">
 
+  <!-- Toast de confirmation/annulation après retour de Stripe Checkout -->
+  <div class="purchase-toast hidden" id="purchaseToast">
+    <span id="purchaseToastIcon"></span>
+    <span id="purchaseToastText"></span>
+  </div>
+
   <!-- BARRE SUPÉRIEURE : compte + boutique, visible partout -->
   <div class="topbar">
     <button class="topbar-link" id="accountBtn">

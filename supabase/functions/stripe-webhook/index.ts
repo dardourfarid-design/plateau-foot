@@ -7,10 +7,8 @@
 // écrire dans purchases/player_ownership en contournant la RLS de façon
 // contrôlée — c'est le seul endroit du projet où cette clé doit exister.
 //
-// Configuration requise côté Supabase (config.toml) : cette fonction doit
-// avoir verify_jwt = false, puisque Stripe ne peut pas fournir de JWT
-// Supabase — la sécurité vient de la vérification de signature Stripe,
-// pas de l'authentification Supabase standard.
+// Pas de souci CORS ici en pratique (Stripe appelle ce endpoint depuis ses
+// propres serveurs, pas un navigateur).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.4.0?target=deno';

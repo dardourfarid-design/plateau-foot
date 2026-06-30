@@ -200,6 +200,14 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🐛 **Bug corrigé : CORS bloquait tous les appels depuis le navigateur.**
+  Les Edge Functions ne répondaient à aucune requête `OPTIONS` (préflight)
+  et n'envoyaient aucun en-tête `Access-Control-Allow-*` — le navigateur
+  bloquait donc la requête avant même qu'elle ne parte, symptôme observé :
+  "Failed to send a request to the Edge Function" + "CORS error" dans les
+  outils réseau. Corrigé dans les deux fonctions. **Si tu avais déjà
+  déployé une version précédente, il faut redéployer ces deux fonctions
+  avec le nouveau code.**
 - 🆕 **Stripe câblé en mode Test permanent** (décision produit : le site
   reste gratuit, aucune carte réelle n'est jamais débitée). Deux Edge
   Functions écrites (`create-checkout-session`, `stripe-webhook`),

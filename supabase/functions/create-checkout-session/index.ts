@@ -13,8 +13,14 @@
 // Types de produits acceptés (body JSON) :
 //   { kind: 'theme', themeId }
 //   { kind: 'bundle', themeIds: [...] }
-//   { kind: 'player', playerId }
-//   { kind: 'custom-slot' }
+//
+// CORS : le navigateur envoie d'abord une requête OPTIONS de préflight
+// avant la vraie requête POST, dès que l'appel se fait depuis une origine
+// différente de celle de la fonction (cas normal ici : le front est sur
+// Vercel, la fonction sur Supabase). Sans réponse correcte à cette
+// requête, le navigateur bloque la vraie requête avant même de l'envoyer
+// — exactement le comportement observé ("Failed to send a request" côté
+// app, "CORS error" dans les outils réseau du navigateur).
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.4.0?target=deno';
@@ -26,7 +32,19 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://tactic-master.vercel.app';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
+
 Deno.serve(async (req) => {
+  // Répond immédiatement à la requête de préflight, sans exécuter le
+  // reste de la logique — c'est tout ce que le navigateur attend ici.
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -42,8 +60,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { themeId, priceCents, productName } = await resolveProduct(supabase, body);
 
-    // Pose une ligne `purchases` en 'pending' AVANT la redirection Stripe,
-    // pour garder une trace même si l'utilisateur abandonne en route.
     const tempSessionId = `pending-${crypto.randomUUID()}`;
     const { error: pendingError } = await supabase.rpc('create_pending_purchase', {
       p_theme_id: themeId,
@@ -71,8 +87,6 @@ Deno.serve(async (req) => {
       metadata: { theme_id: themeId }
     });
 
-    // Remplace l'id temporaire par le vrai id de session Stripe, pour que
-    // le webhook puisse retrouver cette ligne précise à la confirmation.
     await supabase
       .from('purchases')
       .update({ stripe_session_id: session.id })
@@ -87,14 +101,12 @@ Deno.serve(async (req) => {
 
 /**
  * Détermine le theme_id factice et le prix réel en centimes pour le
- * produit demandé, en lisant toujours la base de vérité côté serveur
- * (jamais le prix envoyé par le client, qui n'est ici qu'un identifiant).
+ * produit demandé, en lisant toujours la base de vérité côté serveur.
  *
  * Note : il n'y a pas de mode 'player' séparé ici — l'achat d'un joueur
  * passe par prepare_player_purchase() (0018) côté client AVANT d'appeler
  * cette fonction, qui crée déjà la ligne `themes` factice correspondante
- * (id 'player-<uuid>'). Cette fonction la traite alors simplement comme
- * un thème normal (mode 'theme'), sans dupliquer cette logique de calcul.
+ * (id 'player-<uuid>'), traitée ici simplement comme un thème normal.
  */
 async function resolveProduct(supabase, body) {
   if (body.kind === 'theme') {
@@ -117,6 +129,6 @@ async function resolveProduct(supabase, body) {
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
 }

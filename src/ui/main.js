@@ -27,7 +27,7 @@ import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from './playerAvatar.js';
-import { fetchMyCustomPlayers, createCustomPlayer, deleteCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID } from '../services/customPlayerService.js';
+import { fetchMyCustomPlayers, createCustomPlayer, deleteCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
 import {
   sendFriendRequest, respondFriendRequest, fetchMyFriendships,
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
@@ -171,6 +171,7 @@ function cacheDomRefs() {
   els.challengesList = document.getElementById('challengesList');
   els.lineupSlots = document.getElementById('lineupSlots');
   els.collectionGrid = document.getElementById('collectionGrid');
+  els.powerShopGrid = document.getElementById('powerShopGrid');
   els.saveLineupBtn = document.getElementById('saveLineupBtn');
   els.openCreatePlayerBtn = document.getElementById('openCreatePlayerBtn');
   els.createPlayerOverlay = document.getElementById('createPlayerOverlay');
@@ -188,6 +189,8 @@ function cacheDomRefs() {
   els.friendPseudoInput = document.getElementById('friendPseudoInput');
   els.sendFriendRequestBtn = document.getElementById('sendFriendRequestBtn');
   els.friendRequestError = document.getElementById('friendRequestError');
+  els.shareProfileBtn = document.getElementById('shareProfileBtn');
+  els.shareProfileFeedback = document.getElementById('shareProfileFeedback');
   els.pendingFriendRequests = document.getElementById('pendingFriendRequests');
   els.friendsList = document.getElementById('friendsList');
   els.mercatoOffersReceived = document.getElementById('mercatoOffersReceived');
@@ -1516,6 +1519,12 @@ async function loadTeamPanel() {
   els.lineupSlots.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
   els.collectionGrid.innerHTML = '';
   try {
+    const newRewards = await claimLevelRewards();
+    if (newRewards && newRewards.length > 0) {
+      const names = newRewards.map(r => r.player_name).join(', ');
+      alert(`Nouvelle récompense de niveau débloquée : ${names} ! Il/elle est maintenant dans ta collection.`);
+    }
+
     const [collection, lineup, customPlayers] = await Promise.all([
       fetchMyCollection(), fetchMyLineup(), fetchMyCustomPlayers()
     ]);
@@ -1525,6 +1534,7 @@ async function loadTeamPanel() {
     renderLineupSlots();
     renderCollectionGrid();
     renderCreatePlayerSection();
+    renderPowerShop(collection);
   } catch (err) {
     els.lineupSlots.innerHTML = '<p class="profile-empty-note">Équipe indisponible pour le moment.</p>';
   }
@@ -1694,6 +1704,77 @@ function renderCollectionGrid() {
 
     els.collectionGrid.appendChild(card);
   });
+}
+
+/**
+ * Affiche la boutique des joueurs rares/légendaires achetables directement
+ * (en plus de la voie gratuite par palier de niveau). N'affiche que ceux
+ * que le compte ne possède pas encore — pas d'intérêt à acheter un
+ * doublon.
+ */
+async function renderPowerShop(myCollection) {
+  els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
+  try {
+    const catalog = await fetchPlayerCatalog();
+    const ownedPlayerIds = new Set(myCollection.map(o => o.player_id));
+    const purchasable = catalog.filter(p => p.power && !ownedPlayerIds.has(p.id));
+
+    els.powerShopGrid.innerHTML = '';
+    if (purchasable.length === 0) {
+      els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Tu possèdes déjà tous les joueurs à pouvoir disponibles.</p>';
+      return;
+    }
+
+    purchasable.forEach(player => {
+      const price = player.rarity === 'rare' ? '2,99 €' : '4,99 €';
+      const card = document.createElement('div');
+      card.className = `player-card rarity-${player.rarity}`;
+
+      const avatarEl = document.createElement('div');
+      avatarEl.className = 'player-card-avatar';
+      avatarEl.innerHTML = renderAvatarSvg(hashSeedToAvatar(player.avatar_seed));
+      card.appendChild(avatarEl);
+
+      const name = document.createElement('div');
+      name.className = 'player-card-name';
+      name.textContent = player.name;
+
+      const power = document.createElement('div');
+      power.className = 'player-card-style';
+      power.textContent = POWER_LABELS[player.power];
+
+      const buyBtn = document.createElement('button');
+      buyBtn.className = 'btn-small primary';
+      buyBtn.style.marginTop = '8px';
+      buyBtn.textContent = `Acheter — ${price}`;
+      buyBtn.addEventListener('click', async () => {
+        if (!currentUser) {
+          authMode = 'signin';
+          renderAccountOverlayContent();
+          els.accountOverlay.classList.add('show');
+          return;
+        }
+        try {
+          const result = await purchasePlayer(player.id, currentUser, checkoutTheme);
+          if (result.redirectUrl) {
+            window.location.href = result.redirectUrl;
+            return;
+          }
+          alert(`${player.name} a été ajouté à ta collection !`);
+          await loadTeamPanel();
+        } catch (err) {
+          alert(err.message || 'Achat impossible pour le moment.');
+        }
+      });
+
+      card.appendChild(name);
+      card.appendChild(power);
+      card.appendChild(buyBtn);
+      els.powerShopGrid.appendChild(card);
+    });
+  } catch (err) {
+    els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Boutique indisponible pour le moment.</p>';
+  }
 }
 
 /**
@@ -1895,6 +1976,7 @@ function wireMercato() {
   els.friendPseudoInput?.addEventListener('keydown', e => {
     if (e.key === 'Enter') handleSendFriendRequest();
   });
+  els.shareProfileBtn?.addEventListener('click', handleShareProfile);
   els.closeMercatoOfferBtn?.addEventListener('click', () => {
     els.mercatoOfferOverlay.classList.remove('show');
   });
@@ -1985,6 +2067,36 @@ async function handleSendFriendRequest() {
     await renderFriendshipsSection();
   } catch (err) {
     els.friendRequestError.textContent = err.message || 'Demande impossible pour le moment.';
+  }
+}
+
+/**
+ * Copie un lien vers le site dans le presse-papier, pour que l'utilisateur
+ * puisse facilement inviter quelqu'un à le rejoindre — le système d'amis
+ * existant (par pseudo exact) crée déjà une vraie raison de partager, mais
+ * n'offrait jusqu'ici aucun moyen simple de le faire hors de l'app.
+ */
+async function handleShareProfile() {
+  const shareUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+  const shareText = `Viens jouer à Tactic Master avec moi : ${shareUrl}`;
+
+  try {
+    if (navigator.share) {
+      // API de partage native (mobile principalement) : laisse le système
+      // proposer les apps disponibles (Messages, WhatsApp, etc.) plutôt
+      // que de se limiter au presse-papier.
+      await navigator.share({ title: 'Tactic Master', text: shareText, url: shareUrl });
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      els.shareProfileFeedback.textContent = 'Lien copié ! Colle-le où tu veux pour inviter quelqu\'un.';
+    }
+  } catch (err) {
+    // L'utilisateur peut annuler le partage natif (pas une vraie erreur) ou
+    // le presse-papier peut être bloqué par le navigateur — dans les deux
+    // cas, on reste silencieux plutôt que d'afficher une fausse alerte.
+    if (err.name !== 'AbortError') {
+      els.shareProfileFeedback.textContent = 'Impossible de copier le lien automatiquement.';
+    }
   }
 }
 

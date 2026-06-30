@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tactic Master</title>
+<title>Tactic Master — Le foot se joue aussi assis</title>
+<meta name="description" content="Un plateau comme les dames, un ballon qui circule comme au foot. Joue en solo, contre l'ordinateur ou en ligne — aussi simple que les dames, parties de 5 minutes.">
+
+<!-- Partage social (Open Graph + Twitter Card). REMPLACER l'URL ci-dessous
+     par le vrai domaine de production avant la prochaine mise en ligne —
+     une URL absolue est obligatoire pour que les aperçus s'affichent
+     correctement sur WhatsApp/Discord/Twitter. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tactic Master — Le foot se joue aussi assis">
+<meta property="og:description" content="Un plateau comme les dames, un ballon qui circule comme au foot. Aussi simple à apprendre, jouable en 5 minutes.">
+<meta property="og:url" content="https://tactic-master.vercel.app/">
+<meta property="og:image" content="https://tactic-master.vercel.app/icons/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tactic Master — Le foot se joue aussi assis">
+<meta name="twitter:description" content="Un plateau comme les dames, un ballon qui circule comme au foot.">
+<meta name="twitter:image" content="https://tactic-master.vercel.app/icons/icon-512.png">
 
 <!-- PWA : installation sur écran d'accueil iOS/Android -->
 <link rel="manifest" href="manifest.json">
@@ -21,6 +36,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+
+<!-- Analytics (Plausible) : aucun cookie, pas de bannière de consentement
+     nécessaire. REMPLACER data-domain par le vrai domaine de production
+     une fois le compte Plausible créé — sans ça, le script charge mais ne
+     remonte aucune donnée utile tant que le domaine ne correspond pas. -->
+<script defer data-domain="tactic-master.vercel.app" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
 
@@ -315,6 +336,12 @@
         </div>
         <div class="collection-grid" id="collectionGrid"></div>
       </div>
+
+      <div class="collection-section">
+        <div class="sidebar-title">Joueurs à pouvoir (boutique)</div>
+        <p class="team-tab-intro">Joueurs rares et légendaires avec un pouvoir spécial — obtenables aussi gratuitement en progressant (niveau 5 et 10).</p>
+        <div class="collection-grid" id="powerShopGrid"></div>
+      </div>
     </div>
 
     <!-- OVERLAY CRÉATION DE JOUEUR PERSONNALISÉ -->
@@ -364,7 +391,6 @@
       </div>
     </div>
 
-    <!-- Onglet Classement -->
     <!-- Onglet Amis & Mercato -->
     <div class="profile-panel hidden" id="panelMercato">
       <div class="mercato-section">
@@ -374,6 +400,8 @@
           <button class="btn primary" id="sendFriendRequestBtn">Ajouter</button>
         </div>
         <p class="online-error" id="friendRequestError"></p>
+        <button class="btn" id="shareProfileBtn" style="margin-top:10px;">Copier mon lien d'invitation</button>
+        <p class="online-error" id="shareProfileFeedback" style="color:var(--craie-att);"></p>
       </div>
 
       <div class="mercato-section">

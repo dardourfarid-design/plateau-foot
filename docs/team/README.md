@@ -9,7 +9,10 @@ l'attendent.
 Ce ne sont pas des descriptions de poste génériques copiées d'ailleurs : elles
 sont écrites en fonction de l'état réel du projet au moment de leur rédaction
 (juin 2026) — moteur de jeu testé, déploiement Vercel, backend Supabase,
-paiement mocké, IA locale, pas encore de multijoueur.
+paiement mocké (Stripe en cours de câblage), IA locale, multijoueur en
+ligne, collection/mercato de joueurs fictifs avec pouvoirs de pion, PWA
+installable. Voir le README principal du projet pour le détail à jour de
+chaque sprint et la liste complète des migrations SQL.
 
 ## Rôles documentés
 
@@ -17,7 +20,7 @@ paiement mocké, IA locale, pas encore de multijoueur.
 |---|---|---|
 | Game Designer | [`game-designer.md`](./game-designer.md) | Moyenne — les règles sont stables, mais l'équilibrage IA et les futurs modes en ont besoin |
 | Développeur Frontend/Produit | [`developpeur-frontend.md`](./developpeur-frontend.md) | Haute — c'est le rôle qui a porté tout le projet jusqu'ici, premier renfort utile |
-| Développeur Backend/Infra | [`developpeur-backend.md`](./developpeur-backend.md) | Haute dès le chantier multijoueur — Realtime, sécurité, montée en charge |
+| Développeur Backend/Infra | [`developpeur-backend.md`](./developpeur-backend.md) | Haute — câblage Stripe en cours (Edge Functions, webhook signé), puis revalidation serveur des coups multijoueur |
 | Designer UI/UX | [`designer-ui-ux.md`](./designer-ui-ux.md) | Moyenne — l'identité visuelle existe, manque une vraie revue pro et des assets (icônes, illustrations) |
 | Growth / Marketing | [`growth-marketing.md`](./growth-marketing.md) | Basse pour l'instant, haute dès que le trafic doit dépasser le cercle proche |
 

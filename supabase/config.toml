@@ -1,0 +1,13 @@
+# ===================== CONFIGURATION SUPABASE =====================
+# La fonction stripe-webhook reçoit des requêtes directement depuis les
+# serveurs Stripe, qui ne peuvent fournir aucun JWT Supabase — sa sécurité
+# repose entièrement sur la vérification de signature Stripe (voir le code
+# de la fonction), pas sur l'authentification Supabase standard. Sans ce
+# réglage, Supabase rejetterait systématiquement les requêtes de Stripe
+# avant même qu'elles n'atteignent le code de la fonction.
+#
+# create-checkout-session garde la vérification JWT par défaut (true,
+# implicite) : elle doit être appelée par un utilisateur authentifié.
+
+[functions.stripe-webhook]
+verify_jwt = false

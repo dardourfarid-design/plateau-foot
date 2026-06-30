@@ -1,24 +1,26 @@
-// ===================== STRIPE PAYMENT PROVIDER (À COMPLÉTER) =====================
-// Implémentation réelle du contrat PaymentProvider via Stripe Checkout.
-// Respecte exactement la même signature que mockPaymentProvider.js : pour activer
-// Stripe en production, il suffit de changer l'import dans paymentProvider.js
-// (le fichier d'assemblage), rien d'autre dans l'app n'a besoin de changer.
+// ===================== STRIPE PAYMENT PROVIDER =====================
+// Implémentation réelle du contrat PaymentProvider via Stripe Checkout, en
+// MODE TEST PERMANENT par décision produit explicite : ce projet reste
+// gratuit, aucune carte réelle n'est jamais débitée. Les clés Stripe
+// utilisées côté serveur (Edge Functions) sont sk_test_/pk_test_.
+// Basculer vers Live plus tard ne demanderait qu'un changement de ces
+// clés (variables d'environnement Supabase), jamais une réécriture de ce
+// fichier ni du reste de l'app.
 //
-// PRÉREQUIS AVANT DE COMPLÉTER CE FICHIER :
-//   1. Compte Stripe créé, mode Test activé
-//   2. Clé publique Stripe (pk_test_...) ajoutée à la config front
-//   3. Une Supabase Edge Function `create-checkout-session` qui :
-//      - reçoit { themeId } depuis le front
-//      - vérifie le prix côté serveur (jamais confiance dans un prix client)
-//      - crée une session Stripe Checkout et renvoie son URL
-//   4. Une Supabase Edge Function `stripe-webhook` qui :
-//      - vérifie la signature Stripe (stripe.webhooks.constructEvent)
-//      - sur `checkout.session.completed`, insère la ligne dans `purchases`
-//        avec la service_role key (jamais avec la clé anonyme)
+// Respecte exactement la même signature que mockPaymentProvider.js : pour
+// activer ce provider, changer l'import dans paymentProvider.js (le
+// fichier d'assemblage) — rien d'autre dans l'app n'a besoin de changer.
 //
-// Ce découpage garantit qu'un client malveillant ne peut jamais s'auto-attribuer
-// un thème gratuitement : la vérité sur "qui a payé quoi" vient uniquement du
-// webhook signé par Stripe, jamais du navigateur.
+// Edge Functions associées (voir supabase/functions/) :
+//   - create-checkout-session : calcule le prix côté serveur, crée la
+//     session Stripe Checkout, pose une ligne `purchases` en 'pending'.
+//   - stripe-webhook : vérifie la signature Stripe, finalise l'achat
+//     (`purchases` -> 'completed', octroi du produit) via la
+//     service_role key — jamais le front, jamais la clé anonyme.
+//
+// Ce découpage garantit qu'un client malveillant ne peut jamais
+// s'auto-attribuer un produit gratuitement : la vérité sur "qui a payé
+// quoi" vient uniquement du webhook signé par Stripe.
 
 import { supabase } from '../supabaseClient.js';
 
@@ -30,7 +32,7 @@ export async function checkoutTheme(theme, user) {
   }
 
   const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-    body: { themeId: theme.id }
+    body: { kind: 'theme', themeId: theme.id }
   });
 
   if (error) {
@@ -52,7 +54,7 @@ export async function checkoutBundle(themeIds, bundlePriceCents, user) {
   }
 
   const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-    body: { themeIds, isBundle: true }
+    body: { kind: 'bundle', themeIds }
   });
 
   if (error) {

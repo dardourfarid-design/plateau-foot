@@ -23,7 +23,6 @@ const STATIC_ASSETS = [
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
   './src/engine/ai.js',
-  './src/engine/undoManager.js',
   './src/ui/main.js',
   './src/ui/boardRenderer.js',
   './src/ui/themeManager.js',

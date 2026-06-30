@@ -52,6 +52,37 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 14. `0014_friends_and_mercato_offers.sql` — système d'amis et offres de mercato avec consentement
 15. `0015_fix_friendships_query.sql` — correctif de fiabilité pour la lecture des amitiés
 16. `0016_pawn_powers.sql` — pouvoirs de pion sur les joueurs rares/légendaires
+17. `0017_player_acquisition.sql` — récompenses de palier de niveau et boutique de joueurs mercato
+18. `0018_fix_purchase_player_architecture.sql` — correctif Phase 0 (audit) : l'achat de joueurs mercato suit désormais le même chemin générique que les thèmes, prêt pour le branchement Stripe
+19. `0019_stripe_foundations.sql` — fonctions serveur pour le webhook Stripe (achat en attente puis confirmation signée)
+
+## Activer Stripe (mode Test permanent, jamais Live)
+
+Décision produit explicite : ce projet reste gratuit. Stripe tourne
+uniquement en mode Test (clés `sk_test_`/`pk_test_`) — aucune carte réelle
+n'est jamais débitée. L'architecture reste réversible vers Live plus tard
+(changement de clés uniquement, aucune réécriture de code), mais ce n'est
+pas l'objectif actuel.
+
+**Étapes côté toi (je ne peux pas les faire à ta place) :**
+
+1. Crée un compte sur [stripe.com](https://stripe.com), reste en **mode Test**
+   (bouton en haut du dashboard — ne jamais basculer sur "Activer le compte" / mode Live)
+2. Récupère la clé secrète de test : Dashboard → Developers → API keys → `Secret key` (commence par `sk_test_`)
+3. Dans ton projet Supabase → Edge Functions → Settings (ou via la CLI `supabase secrets set`), ajoute ces variables :
+   - `STRIPE_SECRET_KEY` = ta clé `sk_test_...`
+   - `FRONTEND_URL` = `https://tactic-master.vercel.app`
+   - `SUPABASE_SERVICE_ROLE_KEY` = trouvable dans Supabase → Project Settings → API → `service_role` (⚠️ ne JAMAIS mettre cette clé dans le code client, uniquement dans les secrets serveur)
+4. Déploie les deux fonctions (`supabase/functions/create-checkout-session` et `supabase/functions/stripe-webhook`) via la CLI Supabase (`supabase functions deploy create-checkout-session`, puis pareil pour `stripe-webhook`) ou directement depuis le dashboard Supabase (Edge Functions → New Function → coller le contenu de `index.ts`)
+5. Dans Stripe Dashboard → Developers → Webhooks → "Add endpoint" :
+   - URL : l'URL de ta fonction `stripe-webhook` déployée (donnée par Supabase après déploiement, ressemble à `https://<ton-projet>.supabase.co/functions/v1/stripe-webhook`)
+   - Événement à écouter : `checkout.session.completed`
+   - Une fois créé, copie le "Signing secret" (commence par `whsec_`) et ajoute-le comme variable `STRIPE_WEBHOOK_SECRET` dans les secrets Supabase (même endroit qu'à l'étape 3)
+6. Exécute la migration `0019_stripe_foundations.sql` (comme les précédentes, via le SQL Editor)
+7. Dans `src/services/payment/paymentProvider.js`, décommente l'import Stripe et remplace `mockProvider` par `stripeProvider` — c'est le seul changement de code nécessaire pour activer réellement Stripe
+8. Teste avec une [carte de test Stripe](https://docs.stripe.com/testing) (ex: `4242 4242 4242 4242`, n'importe quelle date future, n'importe quel CVC) — jamais une vraie carte, le compte étant en mode Test ça ne fonctionnerait de toute façon pas
+
+**Pour revenir au mock à tout moment** : remettre `mockProvider` dans `paymentProvider.js`, aucune autre étape nécessaire — les deux systèmes coexistent sans conflit.
 
 ## Tester l'installation PWA
 
@@ -169,6 +200,41 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
 ## Statut actuel
 
+- 🆕 **Stripe câblé en mode Test permanent** (décision produit : le site
+  reste gratuit, aucune carte réelle n'est jamais débitée). Deux Edge
+  Functions écrites (`create-checkout-session`, `stripe-webhook`),
+  généralisant les 4 mécanismes d'achat existants (thème, bundle, joueur
+  rare/légendaire, slot personnalisé) sous un seul webhook signé. Voir la
+  section "Activer Stripe" ci-dessus pour les étapes de configuration
+  (création de compte, secrets, déploiement) — actions qui nécessitent un
+  humain, pas encore faites ni testées en conditions réelles à ce stade.
+  Le provider actif reste le mock par défaut tant que l'étape 7 de la
+  section ci-dessus n'a pas été faite.
+
+- ✅ **Audit général réalisé (29 juin 2026)** — voir le document complet
+  livré séparément (technique/marketing/business + plan vers Stripe).
+  Phase 0 du plan déjà appliquée :
+  - Correctif d'une vraie faille de revenu : `purchase_player()` appelait
+    `mock_complete_purchase` en dur, ce qui aurait laissé les joueurs
+    rares/légendaires gratuits même après avoir branché Stripe sur les
+    thèmes. Désormais découpé en `prepare_player_purchase()` +
+    `grant_player_if_purchased()`, qui réutilisent le même chemin
+    générique (`paymentProvider.js`) que les thèmes — validé par une
+    simulation du flux complet.
+  - Suppression de `src/engine/undoManager.js` (code mort, jamais importé).
+  - Documentation d'équipe (`docs/team/`) resynchronisée avec l'état réel
+    du projet (multijoueur livré, Stripe en tête des priorités backend).
+  Prochaine étape du plan : créer les Edge Functions Stripe
+  (`create-checkout-session`, `stripe-webhook`).
+
+- 🐛 **Bug corrigé : impasse d'acquisition des joueurs à pouvoir.** Les
+  pouvoirs n'étaient attribués qu'aux rares/légendaires, mais aucune voie
+  n'existait pour en obtenir un premier (starter pack = communs uniquement,
+  mercato suppose d'en posséder déjà un). Deux voies ajoutées :
+  récompense automatique au niveau 5 (1 rare) et niveau 10 (1 légendaire,
+  réclamée à l'ouverture de "Mon équipe"), et achat direct en boutique
+  (2,99€ rare / 4,99€ légendaire, section "Joueurs à pouvoir" dans
+  l'onglet équipe).
 - 🆕 **Pouvoirs de pion (sprint dédié, mécanique terminée)** : 5 pouvoirs
   réservés aux joueurs rares/légendaires du mercato (jamais sur la
   formation de départ ni le starter pack gratuit), chacun activable une

@@ -1,19 +1,37 @@
 :root{
-  --vert-fond: #142B1E;
-  --vert-terrain: #1F3D2B;
-  --vert-terrain-clair: #28492F;
-  --ligne: #F5F2E8;
-  --nuit: #11202E;
-  --nuit-clair: #1B2838;
-  --terre: #C97B4A;
-  --terre-vif: #E08F4F;
-  --bleu-equipe: #3A6EA5;
-  --bleu-equipe-clair: #5C8FC4;
-  --rouge-equipe: #C84B31;
-  --rouge-equipe-clair: #DD6B4F;
-  --craie: #F5F2E8;
-  --craie-att: rgba(245,242,232,0.55);
-  --ombre: rgba(0,0,0,0.45);
+  /* Palette Snowfall x Football japonais — Sprint D1 */
+  --noir:          #0C0A07;
+  --noir-clair:    #181410;
+  --noir-moyen:    #231E18;
+  --ambre:         #C8841A;
+  --or:            #E8A030;
+  --or-pale:       #FFD87A;
+  --craie:         #F0E6D3;
+  --craie-att:     rgba(240,230,211,0.5);
+  --craie-dim:     rgba(240,230,211,0.25);
+  --ombre:         rgba(0,0,0,0.55);
+
+  /* Couleurs équipes */
+  --bleu-equipe:        #2A5FA5;
+  --bleu-equipe-clair:  #7AAEE8;
+  --rouge-equipe:       #C83222;
+  --rouge-equipe-clair: #E07060;
+
+  /* Accents thématiques */
+  --pouvoir:       #7A4FC8;
+  --pouvoir-clair: #9B6BFF;
+  --succes:        #1FA86B;
+
+  /* Terrain */
+  --vert-terrain:       #0A1208;
+  --vert-terrain-clair: #0F1C0D;
+  --ligne-terrain:      rgba(200,132,26,0.10);
+
+  /* Alias rétrocompatibilité (valeurs utilisées dans le JS via CSS) */
+  --nuit:       var(--noir);
+  --nuit-clair: var(--noir-clair);
+  --terre:      var(--ambre);
+  --terre-vif:  var(--or);
 }
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
@@ -30,9 +48,11 @@ html,body{
 /* Vignette de fond : évite le grand vide uni sur les larges écrans en ancrant
    doucement le regard vers le centre, sans détourner l'attention du plateau. */
 body{
-  background:
-    radial-gradient(circle at 50% 0%, rgba(40,73,47,0.16), transparent 60%),
-    var(--nuit);
+  background: var(--noir);
+  /* Grain pellicule : texture SVG très subtile, jamais visible directement
+     mais perçu inconsciemment — donne la profondeur des affiches Snowfall
+     vs un aplat numérique trop propre. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
 }
 
 .app{
@@ -59,7 +79,7 @@ body{
   align-items:center;
   gap:10px;
   padding:14px 22px;
-  border-radius:10px;
+  border-radius:6px;
   background: var(--nuit-clair);
   border: 1px solid rgba(46,158,79,0.4);
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
@@ -88,6 +108,7 @@ body{
   align-items:center;
   padding: 18px 2px;
   margin-bottom: 4px;
+  border-bottom: 1px solid rgba(200,132,26,0.18);
 }
 
 .topbar-link{
@@ -134,7 +155,7 @@ body{
 
 .sidebar-card{
   background: var(--nuit-clair);
-  border-radius:12px;
+  border-radius:6px;
   padding: 18px 20px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.04);
 }
@@ -174,7 +195,7 @@ body{
   grid-template-columns: 1fr auto 1fr;
   align-items:center;
   background: var(--nuit-clair);
-  border-radius:10px;
+  border-radius:6px;
   padding: 14px 18px;
   margin-bottom:18px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
@@ -202,13 +223,13 @@ body{
   align-items:center;
   gap:10px;
   font-family:'Barlow Condensed', sans-serif;
-  font-weight:800;
-  font-size:34px;
+  font-weight:900;
+  font-size:42px;
   letter-spacing:0.02em;
   padding: 0 10px;
 }
 .score-num{min-width:30px; text-align:center;}
-.score-sep{color:var(--craie-att); font-size:22px; font-weight:600;}
+.score-sep{color:var(--ambre); font-size:22px; font-weight:700; opacity:0.7;}
 
 .turn-banner{
   width:100%;
@@ -247,8 +268,8 @@ body{
       var(--vert-terrain) 11.11%,
       var(--vert-terrain) 22.22%
     );
-  border-radius:8px;
-  box-shadow: 0 14px 34px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(245,242,232,0.22);
+  border-radius:6px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(200,132,26,0.18);
   overflow:hidden;
 }
 
@@ -267,29 +288,30 @@ body{
   content:'';
   position:absolute;
   inset: 1px;
-  border: 1px dashed rgba(245,242,232,0.08);
+  border: 1px solid rgba(200,132,26,0.07);
 }
 
-.cell.goal-zone-bleu, .cell.goal-zone-rouge{ background: rgba(245,242,232,0.04); }
+.cell.goal-zone-bleu{ background: rgba(42,95,165,0.12); }
+.cell.goal-zone-rouge{ background: rgba(200,50,34,0.12); }
 
 .center-mark{
   position:absolute;
   top:50%; left:50%;
   width:64px; height:64px;
   margin-left:-32px; margin-top:-32px;
-  border: 2px solid rgba(245,242,232,0.22);
+  border: 1px solid rgba(200,132,26,0.28);
   border-radius:50%;
   pointer-events:none;
 }
 .center-line{
-  position:absolute; top:50%; left:0; right:0; height:2px;
-  background: rgba(245,242,232,0.22);
+  position:absolute; top:50%; left:0; right:0; height:1px;
+  background: rgba(200,132,26,0.22);
   pointer-events:none;
 }
 
 .goal-line-top, .goal-line-bottom{
-  position:absolute; left: 28.57%; right:28.57%; height:2px;
-  background: rgba(245,242,232,0.35);
+  position:absolute; left: 28.57%; right:28.57%; height:1px;
+  background: rgba(200,132,26,0.45);
   pointer-events:none;
 }
 .goal-line-top{top: 0;}
@@ -297,8 +319,8 @@ body{
 
 .goal-box-top, .goal-box-bottom{
   position:absolute; left: 28.57%; right:28.57%; height: 11.11%;
-  border-left:2px solid rgba(245,242,232,0.22);
-  border-right:2px solid rgba(245,242,232,0.22);
+  border-left:1px solid rgba(200,132,26,0.3);
+  border-right:1px solid rgba(200,132,26,0.3);
   pointer-events:none;
 }
 .goal-box-top{top:0; border-top:none;}
@@ -317,40 +339,55 @@ body{
 }
 
 .token.bleu{
-  background: linear-gradient(155deg, var(--bleu-equipe-clair), var(--bleu-equipe));
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25), 0 3px 6px var(--ombre);
+  background: radial-gradient(circle at 33% 28%, var(--bleu-equipe-clair) 0%, var(--bleu-equipe) 55%, #142E5A 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px var(--ombre);
 }
 .token.rouge{
-  background: linear-gradient(155deg, var(--rouge-equipe-clair), var(--rouge-equipe));
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25), 0 3px 6px var(--ombre);
+  background: radial-gradient(circle at 33% 28%, var(--rouge-equipe-clair) 0%, var(--rouge-equipe) 55%, #6A1510 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px var(--ombre);
 }
 
-.token.gardien{ outline: 3px solid var(--craie); outline-offset: -5px; }
+.token.gardien{ outline: 2px solid var(--or); outline-offset: -5px; }
 
 .token .gk-mark{
   font-family:'Barlow Condensed', sans-serif;
-  font-size: 11px;
-  font-weight:800;
+  font-size: 14px;
+  font-weight:900;
   color: rgba(255,255,255,0.95);
-  letter-spacing:0.05em;
+  letter-spacing:0.02em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+/* Numéro de maillot affiché sur le pion */
+.token .jersey-number{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:15px;
+  font-weight:900;
+  color: rgba(255,255,255,0.92);
+  letter-spacing:0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  line-height:1;
+  pointer-events:none;
+  z-index:4;
 }
 
 .token-name-label{
   position:absolute;
-  bottom: 18%;
+  bottom: 14%;
   left:50%;
   transform: translateX(-50%);
-  font-family:'Space Grotesk', sans-serif;
-  font-size:7px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
   font-weight:700;
   white-space:nowrap;
-  color: rgba(255,255,255,0.95);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
   pointer-events:none;
   z-index:6;
-  max-width: 80%;
+  max-width: 85%;
   overflow:hidden;
   text-overflow:ellipsis;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
 }
 
 @media (max-width: 480px){
@@ -359,22 +396,25 @@ body{
 
 .token-power-badge{
   position:absolute;
-  top:-3px;
-  right:-3px;
-  width:16px; height:16px;
+  top:-4px;
+  right:-4px;
+  width:18px; height:18px;
   border-radius:50%;
-  background: linear-gradient(135deg, #9B5DE5, #6A3FA0);
+  background: var(--pouvoir);
+  border: 1.5px solid var(--pouvoir-clair);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:9px;
   z-index:7;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  overflow:hidden;
 }
+.token-power-badge svg{ display:block; }
 .token-power-badge.used{
-  background: rgba(245,242,232,0.15);
+  background: rgba(240,230,211,0.1);
+  border-color: rgba(240,230,211,0.2);
   filter: grayscale(1);
-  opacity:0.6;
+  opacity:0.5;
 }
 
 .power-btn{
@@ -399,7 +439,7 @@ body{
 .ball{
   width:74%; height:74%;
   border-radius:50%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='35%25' cy='30%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='55%25' stop-color='%23f5f2e8'/%3E%3Cstop offset='100%25' stop-color='%23d6d0bd'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='98' fill='url(%23g)'/%3E%3Cg fill='%231a1208' stroke='%231a1208' stroke-width='1.2' stroke-linejoin='round'%3E%3Cpolygon points='100,68 122,84 113,110 87,110 78,84'/%3E%3Cpolygon points='100,30 116,40 111,58 89,58 84,40'/%3E%3Cpolygon points='55,55 68,62 64,80 45,82 38,64'/%3E%3Cpolygon points='145,55 162,64 155,82 136,80 132,62'/%3E%3Cpolygon points='45,118 62,116 68,134 54,148 38,138'/%3E%3Cpolygon points='155,118 162,138 146,148 132,134 138,116'/%3E%3Cpolygon points='100,170 84,160 89,142 111,142 116,160'/%3E%3C/g%3E%3Cg fill='none' stroke='%231a1208' stroke-width='1' opacity='0.45' stroke-linecap='round'%3E%3Cpath d='M100,68 Q98,50 100,30'/%3E%3Cpath d='M78,84 Q66,70 55,55'/%3E%3Cpath d='M122,84 Q134,70 145,55'/%3E%3Cpath d='M87,110 Q66,113 45,118'/%3E%3Cpath d='M113,110 Q134,113 155,118'/%3E%3Cpath d='M93,118 Q97,144 100,170'/%3E%3C/g%3E%3Ccircle cx='100' cy='100' r='98' fill='none' stroke='rgba(0,0,0,0.12)' stroke-width='2'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='32%25' cy='26%25' r='78%25'%3E%3Cstop offset='0%25' stop-color='%23FDFAF4'/%3E%3Cstop offset='45%25' stop-color='%23E8DFCA'/%3E%3Cstop offset='80%25' stop-color='%23C4B898'/%3E%3Cstop offset='100%25' stop-color='%23A09070'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='97' fill='url(%23g)'/%3E%3Cg fill='%231A1208' opacity='0.82'%3E%3Cpolygon points='100,62 124,79 115,107 85,107 76,79'/%3E%3Cpolygon points='100,22 118,35 112,56 88,56 82,35'/%3E%3Cpolygon points='50,50 65,56 60,77 40,80 31,59'/%3E%3Cpolygon points='150,50 169,59 160,80 140,77 135,56'/%3E%3Cpolygon points='38,115 58,111 65,132 50,148 32,136'/%3E%3Cpolygon points='162,115 168,136 150,148 135,132 142,111'/%3E%3Cpolygon points='100,178 82,166 88,144 112,144 118,166'/%3E%3C/g%3E%3Cg fill='none' stroke='%231A1208' stroke-width='1.2' opacity='0.35' stroke-linecap='round'%3E%3Cpath d='M100,62 Q99,44 100,22'/%3E%3Cpath d='M76,79 Q63,64 50,50'/%3E%3Cpath d='M124,79 Q137,64 150,50'/%3E%3Cpath d='M85,107 Q62,111 38,115'/%3E%3Cpath d='M115,107 Q138,111 162,115'/%3E%3Cpath d='M92,114 Q96,146 100,178'/%3E%3C/g%3E%3Ccircle cx='68' cy='52' r='8' fill='rgba(255,255,255,0.22)'/%3E%3Ccircle cx='100' cy='100' r='97' fill='none' stroke='rgba(0,0,0,0.1)' stroke-width='2'/%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
   position:relative;
@@ -467,7 +507,7 @@ body{
   background: var(--nuit-clair);
   color: var(--craie);
   border: 1px solid rgba(245,242,232,0.14);
-  border-radius:7px;
+  border-radius:4px;
   padding: 10px 18px;
   cursor:pointer;
   transition: background 0.15s ease, transform 0.1s ease;
@@ -476,8 +516,8 @@ body{
 .btn:active{ transform: scale(0.97); }
 .btn:focus-visible{ outline:2px solid var(--terre-vif); outline-offset:2px; }
 
-.btn.primary{ background: var(--terre); border-color: var(--terre); color: #1A1208; }
-.btn.primary:hover{ background: var(--terre-vif); }
+.btn.primary{ background: var(--ambre); border-color: var(--ambre); color: #0C0A07; font-weight:800; }
+.btn.primary:hover{ background: var(--or); border-color: var(--or); }
 
 /* ---------- OVERLAY BUT / FIN ---------- */
 
@@ -493,7 +533,7 @@ body{
 
 .overlay-card{
   background: var(--nuit-clair);
-  border-radius:14px;
+  border-radius:6px;
   padding: 36px 40px;
   text-align:center;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -544,12 +584,12 @@ body{
 
 .logo-title{
   font-family:'Barlow Condensed', sans-serif;
-  font-weight:800; font-size:52px;
-  letter-spacing:0.02em; text-transform:uppercase;
-  line-height:0.95;
-  margin-bottom:4px;
+  font-weight:900; font-size:60px;
+  letter-spacing:-0.01em; text-transform:uppercase;
+  line-height:0.92;
+  margin-bottom:2px;
 }
-.logo-title span{ color: var(--terre-vif); }
+.logo-title span{ color: var(--ambre); }
 
 .logo-sub{
   font-size:13px; color: var(--craie-att);
@@ -579,7 +619,7 @@ body{
 .setup-options{ display:flex; gap:8px; }
 .setup-option{
   flex:1; padding: 12px 8px;
-  border-radius:8px;
+  border-radius:4px;
   border: 1px solid rgba(245,242,232,0.14);
   background: var(--nuit-clair);
   color: var(--craie);
@@ -603,7 +643,7 @@ body{
       var(--vert-terrain-clair) 0%, var(--vert-terrain-clair) 16.6%,
       var(--vert-terrain) 16.6%, var(--vert-terrain) 33.3%
     );
-  border-radius:12px;
+  border-radius:6px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(245,242,232,0.18);
 }
 
@@ -636,7 +676,7 @@ body{
 
 .feature-card{
   background: var(--nuit-clair);
-  border-radius:12px;
+  border-radius:6px;
   padding:22px 20px;
   text-align:left;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
@@ -697,7 +737,7 @@ body{
   flex-wrap:wrap;
   background: linear-gradient(120deg, #1d1408, #2a1d0a);
   border: 1px solid rgba(244,211,94,0.3);
-  border-radius:10px;
+  border-radius:6px;
   padding: 14px 18px;
   margin-bottom:22px;
 }
@@ -754,7 +794,7 @@ body{
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 .profile-tab:hover{ color: var(--craie); }
-.profile-tab.active{ color: var(--terre-vif); border-color: var(--terre-vif); }
+.profile-tab.active{ color: var(--or); border-color: var(--ambre); }
 
 .profile-panel{ width:100%; }
 
@@ -767,7 +807,7 @@ body{
 
 .progress-stat{
   background: var(--nuit-clair);
-  border-radius:10px;
+  border-radius:6px;
   padding:16px 10px;
   text-align:center;
 }
@@ -775,9 +815,9 @@ body{
 .progress-stat-value{
   display:block;
   font-family:'Barlow Condensed', sans-serif;
-  font-weight:800;
+  font-weight:900;
   font-size:28px;
-  color: var(--terre-vif);
+  color: var(--or);
 }
 
 .progress-stat-label{
@@ -798,7 +838,7 @@ body{
 
 .challenge-card{
   background: var(--nuit-clair);
-  border-radius:10px;
+  border-radius:6px;
   padding:14px 16px;
   margin-bottom:10px;
   display:flex;
@@ -835,7 +875,7 @@ body{
 .lineup-slot{
   background: var(--nuit-clair);
   border: 1px dashed rgba(245,242,232,0.2);
-  border-radius:10px;
+  border-radius:6px;
   padding:12px;
   text-align:center;
   cursor:pointer;
@@ -890,7 +930,7 @@ body{
 
 .player-card{
   background: var(--nuit-clair);
-  border-radius:10px;
+  border-radius:6px;
   padding:12px;
   cursor:grab;
   border: 1px solid rgba(245,242,232,0.08);
@@ -916,7 +956,7 @@ body{
   margin-top:6px;
   display:inline-block;
   padding:2px 6px;
-  border-radius:8px;
+  border-radius:4px;
   background: rgba(245,242,232,0.08);
   color: var(--craie-att);
 }
@@ -993,7 +1033,7 @@ body{
 
 .friend-row, .offer-row{
   background: var(--nuit-clair);
-  border-radius:10px;
+  border-radius:6px;
   padding:12px 14px;
   margin-bottom:8px;
   display:flex;
@@ -1045,7 +1085,7 @@ body{
 .mercato-player-option{
   background: var(--nuit);
   border: 1px solid rgba(245,242,232,0.1);
-  border-radius:8px;
+  border-radius:4px;
   padding:8px 10px;
   font-size:12px;
   color: var(--craie);
@@ -1099,7 +1139,7 @@ body{
 
 .theme-card{
   background: var(--nuit-clair);
-  border-radius:12px;
+  border-radius:6px;
   padding:18px;
   display:flex; flex-direction:column; gap:10px;
   border: 1px solid rgba(245,242,232,0.08);
@@ -1133,7 +1173,7 @@ body{
 
 .theme-swatch{
   height:72px;
-  border-radius:8px;
+  border-radius:4px;
   display:flex; align-items:flex-end; gap:8px;
   padding:10px;
 }
@@ -1177,7 +1217,7 @@ body{
 .shop-offline-banner{
   background: rgba(200,75,49,0.12);
   border: 1px solid rgba(200,75,49,0.3);
-  border-radius:8px;
+  border-radius:4px;
   color: var(--craie);
 }
 
@@ -1277,7 +1317,7 @@ body{
   margin: 18px 0 14px;
   padding: 14px 28px;
   background: var(--nuit);
-  border-radius:10px;
+  border-radius:6px;
   border: 1px dashed rgba(224,143,79,0.4);
 }
 
@@ -1344,7 +1384,7 @@ body{
   max-width:300px;
   background: var(--nuit-clair);
   border: 1px solid rgba(244,211,94,0.4);
-  border-radius:12px;
+  border-radius:6px;
   padding:16px 18px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.5);
   left:50%;
@@ -1427,7 +1467,7 @@ body{
   width:100%;
   background: var(--nuit);
   border: 1px solid rgba(245,242,232,0.16);
-  border-radius:7px;
+  border-radius:4px;
   padding: 11px 12px;
   color: var(--craie);
   font-family:'Space Grotesk', sans-serif;
@@ -1445,7 +1485,7 @@ body{
 
 .consent-block{
   background: var(--nuit);
-  border-radius:8px;
+  border-radius:4px;
   padding: 12px 14px;
   margin-bottom:16px;
 }
@@ -1501,3 +1541,755 @@ body{
   padding:4px 0;
 }
 .account-danger{ color: var(--rouge-equipe-clair) !important; }
+
+/* ========== SPRINT D2 — SETUP SCREEN & TOPBAR ========== */
+
+/* --- Topbar redesign --- */
+.topbar-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.topbar-badge{ flex-shrink:0; border-radius:3px; }
+.topbar-account{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+}
+.topbar-shop-btn{
+  background: rgba(200,132,26,0.1);
+  border: 1px solid rgba(200,132,26,0.25);
+  color: var(--ambre);
+  padding: 6px 12px;
+  border-radius:3px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.topbar-shop-btn:hover{
+  background: rgba(200,132,26,0.18);
+  color: var(--or);
+}
+.topbar-link{ display:flex; align-items:center; gap:5px; }
+
+/* --- Hero : bandeau saison --- */
+.hero-season-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  margin-bottom:14px;
+}
+.hero-season-dot{
+  width:6px; height:6px;
+  border-radius:50%;
+  background: var(--ambre);
+  flex-shrink:0;
+}
+
+/* --- Logo : liseré ambre sous le mot MASTER --- */
+.logo-title{ position:relative; }
+.logo-title-underline{
+  width:64px;
+  height:2px;
+  background: var(--ambre);
+  margin:6px 0 16px;
+}
+@media(max-width:760px){ .logo-title-underline{ margin:4px auto 12px; } }
+
+/* --- Stats hero : bandeau 3 colonnes façon pub --- */
+.hero-stats-row{
+  display:flex;
+  align-items:center;
+  gap:0;
+  margin-bottom:24px;
+  border-top:1px solid rgba(200,132,26,0.2);
+  border-bottom:1px solid rgba(200,132,26,0.2);
+  padding: 10px 0;
+}
+.hero-stat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  text-align:center;
+}
+.hero-stat-value{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900;
+  font-size:22px;
+  color: var(--craie);
+  line-height:1;
+}
+.hero-stat-label{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+}
+.hero-stat-sep{
+  width:1px;
+  height:32px;
+  background: rgba(200,132,26,0.25);
+  flex-shrink:0;
+}
+
+/* --- CTA : icône intégrée --- */
+.cta-main{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+.config-start-btn{
+  width:100%;
+  padding:14px;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+/* --- Preview plateau : ornements coins japonais --- */
+.setup-preview{ position:relative; }
+.preview-corner{
+  position:absolute;
+  width:18px; height:18px;
+  pointer-events:none;
+  z-index:2;
+}
+.preview-corner-tl{
+  top:-6px; left:-6px;
+  border-top:2px solid var(--ambre);
+  border-left:2px solid var(--ambre);
+}
+.preview-corner-br{
+  bottom:-6px; right:-6px;
+  border-bottom:2px solid var(--ambre);
+  border-right:2px solid var(--ambre);
+}
+.preview-field-label{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color: rgba(200,132,26,0.5);
+  text-align:center;
+  margin-top:10px;
+}
+
+/* --- Pions de preview : numéro de maillot --- */
+.preview-token{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.preview-token.bleu{
+  background: radial-gradient(circle at 33% 28%, var(--bleu-equipe-clair) 0%, var(--bleu-equipe) 55%, #142E5A 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), 0 3px 8px rgba(0,0,0,0.5);
+}
+.preview-token.rouge{
+  background: radial-gradient(circle at 33% 28%, var(--rouge-equipe-clair) 0%, var(--rouge-equipe) 55%, #6A1510 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), 0 3px 8px rgba(0,0,0,0.5);
+}
+.preview-token::after{
+  content: attr(data-num);
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:12px;
+  font-weight:900;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  line-height:1;
+}
+
+/* --- Feature cards : icône SVG au lieu d'emoji --- */
+.feature-icon-wrap{
+  color: var(--ambre);
+  margin-bottom:12px;
+  display:block;
+}
+.feature-card{
+  border-top: 2px solid rgba(200,132,26,0.15);
+}
+.feature-card:hover{ border-top-color: rgba(200,132,26,0.5); }
+.feature-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:16px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+/* --- Setup options : avec icône --- */
+.setup-options-icon .setup-option{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:14px 8px;
+  font-size:12px;
+}
+.setup-option-icon{ opacity:.7; }
+.setup-option.active .setup-option-icon{ opacity:1; }
+.setup-option-stars{
+  font-size:11px;
+  color: var(--ambre);
+  margin-right:3px;
+}
+.setup-option.active .setup-option-stars{ color: var(--noir); }
+
+/* --- Goals : grand chiffre centré --- */
+.setup-options-goals .setup-option{ padding:10px 6px; }
+.goal-val{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  display:block;
+}
+
+/* ========== SPRINT D3 — ANIMATIONS PLATEAU ========== */
+
+/* --- Transitions entre écrans --- */
+.setup-screen, .config-screen, .game-layout, .profile-screen, .shop-layout {
+  animation: screen-enter 0.25s ease both;
+}
+@keyframes screen-enter {
+  from { opacity:0; transform: scale(0.97) translateY(6px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+
+/* --- Hover pions : soulèvement + intensification ombre --- */
+.token:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.22),
+              inset 0 0 0 1px rgba(0,0,0,0.3),
+              0 8px 18px rgba(0,0,0,0.65);
+}
+.token.selected {
+  transform: scale(1.12) translateY(-2px);
+  box-shadow: 0 0 0 3px var(--craie), 0 8px 20px rgba(0,0,0,0.65);
+}
+
+/* --- Turn banner : pulsation sur l'équipe active --- */
+.turn-banner { transition: color 0.3s ease; }
+.turn-banner.active-bleu  { animation: pulse-bleu 2s ease-in-out infinite; }
+.turn-banner.active-rouge { animation: pulse-rouge 2s ease-in-out infinite; }
+
+@keyframes pulse-bleu {
+  0%,100% { color: var(--bleu-equipe-clair); opacity:1; }
+  50%      { color: #A8CCEE; opacity:0.75; }
+}
+@keyframes pulse-rouge {
+  0%,100% { color: var(--rouge-equipe-clair); opacity:1; }
+  50%      { color: #EDA090; opacity:0.75; }
+}
+
+/* --- Score : flash quand un but est marqué --- */
+.score-num.goal-flash {
+  animation: score-bump 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes score-bump {
+  0%   { transform: scale(1); color: var(--craie); }
+  40%  { transform: scale(1.5); color: var(--or); }
+  100% { transform: scale(1); color: var(--craie); }
+}
+
+/* --- Overlay BUT : fond dynamique + lignes de vitesse --- */
+.goal-overlay-bg.show {
+  background: rgba(8,6,4,0.92);
+}
+
+.goal-card {
+  position:relative;
+  overflow:hidden;
+  min-width:280px;
+  border: 1px solid rgba(200,132,26,0.35);
+  padding: 32px 36px 28px;
+}
+.goal-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at 50% 40%, rgba(200,132,26,0.12) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+/* Lignes de vitesse façon manga — tournent autour du centre */
+.goal-speedlines {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.goal-sl {
+  position:absolute;
+  top:50%; left:50%;
+  width:200%; height:1px;
+  background: linear-gradient(90deg, transparent 30%, rgba(200,132,26,0.2), transparent 70%);
+  transform-origin: 0 50%;
+}
+.goal-sl:nth-child(1)  { transform: rotate(0deg)   translateX(-50%); }
+.goal-sl:nth-child(2)  { transform: rotate(22.5deg) translateX(-50%); }
+.goal-sl:nth-child(3)  { transform: rotate(45deg)   translateX(-50%); }
+.goal-sl:nth-child(4)  { transform: rotate(67.5deg) translateX(-50%); }
+.goal-sl:nth-child(5)  { transform: rotate(90deg)   translateX(-50%); }
+.goal-sl:nth-child(6)  { transform: rotate(112.5deg)translateX(-50%); }
+.goal-sl:nth-child(7)  { transform: rotate(135deg)  translateX(-50%); }
+.goal-sl:nth-child(8)  { transform: rotate(157.5deg)translateX(-50%); }
+
+/* Animation d'entrée des lignes */
+.goal-overlay-bg.show .goal-speedlines {
+  animation: speedlines-spin 6s linear infinite;
+}
+@keyframes speedlines-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tampon japonais "GOAL" */
+.goal-jp-tag {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  border: 1px solid var(--ambre);
+  border-radius:2px;
+  padding: 3px 8px;
+  display:inline-block;
+  margin-bottom:10px;
+  position:relative;
+}
+
+/* Titre BUT : animation entrée */
+.goal-overlay-bg.show .overlay-title {
+  animation: goal-title-in 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.05s both;
+}
+@keyframes goal-title-in {
+  from { transform: scale(0.6); opacity:0; }
+  to   { transform: scale(1);   opacity:1; }
+}
+
+/* Score flash dans l'overlay */
+.goal-score-flash {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:48px;
+  font-weight:900;
+  letter-spacing:.04em;
+  color: var(--or);
+  margin: 8px 0 16px;
+  line-height:1;
+}
+.goal-overlay-bg.show .goal-score-flash {
+  animation: score-flash-in 0.5s ease 0.2s both;
+}
+@keyframes score-flash-in {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* Bouton Continuer dans l'overlay */
+.goal-continue-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:4px;
+}
+
+/* --- Overlay FIN DE PARTIE --- */
+.end-card {
+  border: 1px solid rgba(200,132,26,0.3);
+  padding: 32px 36px 28px;
+  text-align:center;
+  min-width:300px;
+}
+.overlay.show .end-card {
+  animation: end-card-in 0.5s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes end-card-in {
+  from { transform: scale(0.85) translateY(20px); opacity:0; }
+  to   { transform: scale(1) translateY(0); opacity:1; }
+}
+
+/* Trophée : couleur selon l'équipe gagnante, animation entrée */
+.end-trophy {
+  display:flex;
+  justify-content:center;
+  margin-bottom:12px;
+  color: var(--or);
+}
+.overlay.show .end-trophy svg {
+  animation: trophy-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+}
+@keyframes trophy-drop {
+  from { transform: translateY(-20px) scale(0.7); opacity:0; }
+  to   { transform: translateY(0) scale(1); opacity:1; }
+}
+.end-trophy.bleu  { color: var(--bleu-equipe-clair); }
+.end-trophy.rouge { color: var(--rouge-equipe-clair); }
+
+.end-score-display {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:28px;
+  font-weight:800;
+  color: var(--craie);
+  margin: 4px 0 14px;
+}
+
+/* Stats de fin (colonne buts/victoire) */
+.end-stats-row {
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  margin-bottom:4px;
+}
+.end-stat {
+  background: rgba(240,230,211,0.05);
+  border: 1px solid rgba(240,230,211,0.1);
+  border-radius:4px;
+  padding: 8px 14px;
+  text-align:center;
+}
+.end-stat-val {
+  display:block;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:900;
+  color: var(--or);
+  line-height:1;
+}
+.end-stat-lbl {
+  display:block;
+  font-size:9px;
+  font-family:'Barlow Condensed', sans-serif;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+  margin-top:3px;
+}
+
+/* --- Ballon : micro-rotation au hover sur une cellule où il se trouve --- */
+.cell:has(.ball):hover .ball {
+  animation: ball-spin 1.2s linear infinite;
+}
+@keyframes ball-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Pion sélectionnable : subtle pulse invitation --- */
+.token.selectable:not(.selected):not(:hover) {
+  animation: token-invite 2.5s ease-in-out infinite;
+}
+@keyframes token-invite {
+  0%,100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.55); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.55), 0 0 0 2px rgba(240,230,211,0.15); }
+}
+
+
+/* ========== SPRINT D4 — CARTES TCG + SKELETON + ONGLETS + HOVER 3D ========== */
+
+/* --- Onglets profil : indicateur glissant --- */
+.profile-tabs {
+  position:relative;
+  border-bottom: 1px solid rgba(200,132,26,0.15);
+  padding-bottom:0;
+  margin-bottom:24px;
+}
+/* L'indicateur ambre animé est injecté en JS via .tab-indicator */
+.tab-indicator {
+  position:absolute;
+  bottom:0;
+  height:2px;
+  background: var(--ambre);
+  border-radius:2px 2px 0 0;
+  transition: left 0.25s cubic-bezier(0.4,0,0.2,1),
+              width 0.25s cubic-bezier(0.4,0,0.2,1);
+  pointer-events:none;
+}
+.profile-tab {
+  position:relative;
+  border-bottom:2px solid transparent;
+}
+.profile-tab.active {
+  color: var(--or);
+  border-color: transparent; /* l'indicateur prend le relais */
+}
+
+/* --- Skeleton loader --- */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(240,230,211,0.05) 25%,
+    rgba(240,230,211,0.10) 50%,
+    rgba(240,230,211,0.05) 75%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-sweep 1.6s ease infinite;
+  border-radius:4px;
+}
+@keyframes skeleton-sweep {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+.skeleton-card {
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.06);
+  border-radius:4px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.skeleton-circle {
+  width:44px; height:44px;
+  border-radius:50%;
+}
+.skeleton-line { height:10px; }
+.skeleton-line.short { width:55%; }
+.skeleton-line.medium { width:75%; }
+.skeleton-line.long { width:90%; }
+.skeleton-badge { height:18px; width:40%; border-radius:3px; }
+
+/* --- Cartes joueur TCG : refonte complète --- */
+.player-card {
+  background: var(--noir-clair);
+  border-radius:4px;
+  padding:0;
+  cursor:grab;
+  position:relative;
+  overflow:hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Perspective pour le hover 3D */
+  perspective:600px;
+  transform-style:preserve-3d;
+}
+
+/* Liseré de rareté en haut */
+.player-card::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:3px;
+  z-index:2;
+}
+.player-card.rarity-commun::before  { background: rgba(240,230,211,0.15); }
+.player-card.rarity-rare::before    { background: linear-gradient(90deg,#2A5FA5,#7AAEE8,#2A5FA5); }
+.player-card.rarity-legendaire::before { background: linear-gradient(90deg,#C8841A,#FFD87A,#E8A030,#FFD87A,#C8841A); }
+.player-card.rarity-custom::before  { background: linear-gradient(90deg,#7A4FC8,#9B6BFF,#7A4FC8); }
+
+/* Hover 3D léger — rotation selon position souris via JS */
+.player-card:hover {
+  box-shadow: 0 14px 36px rgba(0,0,0,0.7);
+  z-index:2;
+}
+/* Lueur de rareté au hover */
+.player-card.rarity-rare:hover      { box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 20px rgba(42,95,165,0.25); }
+.player-card.rarity-legendaire:hover{ box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 24px rgba(200,132,26,0.3); }
+.player-card.rarity-custom:hover    { box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 20px rgba(122,79,200,0.3); }
+
+.player-card.dragging { opacity:0.35; transform:scale(0.95); }
+.player-card.assigned { outline: 1px solid rgba(200,132,26,0.4); }
+
+/* Intérieur de la carte */
+.player-card-inner {
+  padding: 12px 12px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+/* Header : avatar + numéro + badge position */
+.player-card-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+.player-card-avatar-wrap {
+  position:relative;
+  width:46px; height:46px;
+  flex-shrink:0;
+}
+.player-card-avatar-wrap svg { width:46px; height:46px; display:block; }
+
+/* Numéro de maillot sur l'avatar */
+.player-card-jersey {
+  position:absolute;
+  bottom:-4px; right:-4px;
+  background: var(--noir);
+  border: 1px solid rgba(240,230,211,0.15);
+  border-radius:3px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:11px;
+  font-weight:900;
+  color: var(--craie);
+  width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1;
+}
+.player-card.rarity-rare .player-card-jersey     { border-color: rgba(42,95,165,0.5); color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-jersey{ border-color: rgba(200,132,26,0.6); color: var(--or); }
+.player-card.rarity-custom .player-card-jersey   { border-color: rgba(122,79,200,0.5); color: var(--pouvoir-clair); }
+
+/* Badge position (DEF / ATT / GK) */
+.player-card-pos {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding: 2px 5px;
+  border-radius:2px;
+  border: 1px solid rgba(240,230,211,0.2);
+  color: var(--craie-att);
+}
+.player-card.rarity-rare .player-card-pos       { border-color: rgba(42,95,165,0.4); color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-pos { border-color: rgba(200,132,26,0.5); color: var(--or); }
+.player-card.rarity-custom .player-card-pos     { border-color: rgba(122,79,200,0.4); color: var(--pouvoir-clair); }
+
+/* Nom + style */
+.player-card-name {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:15px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color: var(--craie);
+  margin-bottom:1px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.player-card-style {
+  font-size:10px;
+  color: var(--craie-att);
+  text-transform:capitalize;
+  margin-bottom:8px;
+  letter-spacing:.02em;
+}
+
+/* Stats VIT / TIR */
+.player-card-stats {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin-bottom:8px;
+}
+.player-card-stat {
+  background: rgba(240,230,211,0.04);
+  border-radius:2px;
+  padding: 3px 6px;
+  display:flex;
+  flex-direction:column;
+}
+.player-card-stat-label {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-dim);
+}
+.player-card-stat-val {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:16px;
+  font-weight:900;
+  line-height:1;
+  color: var(--craie);
+}
+.player-card.rarity-rare .player-card-stat-val      { color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-stat-val{ color: var(--or); }
+.player-card.rarity-custom .player-card-stat-val    { color: var(--pouvoir-clair); }
+
+/* Footer : rareté + badge pouvoir */
+.player-card-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+}
+.player-card-rarity {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding: 2px 6px;
+  border-radius:2px;
+}
+.player-card.rarity-commun .player-card-rarity {
+  background: rgba(240,230,211,0.07);
+  color: var(--craie-att);
+}
+.player-card.rarity-rare .player-card-rarity {
+  background: rgba(42,95,165,0.15);
+  color: var(--bleu-equipe-clair);
+}
+.player-card.rarity-legendaire .player-card-rarity {
+  background: rgba(200,132,26,0.15);
+  color: var(--or);
+}
+.player-card.rarity-custom .player-card-rarity {
+  background: rgba(122,79,200,0.15);
+  color: var(--pouvoir-clair);
+}
+
+/* Badge pouvoir sur la carte (pas le pion) */
+.player-card-power-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: var(--pouvoir-clair);
+  background: rgba(122,79,200,0.12);
+  border: 1px solid rgba(122,79,200,0.3);
+  border-radius:2px;
+  padding: 2px 5px;
+}
+
+/* Badge "Aligné" repositionné */
+.player-card-assigned-badge {
+  position:absolute;
+  top:8px; left:8px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  background: rgba(200,132,26,0.15);
+  border: 1px solid rgba(200,132,26,0.3);
+  padding: 2px 5px;
+  border-radius:2px;
+  z-index:3;
+}
+
+/* Stats de progression : liseré ambre à gauche */
+.progress-stat {
+  border-left: 2px solid rgba(200,132,26,0.3);
+  border-radius:0 4px 4px 0;
+  transition: border-color 0.2s ease;
+}
+.progress-stat:hover { border-left-color: var(--ambre); }
+

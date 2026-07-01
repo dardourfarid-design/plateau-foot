@@ -19,20 +19,19 @@ import {
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { initShop } from './shopUI.js';
+import { initProfile, toOwnedShape } from './profileUI.js';
+import { initMercato } from './mercatoUI.js';
 import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail, sendPasswordResetEmail } from '../services/supabaseClient.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
-import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, renamePlayer, saveLineup } from '../services/playerCollectionService.js';
+import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
-import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from './playerAvatar.js';
-import { fetchMyCustomPlayers, createCustomPlayer, deleteCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
-import {
-  sendFriendRequest, respondFriendRequest, fetchMyFriendships,
-  createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
-} from '../services/mercatoService.js';
+import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
+import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
+// mercatoService importé dans mercatoUI.js
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -125,6 +124,9 @@ function cacheDomRefs() {
   els.boardGrid = document.getElementById('boardGrid');
   els.scoreBleu = document.getElementById('scoreBleu');
   els.scoreRouge = document.getElementById('scoreRouge');
+  els.goalScoreFlash = document.getElementById('goalScoreFlash');
+  els.endStatsRow = document.getElementById('endStatsRow');
+  els.backToSetupFromEndBtn = document.getElementById('backToSetupFromEndBtn');
   els.sidebarScoreBleu = document.getElementById('sidebarScoreBleu');
   els.sidebarScoreRouge = document.getElementById('sidebarScoreRouge');
   els.sidebarTurn = document.getElementById('sidebarTurn');
@@ -313,8 +315,21 @@ function startGame(goalsToWin) {
 function render() {
   const lineupsByTeam = myResolvedLineup ? { bleu: myResolvedLineup } : null;
   renderBoard(els.boardGrid, gameState, lineupsByTeam);
+  // Flash d'animation sur le score qui vient de changer
+  const prevBleu = parseInt(els.scoreBleu.textContent, 10);
+  const prevRouge = parseInt(els.scoreRouge.textContent, 10);
   els.scoreBleu.textContent = gameState.score[TEAMS.BLEU];
   els.scoreRouge.textContent = gameState.score[TEAMS.ROUGE];
+  if (gameState.score[TEAMS.BLEU] > prevBleu) {
+    els.scoreBleu.classList.remove('goal-flash');
+    void els.scoreBleu.offsetWidth; // force reflow pour re-déclencher l'animation
+    els.scoreBleu.classList.add('goal-flash');
+  }
+  if (gameState.score[TEAMS.ROUGE] > prevRouge) {
+    els.scoreRouge.classList.remove('goal-flash');
+    void els.scoreRouge.offsetWidth;
+    els.scoreRouge.classList.add('goal-flash');
+  }
   els.sidebarScoreBleu.textContent = gameState.score[TEAMS.BLEU];
   els.sidebarScoreRouge.textContent = gameState.score[TEAMS.ROUGE];
   els.sidebarTurn.textContent = gameState.turn === TEAMS.BLEU ? 'Bleu' : 'Rouge';
@@ -550,6 +565,11 @@ function showGoalOverlay(scoringTeam) {
   els.goalTitle.className = 'overlay-title ' + scoringTeam;
   els.goalTitle.textContent = 'BUT !';
   els.goalSub.textContent = scoringTeam === TEAMS.BLEU ? "L'équipe bleue marque" : "L'équipe rouge marque";
+  // Affiche le nouveau score dans l'overlay pour un retour immédiat
+  if (els.goalScoreFlash) {
+    els.goalScoreFlash.textContent =
+      `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
+  }
   els.goalOverlay.classList.add('show');
 }
 
@@ -565,7 +585,28 @@ function hideGoalOverlayAndResume() {
 function showEndOverlay(winningTeam) {
   els.endTitle.className = 'overlay-title ' + winningTeam;
   els.endTitle.textContent = winningTeam === TEAMS.BLEU ? 'BLEU GAGNE' : 'ROUGE GAGNE';
-  els.endSub.textContent = `Score final : ${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
+  els.endSub.textContent = `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
+
+  // Colorier le trophée selon l'équipe gagnante
+  const trophy = els.endOverlay.querySelector('.end-trophy');
+  if (trophy) { trophy.className = 'end-trophy ' + winningTeam; }
+
+  // Stats de fin : buts du gagnant + streak si disponible
+  if (els.endStatsRow) {
+    const winner = gameState.score[winningTeam];
+    const loser = gameState.score[winningTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU];
+    els.endStatsRow.innerHTML = `
+      <div class="end-stat">
+        <span class="end-stat-val">${winner}</span>
+        <span class="end-stat-lbl">Buts marqués</span>
+      </div>
+      <div class="end-stat">
+        <span class="end-stat-val">${loser}</span>
+        <span class="end-stat-lbl">Buts encaissés</span>
+      </div>
+    `;
+  }
+
   els.endOverlay.classList.add('show');
 
   if (currentUser && !tutorial.isActive()) {
@@ -886,6 +927,8 @@ function openPowerTargetSelection(token) {
 }
 
 function wireGameControls() {
+  // Bouton "← Accueil" dans l'overlay de fin de partie
+  els.backToSetupFromEndBtn?.addEventListener('click', backToSetup);
   els.cancelBtn.addEventListener('click', handleCancel);
   els.endTurnBtn.addEventListener('click', handleEndTurnClick);
   els.restartBtn.addEventListener('click', backToSetup);
@@ -1263,42 +1306,13 @@ function endTutorial() {
 
 // ---------- Écran Profil ----------
 
-let myCollectionCache = [];
-let myCustomPlayersCache = [];
-let myLineupCache = null;
-
-function wireProfileScreen() {
-  els.profileBtn?.addEventListener('click', openProfileScreen);
-  els.profileBackBtn?.addEventListener('click', () => {
-    els.profileScreen.classList.add('hidden');
-    els.setupScreen.classList.remove('hidden');
-  });
-
-  els.profileTabs?.querySelectorAll('.profile-tab').forEach(tab => {
-    tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab));
-  });
-
-  els.saveLineupBtn?.addEventListener('click', handleSaveLineup);
-}
-
-async function openProfileScreen() {
-  if (!currentUser) {
-    authMode = 'signin';
-    renderAccountOverlayContent();
-    els.accountOverlay.classList.add('show');
-    return;
-  }
-
-  els.setupScreen.classList.add('hidden');
-  els.configScreen.classList.add('hidden');
-  els.gameScreen.classList.add('hidden');
-  els.shopScreen.classList.add('hidden');
-  els.profileScreen.classList.remove('hidden');
-
-  await loadProgressPanel();
-}
-
-function switchProfileTab(tabName) {
+/**
+ * Orchestre l'affichage des onglets et délègue le chargement de chaque
+ * panneau à profileUI ou mercatoUI selon l'onglet sélectionné.
+ * Reste dans main.js car c'est de l'orchestration entre deux modules,
+ * pas de la logique appartenant à l'un ou l'autre domaine.
+ */
+function switchProfileTab(tabName, profileModule, mercatoModule) {
   els.profileTabs.querySelectorAll('.profile-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === tabName);
   });
@@ -1308,819 +1322,10 @@ function switchProfileTab(tabName) {
   els.panelMercato.classList.toggle('hidden', tabName !== 'mercato');
   els.panelLeaderboard.classList.toggle('hidden', tabName !== 'leaderboard');
 
-  if (tabName === 'challenges') loadChallengesPanel();
-  if (tabName === 'team') loadTeamPanel();
-  if (tabName === 'mercato') loadMercatoPanel();
-  if (tabName === 'leaderboard') loadLeaderboardPanel();
-}
-
-async function loadProgressPanel() {
-  try {
-    await ensureStarterPack(); // garantit un starter pack dès la première visite
-    const progress = await fetchMyProgress();
-    els.progressEmptyNote.classList.toggle('hidden', !!progress);
-    els.progressLevel.textContent = progress?.level ?? 1;
-    els.progressXp.textContent = progress?.xp ?? 0;
-    els.progressStreak.textContent = progress?.current_streak_days ?? 0;
-    els.progressWins.textContent = progress?.games_won ?? 0;
-  } catch (err) {
-    console.error('Progression non chargée :', err);
-  }
-}
-
-async function loadChallengesPanel() {
-  els.challengesList.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  try {
-    const challenges = await fetchTodayChallenges();
-    if (!challenges || challenges.length === 0) {
-      els.challengesList.innerHTML = '<p class="profile-empty-note">Aucun défi disponible aujourd\'hui.</p>';
-      return;
-    }
-    els.challengesList.innerHTML = '';
-    challenges.forEach(c => {
-      const card = document.createElement('div');
-      card.className = 'challenge-card' + (c.completed ? ' completed' : '');
-
-      const left = document.createElement('div');
-      const desc = document.createElement('div');
-      desc.className = 'challenge-desc';
-      desc.textContent = c.daily_challenge_templates?.description || 'Défi du jour';
-      const progress = document.createElement('div');
-      progress.className = 'challenge-progress';
-      const target = c.daily_challenge_templates?.target_count ?? 1;
-      progress.textContent = `${Math.min(c.progress_count, target)}/${target}`;
-      left.appendChild(desc);
-      left.appendChild(progress);
-
-      const check = document.createElement('div');
-      check.className = 'challenge-check';
-      check.textContent = c.completed ? '✓' : '';
-
-      card.appendChild(left);
-      card.appendChild(check);
-      els.challengesList.appendChild(card);
-    });
-  } catch (err) {
-    els.challengesList.innerHTML = '<p class="profile-empty-note">Défis indisponibles pour le moment.</p>';
-  }
-}
-
-const LINEUP_SLOT_LABELS = {
-  gk: 'Gardien', def0: 'Défenseur 1', def1: 'Défenseur 2',
-  att0: 'Attaquant 1', att1: 'Attaquant 2', att2: 'Attaquant 3'
-};
-
-async function loadTeamPanel() {
-  els.lineupSlots.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  els.collectionGrid.innerHTML = '';
-  try {
-    const newRewards = await claimLevelRewards();
-    if (newRewards && newRewards.length > 0) {
-      const names = newRewards.map(r => r.player_name).join(', ');
-      alert(`Nouvelle récompense de niveau débloquée : ${names} ! Il/elle est maintenant dans ta collection.`);
-    }
-
-    const [collection, lineup, customPlayers] = await Promise.all([
-      fetchMyCollection(), fetchMyLineup(), fetchMyCustomPlayers()
-    ]);
-    myCollectionCache = collection;
-    myLineupCache = lineup || {};
-    myCustomPlayersCache = customPlayers;
-    renderLineupSlots();
-    renderCollectionGrid();
-    renderCreatePlayerSection();
-    renderPowerShop(collection);
-  } catch (err) {
-    els.lineupSlots.innerHTML = '<p class="profile-empty-note">Équipe indisponible pour le moment.</p>';
-  }
-}
-
-/**
- * Liste combinée de tous les joueurs possédés, catalogue + créations
- * personnalisées, dans une forme uniforme. Source de vérité unique utilisée
- * partout où on doit retrouver un joueur par son ownershipId — avant ce
- * correctif, renderLineupSlots() ne cherchait que dans myCollectionCache,
- * ce qui rendait les joueurs custom invisibles une fois assignés à un poste.
- */
-function getAllOwnedPlayers() {
-  return [...myCollectionCache, ...myCustomPlayersCache.map(toOwnedShape)];
-}
-
-function renderLineupSlots() {
-  els.lineupSlots.innerHTML = '';
-  const allOwned = getAllOwnedPlayers();
-  Object.entries(LINEUP_SLOT_LABELS).forEach(([slot, label]) => {
-    const ownershipId = myLineupCache?.[`slot_${slot}`];
-    const owned = allOwned.find(c => c.id === ownershipId);
-
-    const slotEl = document.createElement('div');
-    slotEl.className = 'lineup-slot' + (owned ? ' filled' : '');
-    slotEl.dataset.slot = slot;
-
-    if (owned) {
-      const avatarEl = document.createElement('div');
-      avatarEl.className = 'lineup-slot-avatar';
-      avatarEl.innerHTML = renderAvatarSvg(avatarForOwned(owned));
-      slotEl.appendChild(avatarEl);
-    }
-
-    const labelEl = document.createElement('div');
-    labelEl.className = 'lineup-slot-label';
-    labelEl.textContent = label;
-    slotEl.appendChild(labelEl);
-
-    const nameEl = document.createElement('div');
-    nameEl.className = 'lineup-slot-name';
-    if (owned) {
-      const baseName = owned.isCustom ? owned.name : owned.fictional_players.name;
-      nameEl.textContent = owned.custom_name || baseName;
-    } else {
-      nameEl.textContent = 'Glisse un joueur ici';
-    }
-    slotEl.appendChild(nameEl);
-
-    if (owned) {
-      const clearBtn = document.createElement('button');
-      clearBtn.className = 'lineup-slot-clear';
-      clearBtn.textContent = '✕';
-      clearBtn.title = 'Retirer ce joueur du poste';
-      clearBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        myLineupCache[`slot_${slot}`] = null;
-        renderLineupSlots();
-      });
-      slotEl.appendChild(clearBtn);
-    }
-
-    // ---------- Cible de glisser-déposer ----------
-    slotEl.addEventListener('dragover', e => {
-      e.preventDefault(); // nécessaire pour autoriser le drop
-      slotEl.classList.add('drop-target-active');
-    });
-    slotEl.addEventListener('dragleave', () => {
-      slotEl.classList.remove('drop-target-active');
-    });
-    slotEl.addEventListener('drop', e => {
-      e.preventDefault();
-      slotEl.classList.remove('drop-target-active');
-      const ownershipIdDropped = e.dataTransfer.getData('text/plain');
-      if (!ownershipIdDropped) return;
-      assignPlayerToSlot(ownershipIdDropped, slot);
-    });
-
-    els.lineupSlots.appendChild(slotEl);
-  });
-}
-
-function assignPlayerToSlot(ownershipId, slot) {
-  // Si ce joueur occupe déjà un autre poste, on le libère d'abord — un
-  // même joueur ne peut pas être aligné à deux postes en même temps.
-  Object.keys(LINEUP_SLOT_LABELS).forEach(s => {
-    if (myLineupCache[`slot_${s}`] === ownershipId) {
-      myLineupCache[`slot_${s}`] = null;
-    }
-  });
-  myLineupCache[`slot_${slot}`] = ownershipId;
-  renderLineupSlots();
-  renderCollectionGrid(); // pour mettre à jour l'état visuel "déjà aligné" des cartes
-}
-
-/**
- * Détermine l'avatar à afficher pour un joueur possédé : un joueur custom
- * a son propre avatar choisi explicitement ; un joueur du catalogue dérive
- * le sien de façon déterministe depuis avatar_seed.
- */
-function avatarForOwned(owned) {
-  if (owned.isCustom) {
-    return { color: owned.avatar_color, pattern: owned.avatar_pattern, accessory: owned.avatar_accessory };
-  }
-  return hashSeedToAvatar(owned.fictional_players.avatar_seed);
-}
-
-function renderCollectionGrid() {
-  els.collectionGrid.innerHTML = '';
-  const allOwned = getAllOwnedPlayers();
-
-  if (allOwned.length === 0) {
-    els.collectionGrid.innerHTML = '<p class="profile-empty-note">Aucun joueur dans ta collection pour le moment.</p>';
-    return;
-  }
-
-  const assignedIds = new Set(Object.keys(LINEUP_SLOT_LABELS).map(s => myLineupCache?.[`slot_${s}`]).filter(Boolean));
-
-  allOwned.forEach(owned => {
-    const rarity = owned.isCustom ? 'custom' : owned.fictional_players.rarity;
-    const card = document.createElement('div');
-    card.className = `player-card rarity-${rarity}` + (assignedIds.has(owned.id) ? ' assigned' : '');
-    card.draggable = true;
-    card.dataset.ownershipId = owned.id;
-
-    const avatarEl = document.createElement('div');
-    avatarEl.className = 'player-card-avatar';
-    avatarEl.innerHTML = renderAvatarSvg(avatarForOwned(owned));
-    card.appendChild(avatarEl);
-
-    const name = document.createElement('div');
-    name.className = 'player-card-name';
-    name.textContent = owned.custom_name || (owned.isCustom ? owned.name : owned.fictional_players.name);
-
-    const style = document.createElement('div');
-    style.className = 'player-card-style';
-    style.textContent = owned.isCustom ? owned.style : owned.fictional_players.style;
-
-    const rarityTag = document.createElement('span');
-    rarityTag.className = 'player-card-rarity';
-    rarityTag.textContent = owned.isCustom ? 'personnalisé' : owned.fictional_players.rarity;
-
-    card.appendChild(name);
-    card.appendChild(style);
-    card.appendChild(rarityTag);
-
-    if (assignedIds.has(owned.id)) {
-      const badge = document.createElement('span');
-      badge.className = 'player-card-assigned-badge';
-      badge.textContent = 'Aligné';
-      card.appendChild(badge);
-    }
-
-    // ---------- Source de glisser-déposer ----------
-    card.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', owned.id);
-      e.dataTransfer.effectAllowed = 'move';
-      card.classList.add('dragging');
-    });
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-    });
-
-    // Solution de repli tactile/clic : assigne au premier poste vide,
-    // pour les appareils où le drag&drop natif est peu pratique.
-    card.addEventListener('click', () => handlePlayerCardClick(owned));
-
-    els.collectionGrid.appendChild(card);
-  });
-}
-
-/**
- * Affiche la boutique des joueurs rares/légendaires achetables directement
- * (en plus de la voie gratuite par palier de niveau). N'affiche que ceux
- * que le compte ne possède pas encore — pas d'intérêt à acheter un
- * doublon.
- */
-async function renderPowerShop(myCollection) {
-  els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  try {
-    const catalog = await fetchPlayerCatalog();
-    const ownedPlayerIds = new Set(myCollection.map(o => o.player_id));
-    const purchasable = catalog.filter(p => p.power && !ownedPlayerIds.has(p.id));
-
-    els.powerShopGrid.innerHTML = '';
-    if (purchasable.length === 0) {
-      els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Tu possèdes déjà tous les joueurs à pouvoir disponibles.</p>';
-      return;
-    }
-
-    purchasable.forEach(player => {
-      const price = player.rarity === 'rare' ? '2,99 €' : '4,99 €';
-      const card = document.createElement('div');
-      card.className = `player-card rarity-${player.rarity}`;
-
-      const avatarEl = document.createElement('div');
-      avatarEl.className = 'player-card-avatar';
-      avatarEl.innerHTML = renderAvatarSvg(hashSeedToAvatar(player.avatar_seed));
-      card.appendChild(avatarEl);
-
-      const name = document.createElement('div');
-      name.className = 'player-card-name';
-      name.textContent = player.name;
-
-      const power = document.createElement('div');
-      power.className = 'player-card-style';
-      power.textContent = POWER_LABELS[player.power];
-
-      const buyBtn = document.createElement('button');
-      buyBtn.className = 'btn-small primary';
-      buyBtn.style.marginTop = '8px';
-      buyBtn.textContent = `Acheter — ${price}`;
-      buyBtn.addEventListener('click', async () => {
-        if (!currentUser) {
-          authMode = 'signin';
-          renderAccountOverlayContent();
-          els.accountOverlay.classList.add('show');
-          return;
-        }
-        try {
-          const result = await purchasePlayer(player.id, currentUser, checkoutTheme);
-          if (result.redirectUrl) {
-            window.location.href = result.redirectUrl;
-            return;
-          }
-          alert(`${player.name} a été ajouté à ta collection !`);
-          await loadTeamPanel();
-        } catch (err) {
-          alert(err.message || 'Achat impossible pour le moment.');
-        }
-      });
-
-      card.appendChild(name);
-      card.appendChild(power);
-      card.appendChild(buyBtn);
-      els.powerShopGrid.appendChild(card);
-    });
-  } catch (err) {
-    els.powerShopGrid.innerHTML = '<p class="profile-empty-note">Boutique indisponible pour le moment.</p>';
-  }
-}
-
-/**
- * Adapte la forme d'un joueur custom pour qu'elle ressemble à celle d'un
- * player_ownership classique (avec fictional_players imbriqué), pour que
- * renderLineupSlots/renderCollectionGrid puissent traiter les deux sources
- * de façon presque uniforme malgré leur structure de données différente.
- */
-function toOwnedShape(customPlayer) {
-  return {
-    id: customPlayer.id,
-    isCustom: true,
-    custom_name: null,
-    name: customPlayer.name,
-    style: customPlayer.style,
-    avatar_color: customPlayer.avatar_color,
-    avatar_pattern: customPlayer.avatar_pattern,
-    avatar_accessory: customPlayer.avatar_accessory
-  };
-}
-
-function handlePlayerCardClick(owned) {
-  // Clic simple (repli tactile) : assigne ce joueur au premier slot vide.
-  const emptySlot = Object.keys(LINEUP_SLOT_LABELS).find(slot => !myLineupCache?.[`slot_${slot}`]);
-  if (!emptySlot) {
-    alert('Les 6 postes sont déjà pourvus. Glisse ce joueur directement sur un poste pour remplacer son occupant, ou retire un joueur avec le ✕.');
-    return;
-  }
-  assignPlayerToSlot(owned.id, emptySlot);
-}
-
-async function handleSaveLineup() {
-  try {
-    await saveLineup({
-      slot_gk: myLineupCache.slot_gk || null,
-      slot_def0: myLineupCache.slot_def0 || null,
-      slot_def1: myLineupCache.slot_def1 || null,
-      slot_att0: myLineupCache.slot_att0 || null,
-      slot_att1: myLineupCache.slot_att1 || null,
-      slot_att2: myLineupCache.slot_att2 || null
-    });
-    alert('Composition enregistrée ! Elle s\'appliquera à ta prochaine partie.');
-  } catch (err) {
-    alert(err.message || 'Impossible d\'enregistrer la composition pour le moment.');
-  }
-}
-
-// ---------- Création de joueur personnalisé ----------
-
-let newPlayerDraft = {
-  style: 'rapide',
-  color: AVATAR_COLORS[0],
-  pattern: 'plain',
-  accessory: 'none'
-};
-
-function wireCreatePlayer() {
-  els.openCreatePlayerBtn?.addEventListener('click', openCreatePlayerModal);
-  els.closeCreatePlayerBtn?.addEventListener('click', () => {
-    els.createPlayerOverlay.classList.remove('show');
-  });
-  els.confirmCreatePlayerBtn?.addEventListener('click', handleConfirmCreatePlayer);
-
-  els.newPlayerStyleOptions?.querySelectorAll('.setup-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      els.newPlayerStyleOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      newPlayerDraft.style = opt.dataset.style;
-    });
-  });
-
-  els.newPlayerPatternOptions?.querySelectorAll('.setup-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      els.newPlayerPatternOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      newPlayerDraft.pattern = opt.dataset.pattern;
-      renderCreatePlayerPreview();
-    });
-  });
-
-  els.newPlayerAccessoryOptions?.querySelectorAll('.setup-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      els.newPlayerAccessoryOptions.querySelectorAll('.setup-option').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      newPlayerDraft.accessory = opt.dataset.accessory;
-      renderCreatePlayerPreview();
-    });
-  });
-
-  // Palette de couleurs construite dynamiquement depuis AVATAR_COLORS,
-  // pour rester strictement synchronisée avec ce que le rendu sait afficher.
-  AVATAR_COLORS.forEach(color => {
-    const swatch = document.createElement('div');
-    swatch.className = 'avatar-color-swatch' + (color === newPlayerDraft.color ? ' active' : '');
-    swatch.style.background = color;
-    swatch.addEventListener('click', () => {
-      els.newPlayerColorOptions.querySelectorAll('.avatar-color-swatch').forEach(s => s.classList.remove('active'));
-      swatch.classList.add('active');
-      newPlayerDraft.color = color;
-      renderCreatePlayerPreview();
-    });
-    els.newPlayerColorOptions.appendChild(swatch);
-  });
-}
-
-function renderCreatePlayerSection() {
-  // Met à jour la note de quota chaque fois que l'onglet équipe est rechargé
-  // (après création/suppression), pour refléter l'état réel sans recharger
-  // toute la page.
-  const usedSlots = myCustomPlayersCache.length;
-  if (usedSlots === 0) {
-    els.createPlayerQuotaNote.textContent = '1 emplacement gratuit disponible.';
-  } else {
-    els.createPlayerQuotaNote.textContent = `${usedSlots} joueur(s) personnalisé(s) créé(s). Au-delà du premier, chaque emplacement supplémentaire est payant.`;
-  }
-}
-
-function openCreatePlayerModal() {
-  els.createPlayerError.textContent = '';
-  els.newPlayerName.value = '';
-  newPlayerDraft = { style: 'rapide', color: AVATAR_COLORS[0], pattern: 'plain', accessory: 'none' };
-
-  els.newPlayerStyleOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
-  els.newPlayerPatternOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
-  els.newPlayerAccessoryOptions.querySelectorAll('.setup-option').forEach((o, i) => o.classList.toggle('active', i === 0));
-  els.newPlayerColorOptions.querySelectorAll('.avatar-color-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
-
-  renderCreatePlayerPreview();
-  els.createPlayerOverlay.classList.add('show');
-}
-
-function renderCreatePlayerPreview() {
-  els.createPlayerPreview.innerHTML = renderAvatarSvg(newPlayerDraft);
-}
-
-async function handleConfirmCreatePlayer() {
-  const name = els.newPlayerName.value.trim();
-  els.createPlayerError.textContent = '';
-
-  if (!name) {
-    els.createPlayerError.textContent = 'Donne un nom à ton joueur.';
-    return;
-  }
-
-  try {
-    await createCustomPlayer({
-      name,
-      style: newPlayerDraft.style,
-      avatarColor: newPlayerDraft.color,
-      avatarPattern: newPlayerDraft.pattern,
-      avatarAccessory: newPlayerDraft.accessory
-    });
-    els.createPlayerOverlay.classList.remove('show');
-    await loadTeamPanel(); // recharge la collection pour afficher le nouveau joueur
-  } catch (err) {
-    const message = err.message || '';
-    if (message.includes('Limite de joueurs personnalisés')) {
-      els.createPlayerError.textContent = 'Limite gratuite atteinte. Achète un emplacement supplémentaire pour créer ce joueur.';
-      offerCustomPlayerSlotPurchase();
-    } else {
-      els.createPlayerError.textContent = message || 'Création impossible pour le moment.';
-    }
-  }
-}
-
-/**
- * Propose l'achat d'un emplacement supplémentaire en réutilisant le système
- * de paiement déjà en place pour les thèmes (checkoutTheme), plutôt que de
- * dupliquer une logique de paiement spécifique aux joueurs custom.
- */
-async function offerCustomPlayerSlotPurchase() {
-  if (!currentUser) return;
-  const confirmed = confirm('Acheter un emplacement supplémentaire pour créer un joueur personnalisé (1,49€) ?');
-  if (!confirmed) return;
-
-  try {
-    const fakeThemeForSlot = { id: CUSTOM_PLAYER_SLOT_THEME_ID, price_cents: 149 };
-    const result = await checkoutTheme(fakeThemeForSlot, currentUser);
-    if (result.immediate) {
-      alert('Emplacement débloqué ! Tu peux maintenant créer ce joueur.');
-      els.createPlayerError.textContent = '';
-    } else if (result.redirectUrl) {
-      window.location.href = result.redirectUrl;
-    }
-  } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
-  }
-}
-
-// ---------- Amis & Mercato ----------
-
-let mercatoOfferContext = null; // { friendUserId, friendOwnershipId } pendant la création d'une offre
-let mercatoMySelectedOwnershipId = null;
-let mercatoFriendSelectedOwnershipId = null;
-let myFriendsCache = [];
-
-function wireMercato() {
-  els.sendFriendRequestBtn?.addEventListener('click', handleSendFriendRequest);
-  els.friendPseudoInput?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleSendFriendRequest();
-  });
-  els.shareProfileBtn?.addEventListener('click', handleShareProfile);
-  els.closeMercatoOfferBtn?.addEventListener('click', () => {
-    els.mercatoOfferOverlay.classList.remove('show');
-  });
-  els.confirmMercatoOfferBtn?.addEventListener('click', handleConfirmMercatoOffer);
-}
-
-async function loadMercatoPanel() {
-  els.friendRequestError.textContent = '';
-  try {
-    await Promise.all([renderFriendshipsSection(), renderMercatoOffersSection()]);
-  } catch (err) {
-    // Filet de sécurité : si une erreur inattendue remonte malgré les
-    // try/catch internes à chaque section (ex: erreur avant même d'y
-    // entrer), on l'affiche au lieu de la laisser disparaître en silence
-    // — c'est exactement ce qui produisait un onglet vide sans aucun
-    // message ni log, avant ce correctif.
-    console.error('Erreur de chargement du panneau mercato :', err);
-    els.friendRequestError.textContent = 'Une erreur est survenue au chargement (' + (err.message || 'inconnue') + ').';
-  }
-}
-
-async function renderFriendshipsSection() {
-  els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  els.friendsList.innerHTML = '';
-  try {
-    const { friends, pendingReceived } = await fetchMyFriendships();
-    myFriendsCache = friends;
-
-    els.pendingFriendRequests.innerHTML = '';
-    if (pendingReceived.length === 0) {
-      els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Aucune demande en attente.</p>';
-    } else {
-      pendingReceived.forEach(req => {
-        const row = document.createElement('div');
-        row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${req.other_pseudo || 'Joueur'}</span>`;
-        const actions = document.createElement('div');
-        actions.className = 'friend-row-actions';
-        const acceptBtn = document.createElement('button');
-        acceptBtn.className = 'btn-small primary';
-        acceptBtn.textContent = 'Accepter';
-        acceptBtn.addEventListener('click', async () => {
-          await respondFriendRequest(req.user_id, true);
-          await renderFriendshipsSection();
-        });
-        const declineBtn = document.createElement('button');
-        declineBtn.className = 'btn-small danger';
-        declineBtn.textContent = 'Refuser';
-        declineBtn.addEventListener('click', async () => {
-          await respondFriendRequest(req.user_id, false);
-          await renderFriendshipsSection();
-        });
-        actions.appendChild(acceptBtn);
-        actions.appendChild(declineBtn);
-        row.appendChild(actions);
-        els.pendingFriendRequests.appendChild(row);
-      });
-    }
-
-    if (friends.length === 0) {
-      els.friendsList.innerHTML = '<p class="profile-empty-note">Aucun ami pour le moment. Ajoute quelqu\'un par son pseudo ci-dessus.</p>';
-    } else {
-      friends.forEach(friendship => {
-        const row = document.createElement('div');
-        row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${friendship.other_pseudo || 'Joueur'}</span>`;
-        const tradeBtn = document.createElement('button');
-        tradeBtn.className = 'btn-small primary';
-        tradeBtn.textContent = 'Proposer un échange';
-        const otherUserId = friendship.direction === 'sent' ? friendship.friend_id : friendship.user_id;
-        tradeBtn.addEventListener('click', () => openMercatoOfferModal(otherUserId, friendship.other_pseudo));
-        row.appendChild(tradeBtn);
-        els.friendsList.appendChild(row);
-      });
-    }
-  } catch (err) {
-    els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Amis indisponibles pour le moment.</p>';
-  }
-}
-
-async function handleSendFriendRequest() {
-  const pseudo = els.friendPseudoInput.value.trim();
-  els.friendRequestError.textContent = '';
-  if (!pseudo) return;
-  try {
-    await sendFriendRequest(pseudo);
-    els.friendPseudoInput.value = '';
-    await renderFriendshipsSection();
-  } catch (err) {
-    els.friendRequestError.textContent = err.message || 'Demande impossible pour le moment.';
-  }
-}
-
-/**
- * Copie un lien vers le site dans le presse-papier, pour que l'utilisateur
- * puisse facilement inviter quelqu'un à le rejoindre — le système d'amis
- * existant (par pseudo exact) crée déjà une vraie raison de partager, mais
- * n'offrait jusqu'ici aucun moyen simple de le faire hors de l'app.
- */
-async function handleShareProfile() {
-  const shareUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
-  const shareText = `Viens jouer à Tactic Master avec moi : ${shareUrl}`;
-
-  try {
-    if (navigator.share) {
-      // API de partage native (mobile principalement) : laisse le système
-      // proposer les apps disponibles (Messages, WhatsApp, etc.) plutôt
-      // que de se limiter au presse-papier.
-      await navigator.share({ title: 'Tactic Master', text: shareText, url: shareUrl });
-    } else {
-      await navigator.clipboard.writeText(shareText);
-      els.shareProfileFeedback.textContent = 'Lien copié ! Colle-le où tu veux pour inviter quelqu\'un.';
-    }
-  } catch (err) {
-    // L'utilisateur peut annuler le partage natif (pas une vraie erreur) ou
-    // le presse-papier peut être bloqué par le navigateur — dans les deux
-    // cas, on reste silencieux plutôt que d'afficher une fausse alerte.
-    if (err.name !== 'AbortError') {
-      els.shareProfileFeedback.textContent = 'Impossible de copier le lien automatiquement.';
-    }
-  }
-}
-
-async function renderMercatoOffersSection() {
-  els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  els.mercatoOffersSent.innerHTML = '';
-  try {
-    const { received, sent } = await fetchMyMercatoOffers();
-
-    els.mercatoOffersReceived.innerHTML = '';
-    if (received.length === 0) {
-      els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Aucune offre reçue.</p>';
-    } else {
-      received.forEach(offer => {
-        const row = document.createElement('div');
-        row.className = 'offer-row';
-        row.innerHTML = `<span class="offer-row-desc">Échange proposé</span>`;
-        const actions = document.createElement('div');
-        actions.className = 'offer-row-actions';
-        const acceptBtn = document.createElement('button');
-        acceptBtn.className = 'btn-small primary';
-        acceptBtn.textContent = 'Accepter';
-        acceptBtn.addEventListener('click', async () => {
-          try {
-            await respondMercatoOffer(offer.id, true);
-            await renderMercatoOffersSection();
-          } catch (err) {
-            alert(err.message || 'Échange impossible pour le moment.');
-          }
-        });
-        const declineBtn = document.createElement('button');
-        declineBtn.className = 'btn-small danger';
-        declineBtn.textContent = 'Refuser';
-        declineBtn.addEventListener('click', async () => {
-          await respondMercatoOffer(offer.id, false);
-          await renderMercatoOffersSection();
-        });
-        actions.appendChild(acceptBtn);
-        actions.appendChild(declineBtn);
-        row.appendChild(actions);
-        els.mercatoOffersReceived.appendChild(row);
-      });
-    }
-
-    els.mercatoOffersSent.innerHTML = '';
-    if (sent.length === 0) {
-      els.mercatoOffersSent.innerHTML = '<p class="profile-empty-note">Aucune offre envoyée.</p>';
-    } else {
-      sent.forEach(offer => {
-        const row = document.createElement('div');
-        row.className = 'offer-row';
-        row.innerHTML = `<span class="offer-row-desc">En attente de réponse</span>`;
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'btn-small danger';
-        cancelBtn.textContent = 'Annuler';
-        cancelBtn.addEventListener('click', async () => {
-          await cancelMercatoOffer(offer.id);
-          await renderMercatoOffersSection();
-        });
-        row.appendChild(cancelBtn);
-        els.mercatoOffersSent.appendChild(row);
-      });
-    }
-  } catch (err) {
-    els.mercatoOffersReceived.innerHTML = '<p class="profile-empty-note">Offres indisponibles pour le moment.</p>';
-  }
-}
-
-async function openMercatoOfferModal(friendUserId, friendName) {
-  mercatoOfferContext = { friendUserId };
-  mercatoMySelectedOwnershipId = null;
-  mercatoFriendSelectedOwnershipId = null;
-  els.mercatoOfferError.textContent = '';
-  els.friendPlayerSelectLabel.textContent = `Tu demandes à ${friendName || 'ton ami'}`;
-  els.myPlayerSelect.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  els.friendPlayerSelect.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
-  els.mercatoOfferOverlay.classList.add('show');
-
-  try {
-    const [myCollection, myCustom, friendCollection] = await Promise.all([
-      fetchMyCollection(), fetchMyCustomPlayers(), fetchFriendCollection(friendUserId)
-    ]);
-    const myAllOwned = [...myCollection, ...myCustom.map(toOwnedShape)];
-    renderMercatoPlayerOptions(els.myPlayerSelect, myAllOwned, ownershipId => {
-      mercatoMySelectedOwnershipId = ownershipId;
-    });
-    renderMercatoFriendOptions(friendCollection);
-  } catch (err) {
-    els.mercatoOfferError.textContent = err.message || 'Collections indisponibles pour le moment.';
-  }
-}
-
-function renderMercatoPlayerOptions(container, owned, onSelect) {
-  container.innerHTML = '';
-  if (owned.length === 0) {
-    container.innerHTML = '<p class="profile-empty-note">Aucun joueur disponible.</p>';
-    return;
-  }
-  owned.forEach(o => {
-    const opt = document.createElement('div');
-    opt.className = 'mercato-player-option';
-    opt.textContent = o.custom_name || (o.isCustom ? o.name : o.fictional_players.name);
-    opt.addEventListener('click', () => {
-      container.querySelectorAll('.mercato-player-option').forEach(el => el.classList.remove('selected'));
-      opt.classList.add('selected');
-      onSelect(o.id);
-    });
-    container.appendChild(opt);
-  });
-}
-
-function renderMercatoFriendOptions(friendCollection) {
-  els.friendPlayerSelect.innerHTML = '';
-  if (friendCollection.length === 0) {
-    els.friendPlayerSelect.innerHTML = '<p class="profile-empty-note">Cet ami n\'a aucun joueur.</p>';
-    return;
-  }
-  friendCollection.forEach(p => {
-    const opt = document.createElement('div');
-    opt.className = 'mercato-player-option';
-    opt.textContent = p.custom_name || p.player_name;
-    opt.addEventListener('click', () => {
-      els.friendPlayerSelect.querySelectorAll('.mercato-player-option').forEach(el => el.classList.remove('selected'));
-      opt.classList.add('selected');
-      mercatoFriendSelectedOwnershipId = p.id;
-    });
-    els.friendPlayerSelect.appendChild(opt);
-  });
-}
-
-async function handleConfirmMercatoOffer() {
-  els.mercatoOfferError.textContent = '';
-  if (!mercatoMySelectedOwnershipId || !mercatoFriendSelectedOwnershipId) {
-    els.mercatoOfferError.textContent = 'Choisis un joueur de chaque côté.';
-    return;
-  }
-  try {
-    await createMercatoOffer(mercatoOfferContext.friendUserId, mercatoMySelectedOwnershipId, mercatoFriendSelectedOwnershipId);
-    els.mercatoOfferOverlay.classList.remove('show');
-    await renderMercatoOffersSection();
-    alert('Offre envoyée ! Ton ami doit l\'accepter pour que l\'échange se fasse.');
-  } catch (err) {
-    els.mercatoOfferError.textContent = err.message || 'Offre impossible pour le moment.';
-  }
-}
-
-async function loadLeaderboardPanel() {
-  els.leaderboardBody.innerHTML = '<tr><td colspan="5">Chargement…</td></tr>';
-  try {
-    const rows = await fetchLeaderboard(20);
-    if (!rows || rows.length === 0) {
-      els.leaderboardBody.innerHTML = '<tr><td colspan="5">Aucun classement disponible pour le moment.</td></tr>';
-      return;
-    }
-    els.leaderboardBody.innerHTML = '';
-    rows.forEach((row, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${row.display_name}</td>
-        <td>${row.level}</td>
-        <td>${row.xp}</td>
-        <td>${row.games_won}</td>
-      `;
-      els.leaderboardBody.appendChild(tr);
-    });
-  } catch (err) {
-    els.leaderboardBody.innerHTML = '<tr><td colspan="5">Classement indisponible pour le moment.</td></tr>';
-  }
+  if (tabName === 'challenges') profileModule.loadChallengesPanel();
+  if (tabName === 'team') profileModule.loadTeamPanel();
+  if (tabName === 'mercato') mercatoModule.loadMercatoPanel();
+  if (tabName === 'leaderboard') profileModule.loadLeaderboardPanel();
 }
 
 // ---------- Démarrage ----------
@@ -2140,9 +1345,59 @@ function init() {
   wireOnlineMode();
   wireGameControls();
   wireShop();
-  wireProfileScreen();
-  wireCreatePlayer();
-  wireMercato();
+  // Initialisation des modules profil et mercato — même pattern que initShop() :
+  // chaque module reçoit ses dépendances explicitement et retourne les
+  // fonctions que main.js doit orchestrer (notamment les loaders d'onglets).
+  const profileModule = initProfile({
+    els,
+    getCurrentUser: () => currentUser,
+    openAccountOverlay: () => {
+      authMode = 'signin';
+      renderAccountOverlayContent();
+      els.accountOverlay.classList.add('show');
+    },
+    checkoutTheme,
+    renderAvatarSvg,
+    hashSeedToAvatar,
+    AVATAR_COLORS,
+    POWER_LABELS,
+    CUSTOM_PLAYER_SLOT_THEME_ID,
+    ensureStarterPack,
+    fetchMyProgress,
+    fetchTodayChallenges,
+    claimLevelRewards,
+    fetchMyCollection,
+    fetchMyLineup,
+    fetchMyCustomPlayers,
+    saveLineup,
+    createCustomPlayer,
+    fetchPlayerCatalog,
+    purchasePlayer,
+    fetchLeaderboard
+  });
+
+  const mercatoModule = initMercato({
+    els,
+    sendFriendRequest,
+    respondFriendRequest,
+    fetchMyFriendships,
+    createMercatoOffer,
+    respondMercatoOffer,
+    cancelMercatoOffer,
+    fetchMyMercatoOffers,
+    fetchFriendCollection,
+    fetchMyCollection,
+    fetchMyCustomPlayers,
+    toOwnedShape,
+    loadTeamPanel: profileModule.loadTeamPanel
+  });
+
+  // switchProfileTab reste dans main.js : c'est de l'orchestration pure
+  // entre deux modules (profileUI et mercatoUI), pas de la logique d'un
+  // domaine en particulier.
+  els.profileTabs?.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab, profileModule, mercatoModule));
+  });
   wirePowers();
   wireAccount();
   wireTutorial();

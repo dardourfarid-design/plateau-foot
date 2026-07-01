@@ -67,6 +67,40 @@ export function renderBoard(container, state, lineupsByTeam = null) {
   renderDestinationMarkers(container, state);
 }
 
+// Icônes SVG dédiées à chaque pouvoir, dessinées au trait — identiques
+// aux badges de la section 04 du preview japonais. Chaque icône est une
+// métaphore visuelle du pouvoir (éclair = vitesse, bouclier = blocage…).
+const POWER_ICONS = {
+  tir_puissant: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M7 1L3 5h2.5L3.5 9l5.5-5H6.5z" fill="#FFD87A"/>
+  </svg>`,
+  sprint: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M8 5H2M6 2l2 3-2 3" stroke="#FFD87A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+  mur: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <rect x="2" y="2.5" width="6" height="5" rx="0.8" stroke="#FFD87A" stroke-width="1.3"/>
+    <path d="M2 5h6" stroke="#FFD87A" stroke-width="1"/>
+  </svg>`,
+  relais: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M2 7 C2 4 4 2 5 3 C6 2 8 4 8 7" stroke="#FFD87A" stroke-width="1.3" stroke-linecap="round"/>
+    <circle cx="5" cy="7.5" r="1" fill="#FFD87A"/>
+  </svg>`,
+  repli_adverse: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M5 2L5 8M2 5.5l3 3 3-3" stroke="#FFD87A" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+};
+
+// Numéros de maillot attribués de façon déterministe depuis l'id du token.
+// Gardien = 1, les autres = 2-11 selon leur position dans la liste.
+// Donne un repère visuel immédiat sans nécessiter de données serveur.
+function jerseyNumberForToken(tok) {
+  if (tok.isGK) return '1';
+  // Extraire un index depuis l'id (ex: "bleu-def-0" → 0)
+  const match = tok.id.match(/-(\d+)$/);
+  const idx = match ? parseInt(match[1], 10) : 0;
+  return String(idx + 2); // 2–11 pour les joueurs de champ
+}
+
 function renderToken(state, tok, lineupsByTeam) {
   const div = document.createElement('div');
   div.className = 'token ' + tok.team + (tok.isGK ? ' gardien' : '');
@@ -76,30 +110,27 @@ function renderToken(state, tok, lineupsByTeam) {
 
   const playerName = displayNameForToken(tok.id, lineupsByTeam);
 
-  // Le marqueur "G" et le nom du joueur se chevauchent visuellement sur un
-  // pion de cette taille — quand un nom est disponible, il devient
-  // l'identifiant visuel principal (le contour blanc du gardien reste de
-  // toute façon visible pour le distinguer des autres pions).
-  if (tok.isGK && !playerName) {
-    const mark = document.createElement('span');
-    mark.className = 'gk-mark';
-    mark.textContent = 'G';
-    div.appendChild(mark);
-  }
-
   if (playerName) {
-    div.title = playerName; // infobulle native au survol (desktop)
+    // Nom joueur disponible : affiché en bas du pion façon maillot
+    div.title = playerName;
     const label = document.createElement('span');
     label.className = 'token-name-label';
     label.textContent = abbreviateName(playerName);
     div.appendChild(label);
+  } else {
+    // Pas de nom : numéro de maillot, plus lisible que rien
+    const num = document.createElement('span');
+    num.className = tok.isGK ? 'gk-mark' : 'jersey-number';
+    num.textContent = jerseyNumberForToken(tok);
+    div.appendChild(num);
   }
 
   if (tok.power) {
     const badge = document.createElement('span');
     badge.className = 'token-power-badge' + (tok.powerUsed ? ' used' : '');
-    badge.textContent = '★';
     badge.title = tok.powerUsed ? 'Pouvoir déjà utilisé' : 'Pouvoir disponible';
+    // Icône SVG du pouvoir, ou étoile par défaut si pouvoir inconnu
+    badge.innerHTML = POWER_ICONS[tok.power] || '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1l1 3h3L7 6l1 3-3-2-3 2 1-3L1 4h3z" fill="#FFD87A"/></svg>';
     div.appendChild(badge);
   }
 

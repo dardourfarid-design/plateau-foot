@@ -40,7 +40,6 @@ const FALLBACK_THEMES = [
   { id: 'nuit-americaine', name: 'Nuit Américaine', description: 'Sous les étoiles, l’été du grand tournoi.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0A1A33', vertTerrainClair: '#102448', bleuEquipe: '#3B5BA5', rougeEquipe: '#B22234', accent: '#F5F2E8' }, isWorldCup: true },
   { id: 'classique', name: 'Classique', description: 'Le terrain vert historique de Tactic Master.', price_cents: 0, currency: 'eur', config: { vertTerrain: '#1F3D2B', vertTerrainClair: '#28492F', bleuEquipe: '#3A6EA5', rougeEquipe: '#C84B31', accent: '#C97B4A' } },
   { id: 'neon', name: 'Néon', description: 'Un terrain électrique pour les soirées arcade.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0D1B2A', vertTerrainClair: '#15263B', bleuEquipe: '#00E5FF', rougeEquipe: '#FF2D75', accent: '#FFD600' } },
-  { id: 'neige', name: 'Neige', description: 'Le grand froid s’abat sur le terrain.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#E8EEF3', vertTerrainClair: '#F4F8FB', bleuEquipe: '#2C5C8A', rougeEquipe: '#A23B3B', accent: '#6FA8D6' } },
   { id: 'terre-battue', name: 'Terre battue', description: 'Ambiance Roland-Garros, mais au foot.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#A8542E', vertTerrainClair: '#BD663C', bleuEquipe: '#2B4C7E', rougeEquipe: '#7E2B2B', accent: '#F2C572' } },
   { id: 'nuit-stade', name: 'Nuit de stade', description: 'Sous les projecteurs, ambiance match en nocturne.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#0B2818', vertTerrainClair: '#123420', bleuEquipe: '#4FC3F7', rougeEquipe: '#FFB74D', accent: '#FFD54F' } },
   { id: 'retro-8bit', name: 'Rétro 8-bit', description: 'L’esprit jeu vidéo des années 80, en plein écran.', price_cents: 199, currency: 'eur', config: { vertTerrain: '#1A1A2E', vertTerrainClair: '#22223B', bleuEquipe: '#4ECDC4', rougeEquipe: '#FF6B6B', accent: '#FFE66D' } },
@@ -127,7 +126,7 @@ async function handleBundlePurchase(deps, themeIds) {
     const result = await checkoutBundle(themeIds, WORLD_CUP_BUNDLE_PRICE_CENTS, currentUser);
     if (result.immediate) {
       const usedFallback = await refreshThemeData();
-      renderShop(usedFallback);
+      renderShop(deps, usedFallback);
     } else if (result.redirectUrl) {
       window.location.href = result.redirectUrl;
     }

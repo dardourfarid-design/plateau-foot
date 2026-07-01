@@ -31,7 +31,10 @@ import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboa
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
-// mercatoService importé dans mercatoUI.js
+import {
+  sendFriendRequest, respondFriendRequest, fetchMyFriendships,
+  createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
+} from '../services/mercatoService.js';
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';

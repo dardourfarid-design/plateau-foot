@@ -1,4 +1,27 @@
 
+// Icônes SVG de pouvoirs pour les badges sur les cartes joueurs (format TCG)
+const POWER_ICONS_CARD = {
+  tir_puissant: '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M7 1L3 5h2.5L3.5 9 9 4H6.5z" fill="currentColor"/></svg>',
+  sprint:        '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M8 5H2M6 2l2 3-2 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  mur:           '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><rect x="2" y="2.5" width="6" height="5" rx="0.8" stroke="currentColor" stroke-width="1.3"/><path d="M2 5h6" stroke="currentColor" stroke-width="1"/></svg>',
+  relais:        '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 7C2 4 4 2 5 3 6 2 8 4 8 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5" cy="7.5" r="1" fill="currentColor"/></svg>',
+  repli_adverse: '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M5 2v6M2 5.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+// Stats VIT/TIR déterministes depuis le nom du joueur (hash simple).
+// Donne un caractère unique à chaque carte sans données supplémentaires serveur.
+function _statFromSeed(str, offset) {
+  let h = offset;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) & 0xffffffff;
+  return 55 + (Math.abs(h) % 41); // plage 55–95
+}
+
+// Déduit une position lisible depuis le style de jeu du joueur
+function _positionFromStyle(style) {
+  const map = { rapide:'ATT', costaud:'DEF', technique:'MIL', polyvalent:'MIL', défensif:'DEF', offensif:'ATT' };
+  return map[style?.toLowerCase()] || 'MIL';
+}
+
 /**
  * Construit une carte joueur au format TCG japonais : avatar, numéro de
  * maillot, badge de position, nom, style, stats VIT/TIR, badge de rareté,

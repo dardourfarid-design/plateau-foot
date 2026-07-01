@@ -1016,11 +1016,18 @@ async function handleAuthSubmit() {
   const email = els.authEmail.value.trim();
   const password = els.authPassword.value;
   els.authError.textContent = '';
+  els.authError.style.color = '';
 
   if (!email || !password) {
     els.authError.textContent = 'Email et mot de passe requis.';
     return;
   }
+
+  // État de chargement sur le bouton — évite les double-clics et indique
+  // clairement que la requête est en cours (Supabase Auth peut prendre 1-2s).
+  const originalLabel = els.authSubmitBtn.textContent;
+  els.authSubmitBtn.textContent = '…';
+  els.authSubmitBtn.disabled = true;
 
   try {
     if (authMode === 'signin') {
@@ -1040,15 +1047,13 @@ async function handleAuthSubmit() {
           [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked
         });
       } catch (consentErr) {
-        // Ne bloque pas la création de compte si l'enregistrement du
-        // consentement échoue (ex: confirmation email requise avant que la
-        // session soit active) — mais on le journalise pour pouvoir
-        // diagnostiquer si ça arrive souvent.
         console.error('Consentement non enregistré :', consentErr);
       }
 
+      els.authSubmitBtn.disabled = false;
+      els.authSubmitBtn.textContent = originalLabel;
       els.authError.style.color = 'var(--craie-att)';
-      els.authError.textContent = 'Compte créé. Vérifie tes emails si une confirmation est requise.';
+      els.authError.textContent = 'Compte créé ! Vérifie tes emails si une confirmation est requise.';
       return;
     }
     currentUser = await getCurrentUser();
@@ -1056,8 +1061,24 @@ async function handleAuthSubmit() {
     renderAccountOverlayContent();
     els.accountOverlay.classList.remove('show');
   } catch (err) {
-    els.authError.style.color = '';
-    els.authError.textContent = err.message || 'Une erreur est survenue.';
+    els.authSubmitBtn.disabled = false;
+    els.authSubmitBtn.textContent = originalLabel;
+    // Traduire les erreurs Supabase les plus fréquentes en français
+    const msg = err.message || '';
+    let displayMsg = msg;
+    if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+      displayMsg = 'Email ou mot de passe incorrect.';
+    } else if (msg.includes('Email not confirmed')) {
+      displayMsg = 'Confirme ton adresse email avant de te connecter (vérifie tes spams).';
+    } else if (msg.includes('User already registered')) {
+      displayMsg = 'Ce compte existe déjà. Connecte-toi plutôt.';
+    } else if (msg.includes('Password should be at least')) {
+      displayMsg = 'Le mot de passe doit faire au moins 6 caractères.';
+    } else if (!msg) {
+      displayMsg = 'Connexion impossible. Vérifie ta connexion internet.';
+    }
+    els.authError.textContent = displayMsg;
+    console.error('[Auth]', err.message);
   }
 }
 

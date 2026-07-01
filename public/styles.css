@@ -1767,12 +1767,15 @@ body{
 /* ========== SPRINT D3 — ANIMATIONS PLATEAU ========== */
 
 /* --- Transitions entre écrans --- */
+/* IMPORTANT : on n'utilise QUE opacity (pas de transform) pour éviter de
+   créer un stacking context résiduel après l'animation (la valeur `both`
+   + un transform identité persistant absorbait les clics de la topbar). */
 .setup-screen, .config-screen, .game-layout, .profile-screen, .shop-layout {
-  animation: screen-enter 0.25s ease both;
+  animation: screen-enter 0.3s ease forwards;
 }
 @keyframes screen-enter {
-  from { opacity:0; transform: scale(0.97) translateY(6px); }
-  to   { opacity:1; transform: scale(1) translateY(0); }
+  from { opacity:0; }
+  to   { opacity:1; }
 }
 
 /* --- Hover pions : soulèvement + intensification ombre --- */

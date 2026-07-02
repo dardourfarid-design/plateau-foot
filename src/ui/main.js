@@ -31,7 +31,7 @@ import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboa
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
-import { getCurrencyBalance, earnCoins } from '../services/currencyService.js';
+import { getCurrencyBalance } from '../services/currencyService.js';
 import { getMyActivePass } from '../services/passService.js';
 import {
   sendFriendRequest, respondFriendRequest, fetchMyFriendships,
@@ -619,18 +619,20 @@ function showEndOverlay(winningTeam) {
   if (currentUser && !tutorial.isActive()) {
     const won = winningTeam === myTeam;
     const goalsScored = gameState.score[myTeam];
-    recordGameResult(won, goalsScored).catch(err => {
-      console.error('Résultat de partie non enregistré :', err);
-    });
-
-    // Pièces tactiques : +10 par victoire, affichage topbar mis à jour
-    if (won) {
-      // Montant décidé côté serveur (10 fixe, anti-spam — migration 0025)
-      earnCoins().then(newBalance => {
+    // XP, streak, défis ET pièces sont attribués côté serveur en un seul
+    // appel (record_game_result, migration 0026) : +10 victoire, +3 défaite,
+    // +15 par défi complété. On relit ensuite le solde et on affiche le
+    // gain réel (différence), qui peut inclure un bonus de défi.
+    const previousBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
+    recordGameResult(won, goalsScored)
+      .then(() => getCurrencyBalance())
+      .then(newBalance => {
         _updateCoinDisplay(newBalance);
-        _showCoinGain(10);
-      }).catch(() => {/* silencieux si hors-ligne */});
-    }
+        if (newBalance > previousBalance) _showCoinGain(newBalance - previousBalance);
+      })
+      .catch(err => {
+        console.error('Résultat de partie non enregistré :', err);
+      });
   }
 }
 
@@ -1017,6 +1019,42 @@ function _updateCoinDisplay(balance) {
   if (els.coinDisplay) {
     els.coinDisplay.style.display = balance > 0 || currentUser ? 'flex' : 'none';
   }
+}
+
+/**
+ * Après un retour de Stripe Checkout, la livraison passe par le webhook :
+ * elle peut atterrir quelques secondes APRÈS la redirection du navigateur.
+ * La boutique s'ouvre donc parfois sur un solde/contenu encore anciens.
+ * On relit le solde à intervalles espacés : dès qu'il bouge, topbar mise à
+ * jour + badge de gain + un rafraîchissement silencieux de la boutique si
+ * elle est toujours affichée. Un rafraîchissement de sécurité à 3 s couvre
+ * aussi les achats sans pièces (kits, packs, crédits).
+ */
+function _refreshAfterCheckout() {
+  const initialBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
+  let settled = false;
+
+  // Rafraîchissement de sécurité unique (kits/packs livrés par webhook)
+  setTimeout(() => {
+    if (!settled && els.shopScreen && !els.shopScreen.classList.contains('hidden')) {
+      els.shopBtn?.click();
+    }
+  }, 3000);
+
+  [1500, 4000, 8000, 15000].forEach(ms => {
+    setTimeout(() => {
+      if (settled) return;
+      getCurrencyBalance().then(balance => {
+        if (settled || balance === initialBalance) return;
+        settled = true;
+        _updateCoinDisplay(balance);
+        if (balance > initialBalance) _showCoinGain(balance - initialBalance);
+        if (els.shopScreen && !els.shopScreen.classList.contains('hidden')) {
+          els.shopBtn?.click(); // recharge la boutique avec le nouveau solde
+        }
+      }).catch(() => {/* silencieux : le prochain essai retentera */});
+    }, ms);
+  });
 }
 
 /** Micro-animation de gain de pièces affichée sur la topbar */
@@ -1499,12 +1537,14 @@ function handlePaymentReturn() {
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
     els.shopBtn?.click();
+    _refreshAfterCheckout();
   } else if (checkoutResult === 'pass_success') {
     // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
     // L'activation passe par le webhook Stripe : elle peut prendre quelques
     // secondes — le message le dit pour éviter un rechargement paniqué.
     showPurchaseToast('🎫', 'Pass Saison activé ! (quelques secondes de délai possibles)', false);
     els.shopBtn?.click();
+    _refreshAfterCheckout();
   } else if (checkoutResult === 'cancelled') {
     showPurchaseToast('↩️', 'Achat annulé — aucun montant n\'a été débité.', true);
   }

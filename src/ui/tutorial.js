@@ -44,6 +44,30 @@ export const TUTORIAL_STEPS = [
     advanceOn: 'goal-scored'
   },
   {
+    id: 'progress-xp',
+    text: 'Chaque partie te rapporte de l\'XP — victoire ou défaite. Tu montes de niveau, et les paliers offrent de vrais cadeaux : un joueur Rare au niveau 5, un Légendaire au niveau 10. Tout se suit dans « Mon profil ».',
+    target: '#profileBtn',
+    advanceOn: 'next'
+  },
+  {
+    id: 'daily-challenges',
+    text: 'Tous les jours, 3 défis t\'attendent : gagner une partie, marquer des buts… Chaque défi complété rapporte des pièces bonus, et ta série de connexion grimpe — sans jamais te punir si tu rates un jour.',
+    target: '#profileBtn',
+    advanceOn: 'next'
+  },
+  {
+    id: 'coins',
+    text: 'Les pièces tactiques ⬤ : tu en gagnes à CHAQUE partie (+10 victoire, +3 défaite, +15 par défi complété). Elles débloquent les kits du jour en boutique. Pressé ? Des packs de pièces existent aussi.',
+    target: null,
+    advanceOn: 'next'
+  },
+  {
+    id: 'shop',
+    text: 'La boutique : kits de terrain, packs de joueurs à pouvoirs, Pass Saison. Tout est cosmétique ou optionnel — on peut très bien gagner sans dépenser un centime.',
+    target: '#shopBtn',
+    advanceOn: 'next'
+  },
+  {
     id: 'outro',
     text: 'Et voilà, tu sais tout ! Pousse le ballon, surveille ton adversaire, marque le premier. Prêt pour une vraie partie ?',
     target: null,

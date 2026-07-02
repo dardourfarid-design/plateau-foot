@@ -1021,6 +1021,42 @@ function _updateCoinDisplay(balance) {
   }
 }
 
+/**
+ * Après un retour de Stripe Checkout, la livraison passe par le webhook :
+ * elle peut atterrir quelques secondes APRÈS la redirection du navigateur.
+ * La boutique s'ouvre donc parfois sur un solde/contenu encore anciens.
+ * On relit le solde à intervalles espacés : dès qu'il bouge, topbar mise à
+ * jour + badge de gain + un rafraîchissement silencieux de la boutique si
+ * elle est toujours affichée. Un rafraîchissement de sécurité à 3 s couvre
+ * aussi les achats sans pièces (kits, packs, crédits).
+ */
+function _refreshAfterCheckout() {
+  const initialBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
+  let settled = false;
+
+  // Rafraîchissement de sécurité unique (kits/packs livrés par webhook)
+  setTimeout(() => {
+    if (!settled && els.shopScreen && !els.shopScreen.classList.contains('hidden')) {
+      els.shopBtn?.click();
+    }
+  }, 3000);
+
+  [1500, 4000, 8000, 15000].forEach(ms => {
+    setTimeout(() => {
+      if (settled) return;
+      getCurrencyBalance().then(balance => {
+        if (settled || balance === initialBalance) return;
+        settled = true;
+        _updateCoinDisplay(balance);
+        if (balance > initialBalance) _showCoinGain(balance - initialBalance);
+        if (els.shopScreen && !els.shopScreen.classList.contains('hidden')) {
+          els.shopBtn?.click(); // recharge la boutique avec le nouveau solde
+        }
+      }).catch(() => {/* silencieux : le prochain essai retentera */});
+    }, ms);
+  });
+}
+
 /** Micro-animation de gain de pièces affichée sur la topbar */
 function _showCoinGain(amount) {
   const badge = document.createElement('div');
@@ -1501,12 +1537,14 @@ function handlePaymentReturn() {
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
     els.shopBtn?.click();
+    _refreshAfterCheckout();
   } else if (checkoutResult === 'pass_success') {
     // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
     // L'activation passe par le webhook Stripe : elle peut prendre quelques
     // secondes — le message le dit pour éviter un rechargement paniqué.
     showPurchaseToast('🎫', 'Pass Saison activé ! (quelques secondes de délai possibles)', false);
     els.shopBtn?.click();
+    _refreshAfterCheckout();
   } else if (checkoutResult === 'cancelled') {
     showPurchaseToast('↩️', 'Achat annulé — aucun montant n\'a été débité.', true);
   }

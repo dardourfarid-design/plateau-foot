@@ -20,13 +20,14 @@ let activePass        = null;
 let foundersRemaining = 200;
 
 // Kits disponibles via pièces (sélection aléatoire quotidienne stable)
-const COIN_KIT_COST = 10;
+const COIN_KIT_COST = 100;
 
 // Les produits "virtuels" vivent dans la table themes (pattern migrations
 // 0012/0018/0025 : joueurs, packs, slot custom) mais ne sont pas des kits.
 function _isRealKit(theme) {
   return !theme.id.startsWith('player-')
       && !theme.id.startsWith('pack-')
+      && !theme.id.startsWith('coins-')
       && theme.id !== 'custom-player-slot';
 }
 
@@ -54,14 +55,21 @@ const FALLBACK_THEMES = [
   { id: 'arcade-turf',   name: 'Arcade Turf',     description: 'Pions chunky, ombres franches, énergie arcade.',                   price_cents: 249, currency: 'eur', config: { vertTerrain: '#178A3E', vertTerrainClair: '#1EA34A', bleuEquipe: '#2563EB', rougeEquipe: '#E11D48', accent: '#FACC15', skin: 'arcade-turf' } },
 ];
 
+// ── Packs de pièces tactiques (prix vérifiés côté serveur) ─────────
+const COIN_PACKS = [
+  { id: 'coins-100', amount: 100, price_cents: 199, tag: '' },
+  { id: 'coins-250', amount: 250, price_cents: 399, tag: 'POPULAIRE' },
+  { id: 'coins-600', amount: 600, price_cents: 799, tag: 'MEILLEUR TAUX' }
+];
+
 // ── Données packs ──────────────────────────────────────────────────
 const PACKS = [
   {
     id: 'pack-3-kits',
     name: '3 Kits au choix',
-    description: 'Choisis 3 kits dans le catalogue. Économise 25%.',
-    price_cents: 399,
-    saves: '(vs 7,47 €)',
+    description: 'Choisis 3 kits dans le catalogue, quand tu veux.',
+    price_cents: 549,
+    saves: '(—27 % vs 7,47 €)',
     icon: '🎨'
   },
   {
@@ -159,11 +167,14 @@ function _renderShop(deps) {
   // 2. Passes Saison
   sections.push(_renderPasses(deps));
 
-  // 3. Packs groupés
-  sections.push(_renderPacks(deps));
-
-  // 4. Kits à l'unité + pièces
+  // 3. Kits (cœur de l'offre) + kit du jour en pièces
   sections.push(_renderKits(deps));
+
+  // 4. Pièces tactiques (le moyen de gagner les kits du jour)
+  sections.push(_renderCoinPacks(deps));
+
+  // 5. Packs groupés
+  sections.push(_renderPacks(deps));
 
   els.shopGrid.innerHTML = '';
   sections.forEach(section => {
@@ -200,7 +211,7 @@ function _renderFoundersPack(deps) {
     <div class="founders-perks">
       <div class="founders-perk">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 5.5H15L10.2 10l1.8 5.5L8 12.3 4 15.5l1.8-5.5L1 6.5h5.2z" fill="#FFD87A"/></svg>
-        Tous les kits actuels débloqués (17 kits)
+        Tous les kits actuels débloqués — et ceux de la Saison 1 à venir
       </div>
       <div class="founders-perk">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 4.5H14L10.2 9l1.5 4.5L8 11.2 4.3 13.5 5.8 9 2 6.5h4.5z" fill="#9B6BFF"/></svg>
@@ -243,7 +254,7 @@ function _renderPasses(deps) {
       <span class="shop-section-tag">ACCÈS ILLIMITÉ</span>
       <h2 class="shop-section-title">Pass Saison S1</h2>
       <p class="shop-section-desc">
-        Tous les kits de la Saison 1 débloqués + 1 joueur Rare garanti +
+        Tous les kits Saison 1 débloqués pendant l'abonnement + 1 joueur Rare offert +
         bonus XP +20% sur chaque partie. Annulable à tout moment.
       </p>
     </div>
@@ -253,7 +264,7 @@ function _renderPasses(deps) {
         <div class="shop-pass-label">MENSUEL</div>
         <div class="shop-pass-price">1,99 €<span class="shop-pass-period">/mois</span></div>
         <ul class="shop-pass-perks">
-          <li>Tous les kits S1 (17)</li>
+          <li>Tous les kits Saison 1</li>
           <li>1 joueur Rare offert</li>
           <li>XP +20%</li>
         </ul>
@@ -268,7 +279,7 @@ function _renderPasses(deps) {
         <div class="shop-pass-price">3,99 €<span class="shop-pass-period">/3 mois</span></div>
         <div class="shop-pass-savings">Économise 35% vs mensuel</div>
         <ul class="shop-pass-perks">
-          <li>Tous les kits S1 (17)</li>
+          <li>Tous les kits Saison 1</li>
           <li>1 joueur Rare offert</li>
           <li>XP +20%</li>
           <li>Accès aux kits S2 en avant-première</li>
@@ -325,6 +336,68 @@ function _renderPacks(deps) {
   return section;
 }
 
+// ── Section 3bis : Packs de pièces tactiques ──────────────────────
+function _renderCoinPacks(deps) {
+  const section = document.createElement('section');
+  section.className = 'shop-section';
+
+  section.innerHTML = `
+    <div class="shop-section-header">
+      <span class="shop-section-tag">PIÈCES TACTIQUES</span>
+      <h2 class="shop-section-title">Pièces</h2>
+      <p class="shop-section-desc">
+        Ton solde : <strong>${coinBalance} pièce${coinBalance > 1 ? 's' : ''}</strong>.
+        Tu en gagnes à chaque partie (+10 victoire, +3 défaite, +15 par défi du jour) —
+        ou recharge instantanément avec un pack.
+      </p>
+    </div>
+    <div class="shop-packs-grid shop-coins-packs-grid"></div>
+  `;
+
+  const grid = section.querySelector('.shop-coins-packs-grid');
+  COIN_PACKS.forEach(pack => {
+    const card = document.createElement('div');
+    card.className = 'shop-pack-card';
+    card.innerHTML = `
+      ${pack.tag ? `<div class="shop-pass-badge-best">${pack.tag}</div>` : ''}
+      <div class="shop-pack-icon"><svg width="28" height="28" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg></div>
+      <div class="shop-pack-name">${pack.amount} pièces</div>
+      <div class="shop-pack-desc">${Math.floor(pack.amount / COIN_KIT_COST) > 1
+        ? `Soit ${Math.floor(pack.amount / COIN_KIT_COST)} kits du jour, ou garde-les pour la suite.`
+        : 'Soit 1 kit du jour, ou garde-les pour la suite.'}</div>
+      <div class="shop-pack-footer">
+        <span class="shop-pack-price">${formatPrice(pack.price_cents, 'eur')}</span>
+      </div>
+      <button class="btn primary shop-pack-btn">Acheter</button>
+    `;
+    card.querySelector('.shop-pack-btn').addEventListener('click', () =>
+      _buyCoins(pack.id, deps)
+    );
+    grid.appendChild(card);
+  });
+
+  return section;
+}
+
+async function _buyCoins(packId, deps) {
+  if (!deps.getCurrentUser()) { deps.openAccountForSignIn(); return; }
+  try {
+    const token = await getAccessToken();
+    if (!token) throw new Error('Session expirée, reconnecte-toi.');
+    const supabaseUrl = window.__PLATEAU_FOOT_CONFIG__?.supabaseUrl;
+    const res = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ kind: 'coins', packId })
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert(data.error || 'Impossible de créer la session de paiement.');
+  } catch (err) {
+    alert(err.message || 'Achat impossible pour le moment.');
+  }
+}
+
 // ── Section 4 : Kits à l'unité + pièces ───────────────────────────
 function _renderKits(deps) {
   const section = document.createElement('section');
@@ -349,8 +422,9 @@ function _renderKits(deps) {
     <div class="shop-coins-header">
       <div class="shop-coins-info">
         <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg>
-        Ton solde : <strong>${coinBalance} pièce${coinBalance > 1 ? 's' : ''}</strong>
-        <span class="shop-coins-hint">Gagne 10 pièces par victoire</span>
+        <strong>Kits du jour — ${COIN_KIT_COST} pièces</strong> · rotation quotidienne ·
+        ton solde : <strong>${coinBalance} pièce${coinBalance > 1 ? 's' : ''}</strong>
+        <span class="shop-coins-hint">+10 par victoire, +3 par défaite, +15 par défi</span>
       </div>
       <div class="shop-coins-grid" id="coinKitsGrid"></div>
     </div>
@@ -368,9 +442,12 @@ function _renderKits(deps) {
     });
   }
 
-  // Remplir tous les kits
+  // Remplir tous les kits — sans dupliquer ceux déjà proposés en
+  // "kit du jour" juste au-dessus (ils réapparaîtront dans la grille
+  // normale dès demain, à la rotation suivante).
+  const coinKitIds = coinKits.map(t => t.id);
   const kitsGrid = section.querySelector('#shopKitsGrid');
-  themes.forEach(theme => {
+  themes.filter(t => !coinKitIds.includes(t.id)).forEach(theme => {
     const card = _buildKitCard(theme, deps, { coinMode: false });
     kitsGrid.appendChild(card);
   });

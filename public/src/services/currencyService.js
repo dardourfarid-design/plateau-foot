@@ -26,19 +26,6 @@ export async function getCurrencyBalance() {
 }
 
 /**
- * Crédite les pièces de victoire au joueur connecté.
- * Le MONTANT est décidé côté serveur (10, fixe — migration 0025) : le client
- * ne transmet plus jamais de montant, il ne fait que déclencher l'événement.
- * Retourne le nouveau solde.
- */
-export async function earnCoins() {
-  const client = requireClient();
-  const { data, error } = await client.rpc('earn_coins');
-  if (error) throw error;
-  return data; // nouveau solde
-}
-
-/**
  * Débloque un kit contre des pièces, de façon ATOMIQUE et PERSISTÉE :
  * débit des pièces + ligne d'achat créés dans la même transaction SQL
  * (unlock_theme_with_coins, migration 0025). Avant l'audit, seules les

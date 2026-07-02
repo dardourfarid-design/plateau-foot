@@ -31,7 +31,7 @@ import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboa
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
-import { getCurrencyBalance, earnCoins } from '../services/currencyService.js';
+import { getCurrencyBalance } from '../services/currencyService.js';
 import { getMyActivePass } from '../services/passService.js';
 import {
   sendFriendRequest, respondFriendRequest, fetchMyFriendships,
@@ -619,18 +619,20 @@ function showEndOverlay(winningTeam) {
   if (currentUser && !tutorial.isActive()) {
     const won = winningTeam === myTeam;
     const goalsScored = gameState.score[myTeam];
-    recordGameResult(won, goalsScored).catch(err => {
-      console.error('Résultat de partie non enregistré :', err);
-    });
-
-    // Pièces tactiques : +10 par victoire, affichage topbar mis à jour
-    if (won) {
-      // Montant décidé côté serveur (10 fixe, anti-spam — migration 0025)
-      earnCoins().then(newBalance => {
+    // XP, streak, défis ET pièces sont attribués côté serveur en un seul
+    // appel (record_game_result, migration 0026) : +10 victoire, +3 défaite,
+    // +15 par défi complété. On relit ensuite le solde et on affiche le
+    // gain réel (différence), qui peut inclure un bonus de défi.
+    const previousBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
+    recordGameResult(won, goalsScored)
+      .then(() => getCurrencyBalance())
+      .then(newBalance => {
         _updateCoinDisplay(newBalance);
-        _showCoinGain(10);
-      }).catch(() => {/* silencieux si hors-ligne */});
-    }
+        if (newBalance > previousBalance) _showCoinGain(newBalance - previousBalance);
+      })
+      .catch(err => {
+        console.error('Résultat de partie non enregistré :', err);
+      });
   }
 }
 

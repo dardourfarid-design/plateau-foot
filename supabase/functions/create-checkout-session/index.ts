@@ -41,9 +41,17 @@ const PASS_PRICES = {
                intervalCount: 3 }
 };
 
+// Packs de pièces tactiques (one-time). Le CRÉDIT de pièces est décidé côté
+// SQL (complete_stripe_purchase, migration 0026) — jamais par le client.
+const COIN_CATALOG: Record<string, { cents: number; label: string }> = {
+  'coins-100': { cents: 199, label: '100 Pièces Tactiques' },
+  'coins-250': { cents: 399, label: '250 Pièces Tactiques' },
+  'coins-600': { cents: 799, label: '600 Pièces Tactiques' }
+};
+
 // Prix des packs (one-time)
 const PACK_CATALOG: Record<string, { cents: number; label: string; kind: string }> = {
-  'pack-3-kits':   { cents: 399,  label: 'Pack 3 Kits',              kind: 'pack' },
+  'pack-3-kits':   { cents: 549,  label: 'Pack 3 Kits',              kind: 'pack' },
   'pack-academie': { cents: 499,  label: 'Pack Académie — 3 Rares',  kind: 'pack' },
   'pack-legendes': { cents: 799,  label: 'Pack Légendes — 2 Légendaires', kind: 'pack' },
   'pack-fondateurs':{ cents: 999, label: 'Pack Fondateurs',          kind: 'pack' }
@@ -119,6 +127,51 @@ Deno.serve(async (req) => {
           metadata: { user_id: user.id, pass_type: passType }
         }
       });
+
+      return jsonResponse({ url: session.url });
+    }
+
+    // ── PIÈCES TACTIQUES (one-time) ─────────────────────────────────────
+    if (body.kind === 'coins') {
+      const coinPack = COIN_CATALOG[body.packId];
+      if (!coinPack) return jsonResponse({ error: 'Pack de pièces introuvable.' }, 400);
+
+      const tempSessionId = `pending-${crypto.randomUUID()}`;
+      const { error: coinPendingError } = await supabase.rpc('create_pending_purchase', {
+        p_theme_id:          body.packId,
+        p_amount_cents:      coinPack.cents,
+        p_stripe_session_id: tempSessionId
+      });
+      if (coinPendingError) {
+        console.error('create_pending_purchase (coins):', coinPendingError.message);
+        return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'eur',
+            product_data: { name: coinPack.label },
+            unit_amount: coinPack.cents
+          },
+          quantity: 1
+        }],
+        success_url: `${FRONTEND_URL}/?checkout=success`,
+        cancel_url: `${FRONTEND_URL}/?checkout=cancelled`,
+        client_reference_id: user.id,
+        metadata: { theme_id: body.packId, coin_pack: body.packId }
+      });
+
+      const { error: coinUpdateError } = await supabase.rpc('update_pending_purchase_session_id', {
+        p_old_session_id: tempSessionId,
+        p_new_session_id: session.id
+      });
+      if (coinUpdateError) {
+        console.error('update_pending_purchase_session_id (coins):', coinUpdateError.message);
+        return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+      }
 
       return jsonResponse({ url: session.url });
     }

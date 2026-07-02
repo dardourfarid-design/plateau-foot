@@ -217,32 +217,6 @@ const LINEUP_SLOT_LABELS = {
  * Exporté et passé comme dep à mercatoUI, qui en a aussi besoin.
  */
 export function toOwnedShape(customPlayer) {
-  // ---------- Indicateur glissant d'onglet ----------
-
-  function _initTabIndicator(els) {
-    const tabsContainer = els.profileTabs;
-    if (!tabsContainer) return;
-    const indicator = document.createElement('div');
-    indicator.className = 'tab-indicator';
-    tabsContainer.appendChild(indicator);
-    // Positionner immédiatement sur l'onglet actif
-    const active = tabsContainer.querySelector('.profile-tab.active');
-    if (active) _moveTabIndicator(indicator, active);
-    // Écouter les clics sur les onglets pour déplacer l'indicateur
-    tabsContainer.querySelectorAll('.profile-tab').forEach(tab => {
-      tab.addEventListener('click', () => _moveTabIndicator(indicator, tab));
-    });
-  }
-
-  function _moveTabIndicator(indicator, activeTab) {
-    const container = activeTab.closest('.profile-tabs');
-    if (!container || !indicator) return;
-    const containerRect = container.getBoundingClientRect();
-    const tabRect = activeTab.getBoundingClientRect();
-    indicator.style.left = (tabRect.left - containerRect.left) + 'px';
-    indicator.style.width = tabRect.width + 'px';
-  }
-
   return {
     id: customPlayer.id,
     isCustom: true,
@@ -319,6 +293,32 @@ export function initProfile(deps) {
 
   // ----- Création de joueur personnalisé -----
   _wireCreatePlayer(deps);
+
+  // ---------- Indicateur glissant d'onglet ----------
+  // Ces deux fonctions sont définies ici (à l'intérieur d'initProfile) pour
+  // accéder à la même portée que les autres fonctions du module profil.
+
+  function _initTabIndicator(els) {
+    const tabsContainer = els.profileTabs;
+    if (!tabsContainer) return;
+    const indicator = document.createElement('div');
+    indicator.className = 'tab-indicator';
+    tabsContainer.appendChild(indicator);
+    const active = tabsContainer.querySelector('.profile-tab.active');
+    if (active) _moveTabIndicator(indicator, active);
+    tabsContainer.querySelectorAll('.profile-tab').forEach(tab => {
+      tab.addEventListener('click', () => _moveTabIndicator(indicator, tab));
+    });
+  }
+
+  function _moveTabIndicator(indicator, activeTab) {
+    const container = activeTab.closest('.profile-tabs');
+    if (!container || !indicator) return;
+    const containerRect = container.getBoundingClientRect();
+    const tabRect = activeTab.getBoundingClientRect();
+    indicator.style.left = (tabRect.left - containerRect.left) + 'px';
+    indicator.style.width = tabRect.width + 'px';
+  }
 
   return {
     /** Charge l'onglet progression et affiche l'écran profil. */

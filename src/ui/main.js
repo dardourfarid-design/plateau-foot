@@ -1016,6 +1016,7 @@ function renderAccountOverlayContent() {
 }
 
 async function handleAuthSubmit() {
+  console.log('[handleAuthSubmit] démarrage, authMode=', authMode);
   const email = els.authEmail.value.trim();
   const password = els.authPassword.value;
   els.authError.textContent = '';
@@ -1034,7 +1035,9 @@ async function handleAuthSubmit() {
 
   try {
     if (authMode === 'signin') {
+      console.log('[auth] appel signInWithEmail...');
       const { error } = await signInWithEmail(email, password);
+      console.log('[auth] signInWithEmail retour:', error ? ('ERREUR: ' + error.message) : 'succès');
       if (error) throw error;
     } else {
       const displayName = els.authDisplayName.value.trim() || 'Joueur';
@@ -1423,7 +1426,13 @@ function init() {
     tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab, profileModule, mercatoModule));
   });
   wirePowers();
-  wireAccount();
+  try {
+    wireAccount();
+    console.log('[init] wireAccount OK - listeners compte branchés');
+  } catch (err) {
+    console.error('[init] wireAccount CRASH:', err);
+    throw err;
+  }
   wireTutorial();
   registerServiceWorker();
   handlePaymentReturn();
@@ -1484,4 +1493,16 @@ function registerServiceWorker() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    init();
+  } catch (err) {
+    // Affiche l'erreur d'initialisation directement dans la page
+    // pour permettre le diagnostic sans console DevTools
+    console.error('[init() CRASH]', err);
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#C83222;color:#fff;padding:14px 18px;font-family:monospace;font-size:13px;white-space:pre-wrap;word-break:break-all;';
+    banner.textContent = '[ERREUR INIT] ' + err.constructor.name + ': ' + err.message + '\n' + (err.stack || '').split('\n').slice(1,4).join('\n');
+    document.body.prepend(banner);
+  }
+});

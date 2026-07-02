@@ -14,21 +14,43 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v2'; // incrémenté pour invalider l'ancien cache v1 chez les utilisateurs déjà installés
+const CACHE_NAME = 'tactic-master-v3'; // v3 : liste d'assets complétée (audit) — modules extraits + skins + icônes
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
+  './skins.css',
   './config.js',
   './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
   './src/engine/ai.js',
+  './src/engine/powers.js',
   './src/ui/main.js',
   './src/ui/boardRenderer.js',
   './src/ui/themeManager.js',
   './src/ui/tutorial.js',
   './src/ui/playerIdentity.js',
-  './src/ui/playerAvatar.js'
+  './src/ui/playerAvatar.js',
+  './src/ui/shopUI.js',
+  './src/ui/profileUI.js',
+  './src/ui/mercatoUI.js',
+  './src/services/supabaseClient.js',
+  './src/services/consentService.js',
+  './src/services/currencyService.js',
+  './src/services/customPlayerService.js',
+  './src/services/mercatoService.js',
+  './src/services/multiplayerService.js',
+  './src/services/notificationService.js',
+  './src/services/passService.js',
+  './src/services/playerCollectionService.js',
+  './src/services/progressService.js',
+  './src/services/payment/paymentProvider.js',
+  './src/services/payment/stripePaymentProvider.js',
+  './src/services/payment/mockPaymentProvider.js',
+  './src/services/payment/PaymentProvider.contract.js'
 ];
 
 self.addEventListener('install', event => {

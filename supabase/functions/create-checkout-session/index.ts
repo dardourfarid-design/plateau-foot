@@ -25,8 +25,10 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://tactic-master.vercel.app';
 
+// CORS restreint au front de production (au lieu de '*') : ces fonctions ne
+// sont appelées que par le site lui-même.
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': FRONTEND_URL,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
@@ -108,7 +110,14 @@ Deno.serve(async (req) => {
         success_url: `${FRONTEND_URL}/?checkout=pass_success&pass_type=${passType}`,
         cancel_url: `${FRONTEND_URL}/?checkout=cancelled`,
         client_reference_id: user.id,
-        metadata: { user_id: user.id, pass_type: passType }
+        metadata: { user_id: user.id, pass_type: passType },
+        // INDISPENSABLE : les metadata de session ne sont pas propagées à la
+        // Subscription par Stripe. Sans ce bloc, le webhook
+        // customer.subscription.created reçoit sub.metadata vide et le pass
+        // n'est JAMAIS activé (bug corrigé par l'audit).
+        subscription_data: {
+          metadata: { user_id: user.id, pass_type: passType }
+        }
       });
 
       return jsonResponse({ url: session.url });
@@ -119,12 +128,27 @@ Deno.serve(async (req) => {
       const pack = PACK_CATALOG[body.packId];
       if (!pack) return jsonResponse({ error: 'Pack introuvable.' }, 400);
 
+      // Édition limitée : refuse la vente si le compteur Fondateurs est épuisé.
+      if (body.packId === 'pack-fondateurs') {
+        const { data: remaining } = await supabase.rpc('get_founders_remaining');
+        if ((remaining ?? 0) <= 0) {
+          return jsonResponse({ error: 'Le Pack Fondateurs est épuisé.' }, 409);
+        }
+      }
+
       const tempSessionId = `pending-${crypto.randomUUID()}`;
-      await supabase.rpc('create_pending_purchase', {
+      // ERREUR VÉRIFIÉE (audit) : avant, un échec silencieux ici laissait
+      // l'utilisateur payer sans qu'aucune ligne pending n'existe → paiement
+      // encaissé, produit jamais livré par le webhook.
+      const { error: pendingError } = await supabase.rpc('create_pending_purchase', {
         p_theme_id:          body.packId,
         p_amount_cents:      pack.cents,
         p_stripe_session_id: tempSessionId
       });
+      if (pendingError) {
+        console.error('create_pending_purchase (pack):', pendingError.message);
+        return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+      }
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -143,23 +167,31 @@ Deno.serve(async (req) => {
         metadata: { theme_id: body.packId, pack_id: body.packId }
       });
 
-      await supabase.rpc('update_pending_purchase_session_id', {
+      const { error: updateError } = await supabase.rpc('update_pending_purchase_session_id', {
         p_old_session_id: tempSessionId,
         p_new_session_id: session.id
       });
+      if (updateError) {
+        console.error('update_pending_purchase_session_id (pack):', updateError.message);
+        return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+      }
 
       return jsonResponse({ url: session.url });
     }
 
     // ── THÈMES & BUNDLE (comportement inchangé) ──────────────────────────
-    const { themeId, priceCents, productName } = await resolveProduct(supabase, body);
+    const { themeId, priceCents, productName, allThemeIds } = await resolveProduct(supabase, body);
 
     const tempSessionId = `pending-${crypto.randomUUID()}`;
-    await supabase.rpc('create_pending_purchase', {
+    const { error: pendingError } = await supabase.rpc('create_pending_purchase', {
       p_theme_id: themeId,
       p_amount_cents: priceCents,
       p_stripe_session_id: tempSessionId
     });
+    if (pendingError) {
+      console.error('create_pending_purchase:', pendingError.message);
+      return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -175,13 +207,19 @@ Deno.serve(async (req) => {
       success_url: `${FRONTEND_URL}/?checkout=success`,
       cancel_url: `${FRONTEND_URL}/?checkout=cancelled`,
       client_reference_id: user.id,
-      metadata: { theme_id: themeId }
+      // theme_ids : liste complète pour un bundle — le webhook octroie CHAQUE
+      // thème (avant, seul le premier du bundle était livré).
+      metadata: { theme_id: themeId, ...(allThemeIds ? { theme_ids: allThemeIds } : {}) }
     });
 
-    await supabase.rpc('update_pending_purchase_session_id', {
+    const { error: updateError } = await supabase.rpc('update_pending_purchase_session_id', {
       p_old_session_id: tempSessionId,
       p_new_session_id: session.id
     });
+    if (updateError) {
+      console.error('update_pending_purchase_session_id:', updateError.message);
+      return jsonResponse({ error: 'Achat momentanément indisponible.' }, 500);
+    }
 
     return jsonResponse({ url: session.url });
 
@@ -197,13 +235,18 @@ async function resolveProduct(supabase: any, body: any) {
       .from('themes').select('id, name, price_cents')
       .eq('id', body.themeId).eq('is_active', true).single();
     if (error || !theme) throw new Error('Thème introuvable.');
-    return { themeId: theme.id, priceCents: theme.price_cents, productName: theme.name };
+    return { themeId: theme.id, priceCents: theme.price_cents, productName: theme.name, allThemeIds: null };
   }
   if (body.kind === 'bundle') {
     const { data: themes, error } = await supabase
       .from('themes').select('id, price_cents').in('id', body.themeIds).eq('is_active', true);
     if (error || !themes?.length) throw new Error('Bundle introuvable.');
-    return { themeId: themes[0].id, priceCents: 699, productName: 'Pack Mondial complet' };
+    return {
+      themeId: themes[0].id,
+      priceCents: 699,
+      productName: 'Pack Mondial complet',
+      allThemeIds: themes.map((t: { id: string }) => t.id).join(',')
+    };
   }
   throw new Error('Type de produit inconnu.');
 }

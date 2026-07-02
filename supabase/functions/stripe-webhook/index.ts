@@ -46,11 +46,28 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
 
         if (session.mode === 'payment') {
-          // Débloque l'achat dans purchases
+          // Débloque l'achat dans purchases (+ fulfillment packs, voir 0025)
           const { error } = await supabaseAdmin.rpc('complete_stripe_purchase', {
             p_stripe_session_id: session.id
           });
           if (error) console.error('complete_stripe_purchase:', error.message);
+
+          // Bundle : metadata.theme_ids contient TOUS les thèmes du lot —
+          // on octroie chacun (avant l'audit, seul le premier était livré).
+          if (session.metadata?.theme_ids && session.client_reference_id) {
+            const themeIds = session.metadata.theme_ids.split(',');
+            const rows = themeIds.map((id: string) => ({
+              user_id: session.client_reference_id,
+              theme_id: id,
+              amount_cents: 0,
+              status: 'completed',
+              stripe_session_id: `${session.id}-${id}`
+            }));
+            const { error: bundleError } = await supabaseAdmin
+              .from('purchases')
+              .upsert(rows, { onConflict: 'user_id,theme_id' });
+            if (bundleError) console.error('octroi bundle:', bundleError.message);
+          }
 
           // Décrémente le compteur si c'est un Pack Fondateurs
           if (session.metadata?.pack_id === 'pack-fondateurs') {
@@ -66,6 +83,14 @@ Deno.serve(async (req) => {
       case 'customer.subscription.created': {
         const sub = event.data.object as Stripe.Subscription;
         await upsertPass(sub, 'active');
+        // "1 joueur Rare offert" — promesse de la boutique, octroyée une seule
+        // fois par utilisateur (fonction idempotente, voir migration 0025).
+        if (sub.metadata?.user_id) {
+          const { error } = await supabaseAdmin.rpc('grant_pass_rare_reward', {
+            p_user_id: sub.metadata.user_id
+          });
+          if (error) console.error('grant_pass_rare_reward:', error.message);
+        }
         break;
       }
 

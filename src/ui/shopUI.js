@@ -9,17 +9,26 @@ import { fetchActiveThemes, fetchMyPurchases, getAccessToken } from '../services
 import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/payment/paymentProvider.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { getFoundersRemaining, getMyActivePass } from '../services/passService.js';
-import { getCurrencyBalance, spendCoins } from '../services/currencyService.js';
+import { getCurrencyBalance, unlockThemeWithCoins, getKitCredits, redeemKitCredit } from '../services/currencyService.js';
 
 let availableThemes   = [];
 let purchasedThemeIds = [];
 let activeThemeId     = DEFAULT_THEME_ID;
 let coinBalance       = 0;
+let kitCredits        = 0;
 let activePass        = null;
 let foundersRemaining = 200;
 
 // Kits disponibles via pièces (sélection aléatoire quotidienne stable)
 const COIN_KIT_COST = 10;
+
+// Les produits "virtuels" vivent dans la table themes (pattern migrations
+// 0012/0018/0025 : joueurs, packs, slot custom) mais ne sont pas des kits.
+function _isRealKit(theme) {
+  return !theme.id.startsWith('player-')
+      && !theme.id.startsWith('pack-')
+      && theme.id !== 'custom-player-slot';
+}
 
 // ── Catalogue de secours (offline) ────────────────────────────────
 const FALLBACK_THEMES = [
@@ -116,16 +125,18 @@ async function _loadShop(deps) {
   els.shopGrid.innerHTML = _skeleton();
 
   try {
-    const [themeData, currency, pass, remaining] = await Promise.all([
+    const [themeData, currency, pass, remaining, credits] = await Promise.all([
       refreshThemeData(),
       getCurrencyBalance(),
       getMyActivePass(),
-      getFoundersRemaining()
+      getFoundersRemaining(),
+      getKitCredits()
     ]);
 
     availableThemes   = themeData.themes;
     purchasedThemeIds = themeData.purchasedThemeIds;
     coinBalance       = currency;
+    kitCredits        = credits;
     activePass        = pass;
     foundersRemaining = remaining;
     activeThemeId     = deps.loadSavedThemeId();
@@ -319,7 +330,7 @@ function _renderKits(deps) {
   const section = document.createElement('section');
   section.className = 'shop-section';
 
-  const themes = availableThemes.length ? availableThemes : FALLBACK_THEMES;
+  const themes = (availableThemes.length ? availableThemes : FALLBACK_THEMES).filter(_isRealKit);
 
   // Sélection pièces : 3 kits non possédés, stables sur la journée (seed date)
   const today   = new Date().toDateString();
@@ -331,6 +342,7 @@ function _renderKits(deps) {
     <div class="shop-section-header">
       <span class="shop-section-tag">KITS À L'UNITÉ</span>
       <h2 class="shop-section-title">Kits</h2>
+      ${kitCredits > 0 ? `<p class="shop-section-desc">🎟 Tu as <strong>${kitCredits} crédit${kitCredits > 1 ? 's' : ''} kit</strong> à dépenser — choisis librement ci-dessous.</p>` : ''}
     </div>
 
     ${coinKits.length > 0 ? `
@@ -368,10 +380,13 @@ function _renderKits(deps) {
 
 // ── Constructeur d'une carte de kit ───────────────────────────────
 function _buildKitCard(theme, deps, { coinMode }) {
-  const owned     = purchasedThemeIds.includes(theme.id) || theme.price_cents === 0;
-  const isActive  = theme.id === activeThemeId;
-  const hasCoin   = coinMode;
-  const hasPass   = !!activePass;
+  const purchased      = purchasedThemeIds.includes(theme.id) || theme.price_cents === 0;
+  // Le Pass Saison débloque RÉELLEMENT les kits payants (promesse de la
+  // boutique) : sélectionnables tant que le pass est actif.
+  const unlockedByPass = !!activePass && theme.price_cents > 0 && !purchased;
+  const owned          = purchased || unlockedByPass;
+  const isActive       = theme.id === activeThemeId;
+  const hasCoin        = coinMode;
 
   const card = document.createElement('div');
   card.className = 'shop-kit-card' + (isActive ? ' shop-kit-active' : '') + (owned ? ' shop-kit-owned' : '');
@@ -391,12 +406,14 @@ function _buildKitCard(theme, deps, { coinMode }) {
       <div class="shop-kit-footer">
         ${isActive
           ? '<span class="shop-kit-badge shop-kit-badge-active">Actif</span>'
+          : unlockedByPass
+          ? '<span class="shop-kit-badge shop-kit-badge-pass">Inclus dans ton pass</span>'
           : owned
           ? '<span class="shop-kit-badge shop-kit-badge-owned">Débloqué</span>'
+          : kitCredits > 0
+          ? '<button class="btn shop-kit-credit-btn">🎟 Utiliser 1 crédit</button>'
           : hasCoin
           ? `<button class="btn shop-kit-coin-btn"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg> ${COIN_KIT_COST} pièces</button>`
-          : hasPass && theme.price_cents > 0
-          ? '<span class="shop-kit-badge shop-kit-badge-pass">Inclus dans ton pass</span>'
           : theme.price_cents === 0
           ? '<span class="shop-kit-badge shop-kit-badge-free">Gratuit</span>'
           : `<button class="btn primary shop-kit-buy-btn">${formatPrice(theme.price_cents, theme.currency ?? 'eur')}</button>`
@@ -414,6 +431,9 @@ function _buildKitCard(theme, deps, { coinMode }) {
   );
   card.querySelector('.shop-kit-coin-btn')?.addEventListener('click', () =>
     _buyWithCoins(theme, deps)
+  );
+  card.querySelector('.shop-kit-credit-btn')?.addEventListener('click', () =>
+    _buyWithCredit(theme, deps)
   );
   card.querySelector('.shop-kit-select-btn')?.addEventListener('click', () =>
     _selectKit(theme, deps, card)
@@ -446,8 +466,24 @@ async function _buyWithCoins(theme, deps) {
   }
   if (!confirm(`Débloquer "${theme.name}" pour ${COIN_KIT_COST} pièces ?`)) return;
   try {
-    const newBalance = await spendCoins(COIN_KIT_COST, `Kit débloqué : ${theme.name}`);
+    // Atomique et persisté côté serveur (débit + ligne d'achat en une
+    // transaction) — le kit reste débloqué après rechargement.
+    const newBalance = await unlockThemeWithCoins(theme.id);
     coinBalance = newBalance;
+    purchasedThemeIds.push(theme.id);
+    _selectKit(theme, deps);
+    _renderShop(deps);
+  } catch (err) {
+    alert(err.message || 'Achat impossible pour le moment.');
+  }
+}
+
+async function _buyWithCredit(theme, deps) {
+  if (!deps.getCurrentUser()) { deps.openAccountForSignIn(); return; }
+  if (!confirm(`Utiliser 1 crédit kit pour débloquer "${theme.name}" ?`)) return;
+  try {
+    const remaining = await redeemKitCredit(theme.id);
+    kitCredits = remaining;
     purchasedThemeIds.push(theme.id);
     _selectKit(theme, deps);
     _renderShop(deps);

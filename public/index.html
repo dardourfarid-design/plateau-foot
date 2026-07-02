@@ -19,6 +19,23 @@
 <meta name="twitter:title" content="Tactic Master — Le foot se joue aussi assis">
 <meta name="twitter:description" content="Un plateau comme les dames, un ballon qui circule comme au foot.">
 <meta name="twitter:image" content="https://tactic-master.vercel.app/icons/icon-512.png">
+<link rel="canonical" href="https://tactic-master.vercel.app/">
+
+<!-- Données structurées (SEO) : fiche jeu pour Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Tactic Master",
+  "url": "https://tactic-master.vercel.app/",
+  "description": "Jeu de plateau tactique façon dames et foot : pousse le ballon jusqu'à la cage adverse. Solo, contre l'IA ou en ligne. Parties de 5 minutes.",
+  "inLanguage": "fr",
+  "applicationCategory": "Game",
+  "gamePlatform": ["Web", "PWA"],
+  "playMode": ["SinglePlayer", "MultiPlayer"],
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
 
 <!-- PWA : installation sur écran d'accueil iOS/Android -->
 <link rel="manifest" href="manifest.json">
@@ -692,6 +709,15 @@
     <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>
   </div>
 </div>
+
+<!-- Pied de page légal : accessible sans compte, exigé pour la vente en ligne -->
+<footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">
+  <a href="terms.html" rel="nofollow" style="color:inherit">Conditions d'utilisation &amp; de vente</a>
+  &nbsp;·&nbsp;
+  <a href="privacy.html" rel="nofollow" style="color:inherit">Confidentialité</a>
+  &nbsp;·&nbsp;
+  <span>© 2026 Tactic Master</span>
+</footer>
 
 <!-- SDK Supabase via CDN (pas de bundler en place pour cette v1) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

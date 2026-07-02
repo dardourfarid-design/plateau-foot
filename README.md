@@ -56,6 +56,11 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 18. `0018_fix_purchase_player_architecture.sql` — correctif Phase 0 (audit) : l'achat de joueurs mercato suit désormais le même chemin générique que les thèmes, prêt pour le branchement Stripe
 19. `0019_stripe_foundations.sql` — fonctions serveur pour le webhook Stripe (achat en attente puis confirmation signée)
 20. `0020_fix_pending_purchase_session_update.sql` — correctif : mise à jour du session_id Stripe qui échouait silencieusement sous RLS
+21. `0021_retire_neige_theme.sql` — retrait du thème Neige
+22. `0022_new_shop.sql` — nouvelle boutique : kits Saison 1, passes (user_passes), compteur Fondateurs
+23. `0023_tactical_coins.sql` — pièces tactiques (monnaie in-game)
+24. `0024_ui_skins.sql` — habillages complets de plateau (skins)
+25. `0025_commercial_hardening.sql` — **AUDIT COMMERCIALISATION (à exécuter absolument)** : suppression des fonctions de paiement mock (self-grant gratuit possible sinon), earn_coins à montant fixe + anti-spam, achat de kit par pièces atomique et persisté, enregistrement + livraison réelle des packs (Académie, Légendes, 3 Kits → crédits, Fondateurs), récompense Rare du pass, bonus XP +20 % du pass, verrouillage des RPCs webhook
 
 ## Activer la réinitialisation de mot de passe
 
@@ -427,3 +432,29 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
   (le sandbox de développement n'a pas accès réseau à ton projet — à valider
   toi-même en local avec les étapes ci-dessus)
 
+
+
+## Checklist de passage en Stripe LIVE (quand la décision sera prise)
+
+Le code est prêt : aucun changement de code n'est nécessaire, uniquement de la configuration.
+
+1. Exécuter la migration `0025_commercial_hardening.sql` (si pas déjà fait) — elle supprime
+   les fonctions mock et corrige les chemins d'achat cassés (packs, pass, pièces, bundle).
+2. Redéployer les 2 Edge Functions modifiées : `supabase functions deploy create-checkout-session`
+   et `supabase functions deploy stripe-webhook`.
+3. Dans Stripe Dashboard (mode Live) : créer les 2 produits Pass (Price mensuel 1,99 €,
+   trimestriel 3,99 €) et renseigner `STRIPE_PRICE_MONTHLY` / `STRIPE_PRICE_QUARTERLY`
+   dans les secrets Supabase.
+4. Remplacer `STRIPE_SECRET_KEY` (sk_live_...) et `STRIPE_WEBHOOK_SECRET` (webhook Live)
+   dans les secrets Supabase. Créer le endpoint webhook Live pointant vers
+   `https://<projet>.supabase.co/functions/v1/stripe-webhook` avec les événements :
+   checkout.session.completed, customer.subscription.created/updated/deleted,
+   invoice.payment_succeeded, invoice.payment_failed.
+5. Compléter `public/terms.html` (champs [entre crochets] : identité de l'éditeur,
+   médiateur de la consommation) et faire relire CGU/CGV + politique de confidentialité
+   par un professionnel. Activer la collecte de TVA (Stripe Tax recommandé).
+6. Vérifier le domaine d'envoi d'emails (Resend) pour que reset de mot de passe et
+   emails transactionnels partent vers tous les utilisateurs.
+7. Créer le compte Plausible (data-domain déjà en place) pour suivre la conversion.
+8. Tester en Live avec un vrai achat de chaque type (kit, pack, pass) puis un
+   remboursement, avant toute communication publique.

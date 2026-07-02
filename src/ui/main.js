@@ -625,7 +625,8 @@ function showEndOverlay(winningTeam) {
 
     // Pièces tactiques : +10 par victoire, affichage topbar mis à jour
     if (won) {
-      earnCoins(10).then(newBalance => {
+      // Montant décidé côté serveur (10 fixe, anti-spam — migration 0025)
+      earnCoins().then(newBalance => {
         _updateCoinDisplay(newBalance);
         _showCoinGain(10);
       }).catch(() => {/* silencieux si hors-ligne */});
@@ -1497,6 +1498,12 @@ function handlePaymentReturn() {
     // Ouvre directement la boutique avec les données fraîches, pour que
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
+    els.shopBtn?.click();
+  } else if (checkoutResult === 'pass_success') {
+    // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
+    // L'activation passe par le webhook Stripe : elle peut prendre quelques
+    // secondes — le message le dit pour éviter un rechargement paniqué.
+    showPurchaseToast('🎫', 'Pass Saison activé ! (quelques secondes de délai possibles)', false);
     els.shopBtn?.click();
   } else if (checkoutResult === 'cancelled') {
     showPurchaseToast('↩️', 'Achat annulé — aucun montant n\'a été débité.', true);

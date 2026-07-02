@@ -14,4 +14,6 @@ import * as stripeProvider from './stripePaymentProvider.js';
 const activeProvider = stripeProvider;
 
 export const isMockPaymentActive = activeProvider.isMock;
-export const checkoutTheme = active
+export const checkoutTheme = activeProvider.checkoutTheme;
+export const checkoutBundle = activeProvider.checkoutBundle;
+export const verifyPurchase = activeProvider.verifyPurchase;

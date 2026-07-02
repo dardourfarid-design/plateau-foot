@@ -1,0 +1,261 @@
+/* =====================================================================
+   SKINS.CSS — Habillages de plateau (UI skins)
+   ---------------------------------------------------------------------
+   Chaque thème dont la config porte une clé `skin` (voir shopUI.js /
+   migration 0022) active ici un habillage complet, au-delà des simples
+   couleurs gérées par themeManager.applyTheme().
+
+   L'activation se fait via une classe `skin-<id>` posée sur <body> par
+   themeManager.applySkin(). Retirer la classe (thème couleur classique)
+   fait retomber sur le rendu par défaut de styles.css — ce fichier
+   n'écrase donc jamais le défaut, il ne fait qu'ajouter des variantes.
+
+   Tous les sélecteurs sont préfixés `body.skin-*` pour rester plus
+   spécifiques que styles.css et ne s'appliquer qu'au thème choisi.
+   ===================================================================== */
+
+/* =====================================================================
+   1) CHALKBOARD — tableau tactique du coach (gratuit, défaut alternatif)
+   ===================================================================== */
+
+body.skin-chalkboard .board-wrap{
+  background: #14231C;
+  border-radius: 8px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.4),
+              inset 0 0 0 1.5px rgba(255,255,255,0.28);
+}
+body.skin-chalkboard .cell::after{ border-color: rgba(255,255,255,0.05); }
+body.skin-chalkboard .center-mark{ border-color: rgba(255,255,255,0.32); }
+body.skin-chalkboard .center-line,
+body.skin-chalkboard .goal-line-top,
+body.skin-chalkboard .goal-line-bottom{ background: rgba(255,255,255,0.32); }
+body.skin-chalkboard .goal-box-top,
+body.skin-chalkboard .goal-box-bottom{
+  border-left-color: rgba(255,255,255,0.32);
+  border-right-color: rgba(255,255,255,0.32);
+}
+body.skin-chalkboard .cell.goal-zone-bleu{ background: rgba(107,168,255,0.08); }
+body.skin-chalkboard .cell.goal-zone-rouge{ background: rgba(255,122,122,0.08); }
+
+body.skin-chalkboard .token.bleu{
+  background: rgba(107,168,255,0.16);
+  box-shadow: inset 0 0 0 1.5px #8FC0FF;
+  color: #DFF0FF;
+}
+body.skin-chalkboard .token.rouge{
+  background: rgba(255,122,122,0.16);
+  box-shadow: inset 0 0 0 1.5px #FF9D9D;
+  color: #FFE1E1;
+}
+body.skin-chalkboard .token .jersey-number,
+body.skin-chalkboard .token .gk-mark{
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 500;
+}
+body.skin-chalkboard .token.gardien{
+  outline: 1.5px dashed rgba(255,255,255,0.6);
+  outline-offset: -5px;
+}
+body.skin-chalkboard .token.selected{
+  box-shadow: 0 0 0 1.5px #ffffff, inset 0 0 0 1.5px #8FC0FF;
+  transform: scale(1.08);
+}
+body.skin-chalkboard .token-power-badge{
+  background: #14231C;
+  border-color: #ffffff;
+}
+body.skin-chalkboard .ball{
+  background: transparent;
+  border: 1.5px solid #ffffff;
+  box-shadow: none;
+}
+body.skin-chalkboard .cell.dest-move .move-dot{ background: rgba(255,255,255,0.55); box-shadow: none; }
+body.skin-chalkboard .cell.dest-pass .pass-ring{ border-color: rgba(255,255,255,0.7); border-style: dashed; }
+
+body.skin-chalkboard .team-name{ letter-spacing: 0.04em; }
+body.skin-chalkboard .score-sep{ color: rgba(255,255,255,0.4); }
+body.skin-chalkboard .sidebar-card{
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.16);
+}
+body.skin-chalkboard .sidebar-title{ color: #6FBF9A; letter-spacing: 0.1em; }
+body.skin-chalkboard .btn.primary{
+  background: #E4EFE9; border-color: #E4EFE9; color: #14231C;
+}
+body.skin-chalkboard .btn.primary:hover{ background: #ffffff; border-color: #ffffff; }
+
+
+/* =====================================================================
+   2) STADIUM NIGHT — premium broadcast (payant)
+   ===================================================================== */
+
+body.skin-stadium-night .board-wrap{
+  background: radial-gradient(120% 90% at 50% 8%, #16304f 0%, #0e2038 45%, #0a1728 100%);
+  border-radius: 12px;
+  box-shadow: 0 24px 56px rgba(0,0,0,0.7), inset 0 0 60px rgba(0,0,0,0.5),
+              inset 0 0 0 1.5px rgba(255,255,255,0.14);
+}
+body.skin-stadium-night .cell::after{ border-color: rgba(255,255,255,0.045); }
+body.skin-stadium-night .center-mark{ border-color: rgba(255,255,255,0.22); }
+body.skin-stadium-night .center-line,
+body.skin-stadium-night .goal-line-top,
+body.skin-stadium-night .goal-line-bottom{ background: rgba(255,255,255,0.22); }
+body.skin-stadium-night .goal-box-top,
+body.skin-stadium-night .goal-box-bottom{
+  border-left-color: rgba(255,255,255,0.22);
+  border-right-color: rgba(255,255,255,0.22);
+}
+body.skin-stadium-night .cell.goal-zone-bleu{ background: rgba(37,99,235,0.14); }
+body.skin-stadium-night .cell.goal-zone-rouge{ background: rgba(220,38,38,0.14); }
+
+body.skin-stadium-night .token.bleu{
+  background: radial-gradient(circle at 35% 28%, #7FB2FF 0%, #2563EB 72%);
+  box-shadow: 0 0 0 2px rgba(147,197,253,0.55), 0 7px 14px rgba(37,99,235,0.55),
+              inset 0 -3px 6px rgba(0,0,0,0.3);
+  color: #ffffff;
+}
+body.skin-stadium-night .token.rouge{
+  background: radial-gradient(circle at 35% 28%, #FF9E9E 0%, #DC2626 72%);
+  box-shadow: 0 0 0 2px rgba(252,165,165,0.5), 0 7px 14px rgba(220,38,38,0.5),
+              inset 0 -3px 6px rgba(0,0,0,0.3);
+  color: #ffffff;
+}
+body.skin-stadium-night .token .jersey-number,
+body.skin-stadium-night .token .gk-mark{ font-weight: 700; }
+body.skin-stadium-night .token.gardien{
+  outline: 2px solid #FFD87A;
+  outline-offset: -5px;
+}
+body.skin-stadium-night .token.selected{
+  box-shadow: 0 0 0 2px #FFD87A, 0 0 16px rgba(255,216,122,0.6),
+              0 7px 14px rgba(0,0,0,0.5);
+  transform: scale(1.1);
+}
+body.skin-stadium-night .token-power-badge{
+  background: #1a1206; border-color: #FFD87A;
+  box-shadow: 0 0 8px rgba(255,216,122,0.5);
+}
+body.skin-stadium-night .ball{
+  background: radial-gradient(circle at 35% 30%, #ffffff, #c8ccd4);
+  box-shadow: 0 0 14px rgba(255,255,255,0.6), 0 3px 6px rgba(0,0,0,0.5);
+  border: none;
+}
+body.skin-stadium-night .cell.dest-move .move-dot{
+  background: #9CC4FF; box-shadow: 0 0 10px rgba(147,197,255,0.9);
+}
+body.skin-stadium-night .cell.dest-pass .pass-ring{
+  border-color: #FFD87A; box-shadow: 0 0 10px rgba(255,216,122,0.5);
+}
+
+body.skin-stadium-night .score-num{ color: #ffffff; }
+body.skin-stadium-night .score-sep{ color: #FFD87A; opacity: 0.9; }
+body.skin-stadium-night .turn-banner{ color: #C9D6EC; }
+body.skin-stadium-night .sidebar-card{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+body.skin-stadium-night .sidebar-title{ color: #8FA6C4; letter-spacing: 0.14em; }
+body.skin-stadium-night .btn.primary{
+  background: linear-gradient(180deg, #FFE49A, #FFD060);
+  border-color: #FFD060; color: #0a1728;
+  box-shadow: 0 6px 16px rgba(255,208,96,0.3);
+}
+body.skin-stadium-night .btn.primary:hover{
+  background: linear-gradient(180deg, #FFEBAF, #FFDB7A);
+  border-color: #FFDB7A;
+}
+
+
+/* =====================================================================
+   3) ARCADE TURF — bold & chunky (payant)
+   ===================================================================== */
+
+body.skin-arcade-turf .board-wrap{
+  background: repeating-linear-gradient(
+    0deg,
+    #1EA34A 0%, #1EA34A 11.111%,
+    #178A3E 11.111%, #178A3E 22.222%
+  );
+  border: 4px solid #16181C;
+  border-radius: 16px;
+  box-shadow: 0 14px 0 #16181C, 0 30px 50px -18px rgba(0,0,0,0.5),
+              inset 0 0 0 3px rgba(255,255,255,0.12);
+}
+body.skin-arcade-turf .cell::after{ border-color: transparent; }
+body.skin-arcade-turf .center-mark{ border: 3px solid rgba(255,255,255,0.85); }
+body.skin-arcade-turf .center-line,
+body.skin-arcade-turf .goal-line-top,
+body.skin-arcade-turf .goal-line-bottom{ background: rgba(255,255,255,0.85); height: 3px; }
+body.skin-arcade-turf .goal-box-top,
+body.skin-arcade-turf .goal-box-bottom{
+  border-left: 3px solid rgba(255,255,255,0.85);
+  border-right: 3px solid rgba(255,255,255,0.85);
+}
+body.skin-arcade-turf .cell.goal-zone-bleu{ background: rgba(37,99,235,0.16); }
+body.skin-arcade-turf .cell.goal-zone-rouge{ background: rgba(225,29,72,0.16); }
+
+body.skin-arcade-turf .token.bleu{
+  background: #2563EB;
+  border: 3px solid #16181C;
+  box-shadow: 0 4px 0 #16181C;
+  color: #ffffff;
+}
+body.skin-arcade-turf .token.rouge{
+  background: #E11D48;
+  border: 3px solid #16181C;
+  box-shadow: 0 4px 0 #16181C;
+  color: #ffffff;
+}
+body.skin-arcade-turf .token .jersey-number,
+body.skin-arcade-turf .token .gk-mark{
+  font-family: 'Fredoka', 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+}
+body.skin-arcade-turf .token.gardien{
+  outline: 3px solid #FACC15;
+  outline-offset: -6px;
+}
+body.skin-arcade-turf .token.selected{
+  box-shadow: 0 0 0 3px #FACC15, 0 4px 0 #16181C;
+  transform: scale(1.1);
+}
+body.skin-arcade-turf .token-power-badge{
+  background: #FACC15; border: 2.5px solid #16181C; color: #16181C;
+}
+body.skin-arcade-turf .ball{
+  background: #ffffff;
+  border: 3px solid #16181C;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+}
+body.skin-arcade-turf .cell.dest-move .move-dot{
+  background: #ffffff; box-shadow: 0 0 0 2.5px #16181C;
+}
+body.skin-arcade-turf .cell.dest-pass .pass-ring{
+  border: 3px solid #FACC15; box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+}
+
+body.skin-arcade-turf .team-name,
+body.skin-arcade-turf .score-num{
+  font-family: 'Fredoka', 'Barlow Condensed', sans-serif; font-weight: 700;
+}
+body.skin-arcade-turf .score-sep{ color: #FACC15; opacity: 1; }
+body.skin-arcade-turf .sidebar-card{
+  background: #ffffff;
+  border: 3px solid #16181C;
+  border-radius: 16px;
+  box-shadow: 0 6px 0 #16181C;
+  color: #16181C;
+}
+body.skin-arcade-turf .sidebar-title{
+  font-family: 'Fredoka', 'Barlow Condensed', sans-serif; color: #16181C;
+}
+body.skin-arcade-turf .sidebar-stat dt{ color: #6C6C64; }
+body.skin-arcade-turf .sidebar-stat dd{ color: #16181C; }
+body.skin-arcade-turf .btn.primary{
+  background: #FACC15; border: 3px solid #16181C; color: #16181C;
+  font-family: 'Fredoka', 'Barlow Condensed', sans-serif; font-weight: 700;
+  box-shadow: 0 5px 0 #16181C;
+}
+body.skin-arcade-turf .btn.primary:hover{ background: #FFD738; border-color: #16181C; }
+body.skin-arcade-turf .btn.primary:active{ transform: translateY(3px); box-shadow: 0 2px 0 #16181C; }

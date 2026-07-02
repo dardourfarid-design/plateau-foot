@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skins preview — Tactic Master</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="skins.css">
+<style>
+  /* Harness-only : dev tool pour prévisualiser skins.css. Pas servi en prod. */
+  body{ padding: 24px; }
+  .harness-bar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; align-items:center; }
+  .harness-bar span{ font-family:'Barlow Condensed',sans-serif; letter-spacing:.12em; font-size:12px; color:var(--craie-att); text-transform:uppercase; }
+  .harness-bar button{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; padding:8px 14px; border-radius:6px; border:1px solid rgba(200,132,26,.35); background:var(--nuit-clair); color:var(--craie); cursor:pointer; }
+  .harness-bar button.on{ background:var(--ambre); color:#0C0A07; border-color:var(--ambre); }
+  .harness-stage{ display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; }
+  .harness-stage .game-main{ max-width:460px; }
+  .harness-stage .game-sidebar{ display:flex; min-width:240px; }
+  .harness-stage .controls{ display:flex; }
+</style>
+</head>
+<body>
+  <div class="harness-bar">
+    <span>Skin&nbsp;:</span>
+    <button data-skin="" class="on">Classique (défaut)</button>
+    <button data-skin="chalkboard">Chalkboard</button>
+    <button data-skin="stadium-night">Stadium Night</button>
+    <button data-skin="arcade-turf">Arcade Turf</button>
+  </div>
+
+  <div class="harness-stage">
+    <div class="game-main">
+      <div class="scoreboard">
+        <div class="team-block">
+          <span class="team-dot bleu"></span>
+          <span class="team-name">Bleu</span>
+        </div>
+        <div class="score-center">
+          <span class="score-num">1</span>
+          <span class="score-sep">–</span>
+          <span class="score-num">0</span>
+        </div>
+        <div class="team-block right">
+          <span class="team-dot rouge"></span>
+          <span class="team-name">Rouge</span>
+        </div>
+      </div>
+
+      <div class="turn-banner active-bleu">Au tour de bleu</div>
+
+      <div class="board-wrap">
+        <div class="pitch-lines">
+          <div class="goal-line-top"></div>
+          <div class="goal-box-top"></div>
+          <div class="goal-line-bottom"></div>
+          <div class="goal-box-bottom"></div>
+          <div class="center-line"></div>
+          <div class="center-mark"></div>
+        </div>
+        <div class="board-grid" id="boardGrid"></div>
+      </div>
+
+      <div class="controls">
+        <div class="btn-row">
+          <button class="btn primary">Terminer le tour</button>
+          <button class="btn">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="game-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">Feuille de match</div>
+        <dl class="sidebar-stats">
+          <div class="sidebar-stat"><dt>Score</dt><dd>1 – 0</dd></div>
+          <div class="sidebar-stat"><dt>Tour</dt><dd>Bleu</dd></div>
+          <div class="sidebar-stat"><dt>Pouvoir prêt</dt><dd>Sprint · #9</dd></div>
+          <div class="sidebar-stat"><dt>Ballon</dt><dd>Centre</dd></div>
+        </dl>
+      </div>
+    </aside>
+  </div>
+
+<script>
+  const STAR = '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1l1 3h3L7 6l1 3-3-2-3 2 1-3L1 4h3z" fill="#FFD87A"/></svg>';
+  const bluePawns = [
+    { r:8, c:3, num:'1', gk:true },
+    { r:7, c:1, num:'4' }, { r:7, c:5, num:'5' },
+    { r:6, c:3, num:'9', power:true },
+    { r:5, c:3, num:'7', selected:true },
+    { r:5, c:5, num:'11' }
+  ];
+  const redPawns = [
+    { r:0, c:3, num:'1', gk:true },
+    { r:1, c:1, num:'4' }, { r:1, c:5, num:'5' },
+    { r:2, c:2, num:'7' }, { r:2, c:4, num:'11' },
+    { r:3, c:3, num:'9' }
+  ];
+  const ball = { r:4, c:3 };
+  const moveDots = [[5,2],[5,4],[6,2],[6,4]];
+  const passRings = [[3,2],[3,4]];
+  const GOAL_COLS = [2,3,4];
+
+  const grid = document.getElementById('boardGrid');
+  const cells = {};
+  for (let r=0; r<9; r++){
+    for (let c=0; c<7; c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (r===0 && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-rouge');
+      if (r===8 && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-bleu');
+      grid.appendChild(cell);
+      cells[r+','+c] = cell;
+    }
+  }
+  function pawn(p, team){
+    const cell = cells[p.r+','+p.c];
+    const t = document.createElement('div');
+    t.className = 'token ' + team + (p.gk?' gardien':'') + (p.selected?' selected':'') + ' selectable';
+    const label = document.createElement('span');
+    label.className = p.gk ? 'gk-mark' : 'jersey-number';
+    label.textContent = p.num;
+    t.appendChild(label);
+    if (p.power){
+      const b = document.createElement('span');
+      b.className = 'token-power-badge';
+      b.innerHTML = STAR;
+      t.appendChild(b);
+    }
+    cell.appendChild(t);
+  }
+  bluePawns.forEach(p => pawn(p,'bleu'));
+  redPawns.forEach(p => pawn(p,'rouge'));
+
+  const b = document.createElement('div');
+  b.className = 'ball';
+  cells[ball.r+','+ball.c].appendChild(b);
+
+  moveDots.forEach(([r,c]) => {
+    const cell = cells[r+','+c];
+    cell.classList.add('dest-move');
+    const d = document.createElement('div'); d.className='move-dot'; cell.appendChild(d);
+  });
+  passRings.forEach(([r,c]) => {
+    const cell = cells[r+','+c];
+    cell.classList.add('dest-pass');
+    const d = document.createElement('div'); d.className='pass-ring'; cell.appendChild(d);
+  });
+
+  // Skin switcher
+  document.querySelectorAll('.harness-bar button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.harness-bar button').forEach(x => x.classList.remove('on'));
+      btn.classList.add('on');
+      Array.from(document.body.classList).forEach(cls => { if (cls.indexOf('skin-')===0) document.body.classList.remove(cls); });
+      const s = btn.dataset.skin;
+      if (s) document.body.classList.add('skin-'+s);
+    });
+  });
+</script>
+</body>
+</html>

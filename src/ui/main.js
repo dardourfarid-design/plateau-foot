@@ -31,6 +31,8 @@ import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboa
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
+import { getCurrencyBalance, earnCoins } from '../services/currencyService.js';
+import { getMyActivePass } from '../services/passService.js';
 import {
   sendFriendRequest, respondFriendRequest, fetchMyFriendships,
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
@@ -256,6 +258,8 @@ function cacheDomRefs() {
   els.exportDataBtn = document.getElementById('exportDataBtn');
   els.deleteDataBtn = document.getElementById('deleteDataBtn');
   els.accountCloseBtn = document.getElementById('accountCloseBtn');
+  els.coinDisplay   = document.getElementById('coinDisplay');
+  els.coinAmount    = document.getElementById('coinAmount');
 }
 
 // ---------- Cycle de vie du jeu ----------
@@ -616,11 +620,16 @@ function showEndOverlay(winningTeam) {
     const won = winningTeam === myTeam;
     const goalsScored = gameState.score[myTeam];
     recordGameResult(won, goalsScored).catch(err => {
-      // N'affecte jamais l'expérience de jeu si l'enregistrement échoue
-      // (hors-ligne, etc.) : la partie reste valide pour le joueur, on
-      // perd juste la progression de cette partie précise côté serveur.
       console.error('Résultat de partie non enregistré :', err);
     });
+
+    // Pièces tactiques : +10 par victoire, affichage topbar mis à jour
+    if (won) {
+      earnCoins(10).then(newBalance => {
+        _updateCoinDisplay(newBalance);
+        _showCoinGain(10);
+      }).catch(() => {/* silencieux si hors-ligne */});
+    }
   }
 }
 
@@ -993,6 +1002,34 @@ function updateAccountUI() {
   els.accountStatus.textContent = currentUser
     ? (currentUser.email || 'Connecté')
     : 'Non connecté';
+
+  // Rafraîchir le solde de pièces dans la topbar quand l'état du compte change
+  if (currentUser) {
+    getCurrencyBalance().then(balance => _updateCoinDisplay(balance)).catch(() => {});
+  } else {
+    _updateCoinDisplay(0);
+  }
+}
+
+function _updateCoinDisplay(balance) {
+  if (els.coinAmount) els.coinAmount.textContent = balance;
+  if (els.coinDisplay) {
+    els.coinDisplay.style.display = balance > 0 || currentUser ? 'flex' : 'none';
+  }
+}
+
+/** Micro-animation de gain de pièces affichée sur la topbar */
+function _showCoinGain(amount) {
+  const badge = document.createElement('div');
+  badge.className = 'coin-gain-badge';
+  badge.textContent = '+' + amount + ' ⬤';
+  badge.setAttribute('aria-live', 'polite');
+  document.body.appendChild(badge);
+  setTimeout(() => badge.classList.add('coin-gain-badge-show'), 10);
+  setTimeout(() => {
+    badge.classList.remove('coin-gain-badge-show');
+    setTimeout(() => badge.remove(), 400);
+  }, 2200);
 }
 
 function renderAccountOverlayContent() {

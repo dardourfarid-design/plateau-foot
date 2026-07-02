@@ -115,3 +115,13 @@ export async function fetchMyPurchases() {
   if (error) throw error;
   return data;
 }
+
+/**
+ * Retourne le JWT d'accès de la session active, ou null.
+ * Utilisé pour appeler les Edge Functions qui nécessitent une auth.
+ */
+export async function getAccessToken() {
+  if (!supabase) return null;
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? null;
+}

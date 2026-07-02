@@ -1,14 +1,13 @@
 // ===================== stripe-webhook =====================
-// Edge Function Supabase (Deno). Reçoit les événements Stripe (toujours en
-// mode Test pour ce projet — voir create-checkout-session pour le détail
-// de cette décision produit). Vérifie la signature avant tout traitement.
+// Gère les événements Stripe pour les paiements uniques ET les abonnements.
 //
-// Utilise la clé service_role (jamais exposée au client) pour pouvoir
-// écrire dans purchases/player_ownership en contournant la RLS de façon
-// contrôlée — c'est le seul endroit du projet où cette clé doit exister.
-//
-// Pas de souci CORS ici en pratique (Stripe appelle ce endpoint depuis ses
-// propres serveurs, pas un navigateur).
+// Événements traités :
+//   checkout.session.completed       → thèmes, packs, joueurs (one-time)
+//   customer.subscription.created    → activation pass (abonnement récurrent)
+//   customer.subscription.updated    → mise à jour statut/période
+//   customer.subscription.deleted    → annulation pass
+//   invoice.payment_succeeded        → renouvellement abonnement (met à jour la période)
+//   invoice.payment_failed           → pass en statut past_due
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.4.0?target=deno';
@@ -27,12 +26,10 @@ const supabaseAdmin = createClient(
 
 Deno.serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
-  if (!signature) {
-    return new Response('Signature manquante.', { status: 400 });
-  }
+  if (!signature) return new Response('Signature manquante.', { status: 400 });
 
   const body = await req.text();
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
@@ -41,20 +38,116 @@ Deno.serve(async (req) => {
     return new Response(`Signature invalide : ${err.message}`, { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
+  try {
+    switch (event.type) {
 
-    const { error } = await supabaseAdmin.rpc('complete_stripe_purchase', {
-      p_stripe_session_id: session.id
-    });
+      // ── Paiements uniques (thèmes, packs, joueurs) ─────────────────
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
 
-    if (error) {
-      console.error('complete_stripe_purchase a échoué :', error.message);
-      return new Response('Erreur de traitement.', { status: 500 });
+        if (session.mode === 'payment') {
+          // Débloque l'achat dans purchases
+          const { error } = await supabaseAdmin.rpc('complete_stripe_purchase', {
+            p_stripe_session_id: session.id
+          });
+          if (error) console.error('complete_stripe_purchase:', error.message);
+
+          // Décrémente le compteur si c'est un Pack Fondateurs
+          if (session.metadata?.pack_id === 'pack-fondateurs') {
+            await supabaseAdmin.rpc('decrement_founders_counter');
+          }
+        }
+
+        // Mode subscription : le pass est activé via customer.subscription.created
+        break;
+      }
+
+      // ── Abonnements : création ──────────────────────────────────────
+      case 'customer.subscription.created': {
+        const sub = event.data.object as Stripe.Subscription;
+        await upsertPass(sub, 'active');
+        break;
+      }
+
+      // ── Abonnements : mise à jour (ex: changement de plan) ──────────
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        const status = sub.status === 'active' ? 'active'
+                     : sub.status === 'past_due' ? 'past_due'
+                     : 'cancelled';
+        await upsertPass(sub, status);
+        break;
+      }
+
+      // ── Abonnements : annulation ────────────────────────────────────
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        await supabaseAdmin
+          .from('user_passes')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('stripe_subscription_id', sub.id);
+        break;
+      }
+
+      // ── Facture payée (renouvellement mensuel/trimestriel) ──────────
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          await upsertPass(sub, 'active');
+        }
+        break;
+      }
+
+      // ── Facture impayée ─────────────────────────────────────────────
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          await supabaseAdmin
+            .from('user_passes')
+            .update({ status: 'past_due', updated_at: new Date().toISOString() })
+            .eq('stripe_subscription_id', invoice.subscription as string);
+        }
+        break;
+      }
     }
+  } catch (err) {
+    console.error(`Erreur traitement ${event.type}:`, err.message);
+    return new Response('Erreur de traitement.', { status: 500 });
   }
 
   return new Response(JSON.stringify({ received: true }), {
     headers: { 'Content-Type': 'application/json' }
   });
 });
+
+/**
+ * Crée ou met à jour une ligne user_passes depuis un objet Stripe.Subscription.
+ * Le user_id est extrait des métadonnées de la session checkout d'origine,
+ * stockées dans sub.metadata lors de la création de l'abonnement.
+ */
+async function upsertPass(sub: Stripe.Subscription, status: string) {
+  const userId = sub.metadata?.user_id;
+  if (!userId) {
+    console.error('upsertPass: user_id manquant dans sub.metadata', sub.id);
+    return;
+  }
+
+  const passType = sub.metadata?.pass_type ?? 'monthly';
+  const periodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end * 1000).toISOString()
+    : null;
+
+  const { error } = await supabaseAdmin
+    .from('user_passes')
+    .upsert({
+      user_id:               userId,
+      pass_type:             passType,
+      stripe_subscription_id: sub.id,
+      status,
+      current_period_end:    periodEnd,
+      updated_at:            new Date().toISOString()
+    }, { onConflict: 'stripe_subscription_id' });
+
+  if (error) console.error('upsertPass error:', error.message);
+}

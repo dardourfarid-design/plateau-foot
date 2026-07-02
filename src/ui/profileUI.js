@@ -279,7 +279,7 @@ export function initProfile(deps) {
   newPlayerDraft.color = deps.AVATAR_COLORS[0];
 
   // ----- Boutons de l'écran profil -----
-  els.profileBtn?.addEventListener('click', openProfileScreen);
+  els.profileBtn?.addEventListener('click', () => openProfileScreen(deps));
   els.profileBackBtn?.addEventListener('click', () => {
     els.profileScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');

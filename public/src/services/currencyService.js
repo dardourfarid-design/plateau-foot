@@ -45,4 +45,37 @@ export async function earnCoins() {
  * pièces étaient débitées — le kit disparaissait au rechargement.
  * Retourne le nouveau solde.
  */
-expor
+export async function unlockThemeWithCoins(themeId) {
+  const client = requireClient();
+  const { data, error } = await client.rpc('unlock_theme_with_coins', {
+    p_theme_id: themeId
+  });
+  if (error) throw error;
+  return data; // nouveau solde
+}
+
+/**
+ * Nombre de crédits kit disponibles (livrés par le pack "3 Kits au choix").
+ */
+export async function getKitCredits() {
+  if (!supabase) return 0;
+  const { data, error } = await supabase.rpc('get_my_kit_credits');
+  if (error) {
+    console.error('[currency] getKitCredits:', error.message);
+    return 0;
+  }
+  return data ?? 0;
+}
+
+/**
+ * Dépense 1 crédit kit pour débloquer définitivement le kit demandé.
+ * Retourne le nombre de crédits restants.
+ */
+export async function redeemKitCredit(themeId) {
+  const client = requireClient();
+  const { data, error } = await client.rpc('redeem_kit_credit', {
+    p_theme_id: themeId
+  });
+  if (error) throw error;
+  return data; // crédits restants
+}

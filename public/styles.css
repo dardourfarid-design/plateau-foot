@@ -1375,6 +1375,12 @@ body{
   animation: tutorial-pulse 1.4s ease-in-out infinite;
 }
 
+/* Variante pour les panneaux rectangulaires (profil, boutique) visités par
+   le tutoriel : même halo, coins simplement arrondis. */
+.tutorial-spotlight-rect{
+  border-radius:12px;
+}
+
 @keyframes tutorial-pulse{
   0%,100%{ box-shadow: 0 0 0 6px rgba(244,211,94,0.35), 0 0 30px 10px rgba(244,211,94,0.25); }
   50%{ box-shadow: 0 0 0 10px rgba(244,211,94,0.5), 0 0 40px 16px rgba(244,211,94,0.35); }

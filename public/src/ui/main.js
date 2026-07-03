@@ -23,8 +23,9 @@ import { initProfile, toOwnedShape } from './profileUI.js';
 import { initMercato } from './mercatoUI.js';
 import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail, sendPasswordResetEmail } from '../services/supabaseClient.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
-import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession } from '../services/multiplayerService.js';
+import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession, cancelGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
+import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
@@ -34,7 +35,7 @@ import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, 
 import { getCurrencyBalance } from '../services/currencyService.js';
 import { getMyActivePass } from '../services/passService.js';
 import {
-  sendFriendRequest, respondFriendRequest, fetchMyFriendships,
+  sendFriendRequest, respondFriendRequest, cancelFriendRequest, fetchMyFriendships,
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
 } from '../services/mercatoService.js';
 
@@ -180,6 +181,8 @@ function cacheDomRefs() {
   els.purchaseToastText = document.getElementById('purchaseToastText');
   els.shopScreen = document.getElementById('shopScreen');
   els.profileBtn = document.getElementById('profileBtn');
+  els.profileNotifBadge = document.getElementById('profileNotifBadge');
+  els.dailyHint = document.getElementById('dailyHint');
   els.profileScreen = document.getElementById('profileScreen');
   els.profileBackBtn = document.getElementById('profileBackBtn');
   els.profileTabs = document.getElementById('profileTabs');
@@ -191,6 +194,8 @@ function cacheDomRefs() {
   els.progressXp = document.getElementById('progressXp');
   els.progressStreak = document.getElementById('progressStreak');
   els.progressWins = document.getElementById('progressWins');
+  els.progressStreakLabel = document.getElementById('progressStreakLabel');
+  els.progressWinsLabel = document.getElementById('progressWinsLabel');
   els.progressEmptyNote = document.getElementById('progressEmptyNote');
   els.challengesList = document.getElementById('challengesList');
   els.lineupSlots = document.getElementById('lineupSlots');
@@ -216,6 +221,7 @@ function cacheDomRefs() {
   els.shareProfileBtn = document.getElementById('shareProfileBtn');
   els.shareProfileFeedback = document.getElementById('shareProfileFeedback');
   els.pendingFriendRequests = document.getElementById('pendingFriendRequests');
+  els.pendingFriendRequestsSent = document.getElementById('pendingFriendRequestsSent');
   els.friendsList = document.getElementById('friendsList');
   els.mercatoOffersReceived = document.getElementById('mercatoOffersReceived');
   els.mercatoOffersSent = document.getElementById('mercatoOffersSent');
@@ -310,6 +316,10 @@ function applyPowersToGameState() {
 function startGame(goalsToWin) {
   gameState = createGame({ goalsToWin });
   undoSnapshot = null;
+  // En local ou vs IA, l'humain principal joue toujours Bleu. Sans cette
+  // remise à zéro, un joueur ayant rejoint une partie en ligne (myTeam =
+  // Rouge) gardait ce camp en mémoire pour ses parties solo suivantes.
+  if (gameMode !== 'online') myTeam = TEAMS.BLEU;
   els.setupScreen.classList.add('hidden');
   els.configScreen.classList.add('hidden');
   els.gameScreen.classList.remove('hidden');
@@ -339,13 +349,17 @@ function render() {
   }
   els.sidebarScoreBleu.textContent = gameState.score[TEAMS.BLEU];
   els.sidebarScoreRouge.textContent = gameState.score[TEAMS.ROUGE];
-  els.sidebarTurn.textContent = gameState.turn === TEAMS.BLEU ? 'Bleu' : 'Rouge';
+  els.sidebarTurn.textContent = gameState.gameOver
+    ? 'Partie terminée'
+    : (gameState.turn === TEAMS.BLEU ? 'Bleu' : 'Rouge');
 
   els.turnBanner.classList.remove('active-bleu', 'active-rouge');
   if (gameState.gameOver) {
     els.turnBanner.textContent = 'Partie terminée';
   } else {
-    els.turnBanner.textContent = gameState.turn === TEAMS.BLEU ? 'Au tour de bleu' : 'Au tour de rouge';
+    els.turnBanner.textContent = gameState.gameOver
+      ? 'Partie terminée'
+      : (gameState.turn === TEAMS.BLEU ? 'Au tour de bleu' : 'Au tour de rouge');
     els.turnBanner.classList.add(gameState.turn === TEAMS.BLEU ? 'active-bleu' : 'active-rouge');
   }
 
@@ -590,6 +604,10 @@ function hideGoalOverlayAndResume() {
 }
 
 function showEndOverlay(winningTeam) {
+  // Garde anti "overlay fantôme" : si le joueur a déjà quitté l'écran de
+  // jeu (retour accueil pendant le délai de 350 ms ou pendant le timer de
+  // l'IA), ne pas réafficher l'écran de fin par-dessus un autre écran.
+  if (els.gameScreen.classList.contains('hidden')) return;
   els.endTitle.className = 'overlay-title ' + winningTeam;
   els.endTitle.textContent = winningTeam === TEAMS.BLEU ? 'BLEU GAGNE' : 'ROUGE GAGNE';
   els.endSub.textContent = `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
@@ -600,8 +618,13 @@ function showEndOverlay(winningTeam) {
 
   // Stats de fin : buts du gagnant + streak si disponible
   if (els.endStatsRow) {
-    const winner = gameState.score[winningTeam];
-    const loser = gameState.score[winningTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU];
+    // Contre l'IA ou en ligne, les stats sont montrées du point de vue du
+    // JOUEUR (myTeam), pas du vainqueur : afficher « 1 but marqué » à un
+    // joueur qui vient de perdre 0-1 était trompeur. En local 2 joueurs
+    // (écran partagé), on garde le point de vue du vainqueur.
+    const povTeam = (gameMode === 'local') ? winningTeam : myTeam;
+    const winner = gameState.score[povTeam];
+    const loser = gameState.score[povTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU];
     els.endStatsRow.innerHTML = `
       <div class="end-stat">
         <span class="end-stat-val">${winner}</span>
@@ -805,6 +828,11 @@ function cancelOnlineWaiting() {
   if (unsubscribeFromSession) {
     unsubscribeFromSession();
     unsubscribeFromSession = null;
+  }
+  // Clôture la session côté serveur : sans ça, elle restait « waiting »
+  // pour toujours et son code d'invitation restait joignable.
+  if (onlineSessionId) {
+    cancelGameSession(onlineSessionId).catch(() => {/* best effort */});
   }
   onlineSessionId = null;
   els.waitingScreen.classList.add('hidden');
@@ -1011,6 +1039,43 @@ function updateAccountUI() {
     getCurrencyBalance().then(balance => _updateCoinDisplay(balance)).catch(() => {});
   } else {
     _updateCoinDisplay(0);
+  }
+  _refreshNotifications();
+}
+
+/**
+ * Badge de notifications sur « Mon profil » (demandes d'ami + offres de
+ * mercato en attente) et rappel des défis du jour sur l'accueil. Best
+ * effort : toute erreur réseau est silencieuse, l'UI reste utilisable.
+ */
+async function _refreshNotifications() {
+  if (!currentUser) {
+    if (els.profileNotifBadge) els.profileNotifBadge.style.display = 'none';
+    if (els.dailyHint) els.dailyHint.classList.add('hidden');
+    return;
+  }
+  try {
+    const [friendships, offers, challenges] = await Promise.all([
+      fetchMyFriendships().catch(() => ({ pendingReceived: [] })),
+      fetchMyMercatoOffers().catch(() => ({ received: [] })),
+      fetchTodayChallenges().catch(() => [])
+    ]);
+    const notifCount = (friendships.pendingReceived?.length || 0) + (offers.received?.length || 0);
+    if (els.profileNotifBadge) {
+      els.profileNotifBadge.textContent = notifCount;
+      els.profileNotifBadge.style.display = notifCount > 0 ? 'inline-flex' : 'none';
+    }
+    if (els.dailyHint) {
+      const remaining = (challenges || []).filter(c => !c.completed).length;
+      if (remaining > 0) {
+        els.dailyHint.textContent = `🎯 ${remaining} défi${remaining > 1 ? 's' : ''} du jour à relever (+15 pièces chacun)`;
+        els.dailyHint.classList.remove('hidden');
+      } else {
+        els.dailyHint.classList.add('hidden');
+      }
+    }
+  } catch (err) {
+    /* silencieux : purement décoratif */
   }
 }
 
@@ -1286,13 +1351,14 @@ function wireAccount() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err.message || 'Export impossible pour le moment.');
+      showAlert(err.message || 'Export impossible pour le moment.');
     }
   });
 
   els.deleteDataBtn?.addEventListener('click', async () => {
-    const confirmed = confirm(
-      'Supprimer définitivement ton compte et toutes tes données (achats, parties, préférences) ? Cette action est irréversible.'
+    const confirmed = await showConfirm(
+      'Supprimer définitivement ton compte et toutes tes données (achats, parties, préférences) ? Cette action est irréversible.',
+      { title: 'Supprimer mon compte', okLabel: 'Supprimer définitivement' }
     );
     if (!confirmed) return;
     try {
@@ -1301,9 +1367,9 @@ function wireAccount() {
       currentUser = null;
       updateAccountUI();
       els.accountOverlay.classList.remove('show');
-      alert('Tes données ont été supprimées.');
+      showAlert('Tes données ont été supprimées.');
     } catch (err) {
-      alert(err.message || 'Suppression impossible pour le moment.');
+      showAlert(err.message || 'Suppression impossible pour le moment.');
     }
   });
 
@@ -1315,19 +1381,18 @@ function wireAccount() {
   });
 }
 
-function openConsentManagementPanel() {
-  const analytics = confirm('Acceptes-tu l\'analyse de ton usage du jeu pour améliorer le produit ?');
-  const emailMarketing = confirm('Acceptes-tu de recevoir des emails sur les nouveautés et offres ?');
-  const dataSharing = confirm('Acceptes-tu le partage de tes données avec des partenaires sélectionnés ?');
+async function openConsentManagementPanel() {
+  const choices = await showConsentDialog();
+  if (!choices) return; // annulé : aucun changement enregistré
 
   recordConsents({
-    [CONSENT_PURPOSES.ANALYTICS]: analytics,
-    [CONSENT_PURPOSES.EMAIL_MARKETING]: emailMarketing,
-    [CONSENT_PURPOSES.DATA_SHARING]: dataSharing
+    [CONSENT_PURPOSES.ANALYTICS]: choices.analytics,
+    [CONSENT_PURPOSES.EMAIL_MARKETING]: choices.emailMarketing,
+    [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing
   }).then(() => {
-    alert('Tes préférences ont été mises à jour.');
+    showToast('Tes préférences ont été mises à jour.');
   }).catch(err => {
-    alert(err.message || 'Mise à jour impossible pour le moment.');
+    showAlert(err.message || 'Mise à jour impossible pour le moment.');
   });
 }
 
@@ -1438,6 +1503,7 @@ function advanceTutorialStep() {
 
 function endTutorial() {
   tutorial.stop();
+  showToast('Tutoriel terminé ! Configure ta première vraie partie.');
   if (tutorialSpotlightEl) {
     tutorialSpotlightEl.classList.remove('tutorial-spotlight');
     tutorialSpotlightEl = null;
@@ -1524,6 +1590,7 @@ function init() {
     els,
     sendFriendRequest,
     respondFriendRequest,
+    cancelFriendRequest,
     fetchMyFriendships,
     createMercatoOffer,
     respondMercatoOffer,

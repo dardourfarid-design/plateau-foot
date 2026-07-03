@@ -10,6 +10,7 @@ import { checkoutTheme, checkoutBundle, isMockPaymentActive } from '../services/
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { getFoundersRemaining, getMyActivePass } from '../services/passService.js';
 import { getCurrencyBalance, unlockThemeWithCoins, getKitCredits, redeemKitCredit } from '../services/currencyService.js';
+import { showToast, showAlert, showConfirm } from './dialogs.js';
 
 let availableThemes   = [];
 let purchasedThemeIds = [];
@@ -392,9 +393,9 @@ async function _buyCoins(packId, deps) {
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else alert(data.error || 'Impossible de créer la session de paiement.');
+    else showAlert(data.error || 'Impossible de créer la session de paiement.');
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
@@ -531,17 +532,17 @@ async function _buyKit(theme, deps) {
       _renderShop(deps);
     }
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
 async function _buyWithCoins(theme, deps) {
   if (!deps.getCurrentUser()) { deps.openAccountForSignIn(); return; }
   if (coinBalance < COIN_KIT_COST) {
-    alert(`Il te faut ${COIN_KIT_COST} pièces. Tu en as ${coinBalance}.\nGagne des pièces en remportant des parties !`);
+    showAlert(`Il te faut ${COIN_KIT_COST} pièces. Tu en as ${coinBalance}.\nGagne des pièces en remportant des parties !`, { title: 'Pas assez de pièces' });
     return;
   }
-  if (!confirm(`Débloquer "${theme.name}" pour ${COIN_KIT_COST} pièces ?`)) return;
+  if (!(await showConfirm(`Débloquer "${theme.name}" pour ${COIN_KIT_COST} pièces ?`, { okLabel: 'Débloquer' }))) return;
   try {
     // Atomique et persisté côté serveur (débit + ligne d'achat en une
     // transaction) — le kit reste débloqué après rechargement.
@@ -551,13 +552,13 @@ async function _buyWithCoins(theme, deps) {
     _selectKit(theme, deps);
     _renderShop(deps);
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
 async function _buyWithCredit(theme, deps) {
   if (!deps.getCurrentUser()) { deps.openAccountForSignIn(); return; }
-  if (!confirm(`Utiliser 1 crédit kit pour débloquer "${theme.name}" ?`)) return;
+  if (!(await showConfirm(`Utiliser 1 crédit kit pour débloquer "${theme.name}" ?`, { okLabel: 'Utiliser 1 crédit' }))) return;
   try {
     const remaining = await redeemKitCredit(theme.id);
     kitCredits = remaining;
@@ -565,7 +566,7 @@ async function _buyWithCredit(theme, deps) {
     _selectKit(theme, deps);
     _renderShop(deps);
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
@@ -582,9 +583,9 @@ async function _buyPass(passType, deps) {
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else alert(data.error || 'Impossible de créer la session de paiement.');
+    else showAlert(data.error || 'Impossible de créer la session de paiement.');
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 
@@ -601,9 +602,9 @@ async function _buyPack(packId, packName, deps) {
     });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
-    else alert(data.error || 'Impossible de créer la session de paiement.');
+    else showAlert(data.error || 'Impossible de créer la session de paiement.');
   } catch (err) {
-    alert(err.message || 'Achat impossible pour le moment.');
+    showAlert(err.message || 'Achat impossible pour le moment.');
   }
 }
 

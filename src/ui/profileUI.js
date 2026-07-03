@@ -1,3 +1,5 @@
+import { showToast, showAlert, showConfirm } from './dialogs.js';
+
 
 // Icônes SVG de pouvoirs pour les badges sur les cartes joueurs (format TCG)
 const POWER_ICONS_CARD = {
@@ -356,8 +358,13 @@ export function initProfile(deps) {
       els.progressEmptyNote.classList.toggle('hidden', !!progress);
       els.progressLevel.textContent = progress?.level ?? 1;
       els.progressXp.textContent = progress?.xp ?? 0;
-      els.progressStreak.textContent = progress?.current_streak_days ?? 0;
-      els.progressWins.textContent = progress?.games_won ?? 0;
+      const streak = progress?.current_streak_days ?? 0;
+      const wins = progress?.games_won ?? 0;
+      els.progressStreak.textContent = streak;
+      els.progressWins.textContent = wins;
+      // Accord singulier/pluriel des libellés
+      if (els.progressStreakLabel) els.progressStreakLabel.textContent = streak > 1 ? 'Jours de suite' : 'Jour de suite';
+      if (els.progressWinsLabel) els.progressWinsLabel.textContent = wins > 1 ? 'Victoires' : 'Victoire';
     } catch (err) {
       console.error('Progression non chargée :', err);
     }
@@ -381,10 +388,10 @@ export function initProfile(deps) {
         const left = document.createElement('div');
         const desc = document.createElement('div');
         desc.className = 'challenge-desc';
-        desc.textContent = c.daily_challenge_templates?.description || 'Défi du jour';
+        desc.textContent = c.daily_challenge_templates?.description || c.description || 'Défi du jour';
         const progressEl = document.createElement('div');
         progressEl.className = 'challenge-progress';
-        const target = c.daily_challenge_templates?.target_count ?? 1;
+        const target = c.daily_challenge_templates?.target_count ?? c.target_count ?? 1;
         progressEl.textContent = `${Math.min(c.progress_count, target)}/${target}`;
         left.appendChild(desc);
         left.appendChild(progressEl);
@@ -411,7 +418,7 @@ export function initProfile(deps) {
       const newRewards = await deps.claimLevelRewards();
       if (newRewards && newRewards.length > 0) {
         const names = newRewards.map(r => r.player_name).join(', ');
-        alert(`Nouvelle récompense de niveau débloquée : ${names} ! Il/elle est maintenant dans ta collection.`);
+        showAlert(`Nouvelle récompense de niveau débloquée : ${names} ! Il/elle est maintenant dans ta collection.`, { title: 'Récompense de niveau' });
       }
 
       const [collection, lineup, customPlayers] = await Promise.all([
@@ -534,7 +541,7 @@ export function initProfile(deps) {
       card.addEventListener('click', () => {
         const emptySlot = Object.keys(LINEUP_SLOT_LABELS).find(s => !myLineupCache?.[`slot_${s}`]);
         if (!emptySlot) {
-          alert('Les 6 postes sont déjà pourvus. Glisse ce joueur directement sur un poste pour remplacer son occupant, ou retire un joueur avec le ✕.');
+          showAlert('Les 6 postes sont déjà pourvus. Glisse ce joueur directement sur un poste pour remplacer son occupant, ou retire un joueur avec le ✕.');
           return;
         }
         assignPlayerToSlot(owned.id, emptySlot, deps);
@@ -589,10 +596,10 @@ export function initProfile(deps) {
           try {
             const result = await deps.purchasePlayer(player.id, deps.getCurrentUser(), deps.checkoutTheme);
             if (result.redirectUrl) { window.location.href = result.redirectUrl; return; }
-            alert(`${player.name} a été ajouté à ta collection !`);
+            showToast(`${player.name} a été ajouté à ta collection !`);
             await loadTeamPanel(deps);
           } catch (err) {
-            alert(err.message || 'Achat impossible pour le moment.');
+            showAlert(err.message || 'Achat impossible pour le moment.');
           }
         });
         card.querySelector('.player-card-inner').appendChild(buyBtn);
@@ -615,9 +622,9 @@ export function initProfile(deps) {
         slot_att1: myLineupCache.slot_att1 || null,
         slot_att2: myLineupCache.slot_att2 || null
       });
-      alert('Composition enregistrée ! Elle s\'appliquera à ta prochaine partie.');
+      showToast('Composition enregistrée ! Elle s\'appliquera à ta prochaine partie.');
     } catch (err) {
-      alert(err.message || 'Impossible d\'enregistrer la composition pour le moment.');
+      showAlert(err.message || 'Impossible d\'enregistrer la composition pour le moment.');
     }
   }
 
@@ -761,19 +768,19 @@ export function initProfile(deps) {
    */
   async function offerCustomPlayerSlotPurchase(deps) {
     if (!deps.getCurrentUser()) return;
-    const confirmed = confirm('Acheter un emplacement supplémentaire pour créer un joueur personnalisé (1,49€) ?');
+    const confirmed = await showConfirm('Acheter un emplacement supplémentaire pour créer un joueur personnalisé (1,49€) ?', { okLabel: 'Acheter' });
     if (!confirmed) return;
     try {
       const fakeThemeForSlot = { id: deps.CUSTOM_PLAYER_SLOT_THEME_ID, price_cents: 149 };
       const result = await deps.checkoutTheme(fakeThemeForSlot, deps.getCurrentUser());
       if (result.immediate) {
-        alert('Emplacement débloqué ! Tu peux maintenant créer ce joueur.');
+        showToast('Emplacement débloqué ! Tu peux maintenant créer ce joueur.');
         els.createPlayerError.textContent = '';
       } else if (result.redirectUrl) {
         window.location.href = result.redirectUrl;
       }
     } catch (err) {
-      alert(err.message || 'Achat impossible pour le moment.');
+      showAlert(err.message || 'Achat impossible pour le moment.');
     }
   }
 }

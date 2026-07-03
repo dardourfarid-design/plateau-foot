@@ -1,3 +1,4 @@
+import { showToast, showAlert } from './dialogs.js';
 // ===================== MERCATO UI =====================
 // Gère l'onglet Amis & Mercato dans l'écran profil : liste d'amis,
 // demandes en attente, envoi/réception/annulation d'offres d'échange,
@@ -87,7 +88,7 @@ async function renderFriendshipsSection(deps) {
   els.pendingFriendRequests.innerHTML = '<p class="profile-empty-note">Chargement…</p>';
   els.friendsList.innerHTML = '';
   try {
-    const { friends, pendingReceived } = await deps.fetchMyFriendships();
+    const { friends, pendingReceived, pendingSent } = await deps.fetchMyFriendships();
     myFriendsCache = friends;
 
     els.pendingFriendRequests.innerHTML = '';
@@ -122,6 +123,35 @@ async function renderFriendshipsSection(deps) {
         row.appendChild(actions);
         els.pendingFriendRequests.appendChild(row);
       });
+    }
+
+    // Demandes ENVOYÉES en attente : sans cette section, l'expéditeur ne
+    // voyait aucune trace de sa demande et croyait qu'elle avait échoué.
+    if (els.pendingFriendRequestsSent) {
+      els.pendingFriendRequestsSent.innerHTML = '';
+      const sentList = pendingSent || [];
+      if (sentList.length === 0) {
+        els.pendingFriendRequestsSent.innerHTML = '<p class="profile-empty-note">Aucune demande envoyée en attente.</p>';
+      } else {
+        sentList.forEach(req => {
+          const row = document.createElement('div');
+          row.className = 'friend-row';
+          row.innerHTML = `<span class="friend-row-name">${req.other_pseudo || 'Joueur'} <span style="opacity:.6;font-size:12px;">(en attente)</span></span>`;
+          const cancelBtn = document.createElement('button');
+          cancelBtn.className = 'btn-small danger';
+          cancelBtn.textContent = 'Annuler';
+          cancelBtn.addEventListener('click', async () => {
+            try {
+              await deps.cancelFriendRequest(req.friend_id);
+              await renderFriendshipsSection(deps);
+            } catch (err) {
+              showAlert(err.message || 'Annulation impossible pour le moment.');
+            }
+          });
+          row.appendChild(cancelBtn);
+          els.pendingFriendRequestsSent.appendChild(row);
+        });
+      }
     }
 
     if (friends.length === 0) {
@@ -200,7 +230,10 @@ async function renderMercatoOffersSection(deps) {
       received.forEach(offer => {
         const row = document.createElement('div');
         row.className = 'offer-row';
-        row.innerHTML = `<span class="offer-row-desc">Échange proposé</span>`;
+        const who = offer.other_pseudo || 'Un ami';
+        const give = offer.requested_player_name ? ` — il demande <strong>${offer.requested_player_name}</strong>` : '';
+        const get = offer.offered_player_name ? ` contre <strong>${offer.offered_player_name}</strong>` : '';
+        row.innerHTML = `<span class="offer-row-desc">${who} te propose un échange${give}${get}</span>`;
         const actions = document.createElement('div');
         actions.className = 'friend-row-actions';
 
@@ -235,7 +268,11 @@ async function renderMercatoOffersSection(deps) {
       sent.forEach(offer => {
         const row = document.createElement('div');
         row.className = 'offer-row';
-        row.innerHTML = `<span class="offer-row-desc">En attente de réponse</span>`;
+        const who2 = offer.other_pseudo || 'ton ami';
+        const detail = (offer.offered_player_name && offer.requested_player_name)
+          ? ` : ${offer.offered_player_name} contre ${offer.requested_player_name}`
+          : '';
+        row.innerHTML = `<span class="offer-row-desc">En attente de réponse de ${who2}${detail}</span>`;
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'btn-small danger';
         cancelBtn.textContent = 'Annuler';
@@ -333,7 +370,7 @@ async function handleConfirmMercatoOffer(deps) {
     );
     els.mercatoOfferOverlay.classList.remove('show');
     await renderMercatoOffersSection(deps);
-    alert('Offre envoyée ! Ton ami doit l\'accepter pour que l\'échange se fasse.');
+    showToast('Offre envoyée ! Ton ami doit l\'accepter pour que l\'échange se fasse.');
   } catch (err) {
     els.mercatoOfferError.textContent = err.message || 'Offre impossible pour le moment.';
   }

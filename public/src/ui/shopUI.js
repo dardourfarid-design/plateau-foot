@@ -548,6 +548,9 @@ async function _buyWithCoins(theme, deps) {
     // transaction) — le kit reste débloqué après rechargement.
     const newBalance = await unlockThemeWithCoins(theme.id);
     coinBalance = newBalance;
+    // Rafraîchit aussi le compteur de la topbar (géré par main.js) : sans
+    // ça, l'ancien solde restait affiché après l'achat.
+    deps.updateCoinDisplay?.(newBalance);
     purchasedThemeIds.push(theme.id);
     _selectKit(theme, deps);
     _renderShop(deps);

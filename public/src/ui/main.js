@@ -997,6 +997,7 @@ function wireShop() {
   initShop({
     els,
     getCurrentUser: () => currentUser,
+    updateCoinDisplay: balance => _updateCoinDisplay(balance),
     openAccountForSignIn: () => {
       authMode = 'signin';
       renderAccountOverlayContent();

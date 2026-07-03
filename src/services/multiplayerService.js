@@ -55,6 +55,18 @@ export async function joinGameSession(inviteCode) {
  * a été validé localement par le moteur. L'autre joueur le recevra via
  * subscribeToGameSession().
  */
+/**
+ * Clôture une session encore en attente (créateur qui annule). Passe par
+ * une RPC security definer (migration 0029) : la table game_sessions n'a
+ * volontairement aucune policy d'écriture directe. Sans cette clôture, la
+ * session restait « waiting » indéfiniment et son code restait joignable.
+ */
+export async function cancelGameSession(sessionId) {
+  const client = requireClient();
+  const { error } = await client.rpc('cancel_game_session', { p_session_id: sessionId });
+  if (error) throw error;
+}
+
 export async function pushGameState(sessionId, gameState) {
   const client = requireClient();
   const { error } = await client.rpc('update_game_session_state', {

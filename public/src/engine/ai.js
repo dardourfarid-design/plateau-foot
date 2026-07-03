@@ -63,9 +63,28 @@ function evaluateState(state, team) {
  * déplacement de pion sans rapport avec le ballon. Reste volontairement
  * imparfait — c'est le niveau pour découvrir le jeu sans frustration.
  */
+// Distance (Tchebychev) d'une poussée de ballon, pour brider l'IA facile.
+function pushDistance(state, move) {
+  if (!move.passTo) return 0;
+  return Math.max(
+    Math.abs(move.passTo[0] - state.ball.row),
+    Math.abs(move.passTo[1] - state.ball.col)
+  );
+}
+
+const FACILE_MAX_PUSH = 2;
+
 function chooseMoveFacile(state) {
-  const moves = listLegalMoves(state);
-  if (moves.length === 0) return null;
+  const allMoves = listLegalMoves(state);
+  if (allMoves.length === 0) return null;
+
+  // L'IA facile ne fait JAMAIS de poussée de plus de 2 cases : une IA
+  // « facile » qui traversait le plateau et marquait dès son premier tour
+  // punissait la moindre erreur d'un débutant (churn garanti). Si tous les
+  // coups légaux dépassent la limite (cas très rare), on retombe sur la
+  // liste complète pour ne jamais bloquer la partie.
+  const capped = allMoves.filter(m => pushDistance(state, m) <= FACILE_MAX_PUSH);
+  const moves = capped.length > 0 ? capped : allMoves;
 
   // 60% du temps : coup totalement aléatoire (pour rester imprévisible et battable)
   if (Math.random() < 0.6) {

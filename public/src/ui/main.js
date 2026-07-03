@@ -1465,7 +1465,9 @@ function showTutorialView(view) {
   }
 
   if (showProfile) {
-    const tab = view === 'profile-challenges' ? 'challenges' : 'progress';
+    const tab = view === 'profile-challenges' ? 'challenges'
+      : view === 'profile-team' ? 'team'
+      : 'progress';
     if (currentUser && profileModuleRef && mercatoModuleRef) {
       switchProfileTab(tab, profileModuleRef, mercatoModuleRef);
     } else {
@@ -1486,7 +1488,7 @@ function _showProfilePanelStatic(tab) {
   });
   els.panelProgress.classList.toggle('hidden', tab !== 'progress');
   els.panelChallenges.classList.toggle('hidden', tab !== 'challenges');
-  els.panelTeam.classList.add('hidden');
+  els.panelTeam.classList.toggle('hidden', tab !== 'team');
   els.panelMercato.classList.add('hidden');
   els.panelLeaderboard.classList.add('hidden');
 
@@ -1505,6 +1507,11 @@ function _showProfilePanelStatic(tab) {
         <div class="challenge-check"></div>
       </div>`).join('') +
       '<p class="profile-empty-note">Aperçu — crée un compte (gratuit) pour recevoir tes 3 vrais défis chaque jour.</p>';
+  } else if (tab === 'team') {
+    els.lineupSlots.innerHTML =
+      '<p class="profile-empty-note">Aperçu — 6 postes à pourvoir en glissant tes joueurs ici. Crée un compte (gratuit) pour recevoir ton pack de démarrage de 6 joueurs.</p>';
+    els.collectionGrid.innerHTML =
+      '<p class="profile-empty-note">Ta collection apparaîtra ici : joueurs communs offerts, Rares et Légendaires à pouvoir spécial à gagner ou débloquer.</p>';
   } else {
     els.progressEmptyNote.classList.remove('hidden');
     els.progressEmptyNote.textContent = 'Aperçu — crée un compte (gratuit) pour suivre ta vraie progression.';

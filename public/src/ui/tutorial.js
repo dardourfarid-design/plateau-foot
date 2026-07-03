@@ -62,6 +62,15 @@ export const TUTORIAL_STEPS = [
     advanceOn: 'next'
   },
   {
+    id: 'team',
+    text: 'L\'onglet « Mon équipe » : glisse tes joueurs de la collection vers les 6 postes pour composer ta formation. Tu peux créer un joueur personnalisé (1 gratuit !), et les joueurs Rares/Légendaires portent un pouvoir spécial utilisable une fois par partie.',
+    target: '#lineupSlots',
+    fallbackTarget: '#panelTeam',
+    spotlightShape: 'rect',
+    view: 'profile-team',
+    advanceOn: 'next'
+  },
+  {
     id: 'coins',
     text: 'Et voici la boutique ! Ton solde de pièces tactiques ⬤ s\'affiche en haut : tu en gagnes à CHAQUE partie (+10 victoire, +3 défaite, +15 par défi). Elles débloquent les « kits du jour ». Pressé ? Des packs de pièces existent aussi.',
     target: '#coinDisplay',

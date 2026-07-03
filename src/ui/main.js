@@ -1119,8 +1119,16 @@ async function handleAuthSubmit() {
       currentUser = signInData?.user ?? null;
     } else {
       const displayName = els.authDisplayName.value.trim() || 'Joueur';
-      const { error } = await signUpWithEmail(email, password, displayName);
+      const { data: signUpData, error } = await signUpWithEmail(email, password, displayName);
       if (error) throw error;
+
+      // Cas particulier Supabase : si l'email correspond a un compte deja
+      // existant, signUp ne renvoie PAS d'erreur (anti-enumeration) mais un
+      // user sans identities. Sans ce test, on afficherait "Compte cree !"
+      // a quelqu'un qui a deja un compte — parcours trompeur.
+      if (signUpData?.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+        throw new Error('User already registered');
+      }
 
       // Enregistre chaque consentement séparément, reflétant exactement
       // l'état des cases au moment de l'inscription (cochée ou non).
@@ -1136,8 +1144,29 @@ async function handleAuthSubmit() {
 
       els.authSubmitBtn.disabled = false;
       els.authSubmitBtn.textContent = originalLabel;
+
+      if (signUpData?.session) {
+        // Confirmation email desactivee cote Supabase : la session est
+        // active immediatement. On connecte l'utilisateur directement au
+        // lieu de le laisser devant un message ambigu lui demandant de
+        // verifier ses emails alors qu'aucun email ne partira.
+        currentUser = signUpData.session.user;
+        updateAccountUI();
+        renderAccountOverlayContent();
+        els.accountOverlay.classList.remove('show');
+        return;
+      }
+
       els.authError.style.color = 'var(--craie-att)';
-      els.authError.textContent = 'Compte créé ! Vérifie tes emails si une confirmation est requise.';
+      els.authError.textContent = 'Compte créé ! Un email de confirmation t\'a été envoyé — clique sur le lien qu\'il contient puis connecte-toi (pense aux spams).';
+      // Bascule le formulaire en mode connexion pour que l'etape suivante
+      // soit evidente une fois l'email confirme.
+      authMode = 'signin';
+      els.authTitle.textContent = 'Connexion';
+      els.authSubmitBtn.textContent = 'Se connecter';
+      els.authSwitchBtn.textContent = 'Pas encore de compte ? Créer un compte';
+      els.authDisplayName.style.display = 'none';
+      els.consentBlock.classList.add('hidden');
       return;
     }
     // currentUser déjà alimenté par data.user (signin) ou restera null (signup)

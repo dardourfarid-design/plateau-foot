@@ -73,7 +73,9 @@ body{
   position:fixed;
   top:18px;
   left:50%;
-  transform: translateX(-50%) translateY(-12px);
+  /* -60px (au lieu de -12px) : l'état masqué est entièrement HORS écran,
+     plus de pilule à moitié coupée en haut de page pendant les transitions. */
+  transform: translateX(-50%) translateY(-60px);
   z-index:100;
   display:flex;
   align-items:center;

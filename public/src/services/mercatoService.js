@@ -22,6 +22,16 @@ export async function sendFriendRequest(pseudo) {
   if (error) throw error;
 }
 
+/**
+ * Annule une demande d'ami envoyée (encore en attente). Passe par une RPC
+ * (migration 0029) car la table friendships n'expose pas de policy DELETE.
+ */
+export async function cancelFriendRequest(friendId) {
+  const client = requireClient();
+  const { error } = await client.rpc('cancel_friend_request', { p_friend_id: friendId });
+  if (error) throw error;
+}
+
 export async function respondFriendRequest(requesterId, accept) {
   const client = requireClient();
   const { error } = await client.rpc('respond_friend_request', {
@@ -84,6 +94,18 @@ export async function cancelMercatoOffer(offerId) {
  */
 export async function fetchMyMercatoOffers() {
   const client = requireClient();
+
+  // Version enrichie (migration 0029) : pseudos et noms de joueurs joints
+  // côté serveur, pour que l'UI puisse dire QUI propose QUOI contre QUOI.
+  const { data: detailed, error: detailedError } = await client.rpc('fetch_my_mercato_offers_detailed');
+  if (!detailedError && Array.isArray(detailed)) {
+    return {
+      received: detailed.filter(o => o.direction === 'received'),
+      sent: detailed.filter(o => o.direction === 'sent')
+    };
+  }
+
+  // Repli sur l'ancienne requête brute si la RPC n'est pas encore déployée.
   const user = (await client.auth.getUser()).data.user;
   if (!user) return { received: [], sent: [] };
 

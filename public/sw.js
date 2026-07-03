@@ -14,7 +14,7 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v3'; // v3 : liste d'assets complétée (audit) — modules extraits + skins + icônes
+const CACHE_NAME = 'tactic-master-v4'; // v4 : + dialogs.js (oubli qui cassait TOUT le site en mode cache/hors-ligne : l'import échouait et aucun bouton ne répondait)
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -37,6 +37,7 @@ const STATIC_ASSETS = [
   './src/ui/shopUI.js',
   './src/ui/profileUI.js',
   './src/ui/mercatoUI.js',
+  './src/ui/dialogs.js',
   './src/services/supabaseClient.js',
   './src/services/consentService.js',
   './src/services/currencyService.js',

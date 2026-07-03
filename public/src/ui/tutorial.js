@@ -45,32 +45,44 @@ export const TUTORIAL_STEPS = [
   },
   {
     id: 'progress-xp',
-    text: 'Chaque partie te rapporte de l\'XP — victoire ou défaite. Tu montes de niveau, et les paliers offrent de vrais cadeaux : un joueur Rare au niveau 5, un Légendaire au niveau 10. Tout se suit dans « Mon profil ».',
-    target: '#profileBtn',
+    text: 'Te voici dans « Mon profil ». Chaque partie rapporte de l\'XP — victoire ou défaite. Tu montes de niveau, et les paliers offrent de vrais cadeaux : un joueur Rare au niveau 5, un Légendaire au niveau 10. Niveau, XP, série et victoires : tout se lit ici.',
+    target: '.progress-summary',
+    fallbackTarget: '#panelProgress',
+    spotlightShape: 'rect',
+    view: 'profile-progress',
     advanceOn: 'next'
   },
   {
     id: 'daily-challenges',
-    text: 'Tous les jours, 3 défis t\'attendent : gagner une partie, marquer des buts… Chaque défi complété rapporte des pièces bonus, et ta série de connexion grimpe — sans jamais te punir si tu rates un jour.',
-    target: '#profileBtn',
+    text: 'L\'onglet « Défis du jour » : 3 défis quotidiens — gagner une partie, marquer des buts… Chaque défi complété rapporte +15 pièces, et ta série de connexion grimpe, sans jamais te punir si tu rates un jour.',
+    target: '#challengesList',
+    fallbackTarget: '#panelChallenges',
+    spotlightShape: 'rect',
+    view: 'profile-challenges',
     advanceOn: 'next'
   },
   {
     id: 'coins',
-    text: 'Les pièces tactiques ⬤ : tu en gagnes à CHAQUE partie (+10 victoire, +3 défaite, +15 par défi complété). Elles débloquent les kits du jour en boutique. Pressé ? Des packs de pièces existent aussi.',
-    target: null,
+    text: 'Et voici la boutique ! Ton solde de pièces tactiques ⬤ s\'affiche en haut : tu en gagnes à CHAQUE partie (+10 victoire, +3 défaite, +15 par défi). Elles débloquent les « kits du jour ». Pressé ? Des packs de pièces existent aussi.',
+    target: '#coinDisplay',
+    fallbackTarget: '#shopBtn',
+    view: 'shop',
     advanceOn: 'next'
   },
   {
     id: 'shop',
-    text: 'La boutique : kits de terrain, packs de joueurs à pouvoirs, Pass Saison. Tout est cosmétique ou optionnel — on peut très bien gagner sans dépenser un centime.',
-    target: '#shopBtn',
+    text: 'Fais défiler pour tout voir : kits de terrain, packs de joueurs à pouvoirs, Pass Saison, Pack Fondateurs. Tout est cosmétique ou optionnel — on peut très bien gagner sans dépenser un centime.',
+    target: '#shopGrid',
+    fallbackTarget: '#shopScreen',
+    spotlightShape: 'rect',
+    view: 'shop',
     advanceOn: 'next'
   },
   {
     id: 'outro',
     text: 'Et voilà, tu sais tout ! Pousse le ballon, surveille ton adversaire, marque le premier. Prêt pour une vraie partie ?',
     target: null,
+    view: 'board',
     advanceOn: 'finish'
   }
 ];

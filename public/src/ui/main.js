@@ -113,7 +113,11 @@ let unsubscribeFromSession = null;
 
 // État tutoriel
 const tutorial = createTutorialController();
-let tutorialSpotlightEl = null; // élément actuellement mis en valeur, pour pouvoir retirer la classe au changement d'étape
+let tutorialSpotlightEl = null;
+// Références des modules profil/mercato pour la navigation didactique du
+// tutoriel (renseignées dans init(), utilisées par showTutorialView).
+let profileModuleRef = null;
+let mercatoModuleRef = null; // élément actuellement mis en valeur, pour pouvoir retirer la classe au changement d'étape
 let authMode = 'signin'; // 'signin' | 'signup'
 let screenBeforeShop = 'setup';
 
@@ -1430,12 +1434,86 @@ function renderTutorialStep(step) {
   els.tutorialNextBtn.classList.toggle('hidden', step.advanceOn !== 'next' && step.advanceOn !== 'finish');
   els.tutorialNextBtn.textContent = step.advanceOn === 'finish' ? 'Lancer une vraie partie →' : 'Suivant →';
 
+  showTutorialView(step.view);
   applyTutorialSpotlight(step);
+}
+
+/**
+ * Navigation didactique du tutoriel : les étapes « Mon profil » et
+ * « Boutique » affichent les VRAIS écrans (avec les vraies données si le
+ * joueur est connecté, un aperçu de démonstration sinon), au lieu d'un
+ * simple texte pointant un bouton. Le voile du tutoriel reste au-dessus :
+ * l'écran est montré, pas interactif — c'est une visite guidée.
+ */
+function showTutorialView(view) {
+  const showProfile = typeof view === 'string' && view.startsWith('profile');
+  const showShop = view === 'shop';
+  const showBoard = !showProfile && !showShop;
+
+  els.gameScreen.classList.toggle('hidden', !showBoard);
+  els.profileScreen.classList.toggle('hidden', !showProfile);
+
+  if (showShop) {
+    if (els.shopScreen.classList.contains('hidden')) {
+      // Passe par le vrai bouton boutique : catalogue réel (ou catalogue de
+      // secours hors connexion), solde à jour — exactement ce que le joueur
+      // verra ensuite.
+      els.shopBtn?.click();
+    }
+  } else if (!els.shopScreen.classList.contains('hidden')) {
+    els.shopScreen.classList.add('hidden');
+  }
+
+  if (showProfile) {
+    const tab = view === 'profile-challenges' ? 'challenges' : 'progress';
+    if (currentUser && profileModuleRef && mercatoModuleRef) {
+      switchProfileTab(tab, profileModuleRef, mercatoModuleRef);
+    } else {
+      _showProfilePanelStatic(tab);
+    }
+  }
+}
+
+/**
+ * Version « aperçu » des onglets profil pour les visiteurs non connectés
+ * pendant le tutoriel : bascule les panneaux sans appels réseau et remplit
+ * les défis avec des exemples représentatifs, pour montrer la mécanique
+ * sans exiger un compte au milieu de l'apprentissage.
+ */
+function _showProfilePanelStatic(tab) {
+  els.profileTabs.querySelectorAll('.profile-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  els.panelProgress.classList.toggle('hidden', tab !== 'progress');
+  els.panelChallenges.classList.toggle('hidden', tab !== 'challenges');
+  els.panelTeam.classList.add('hidden');
+  els.panelMercato.classList.add('hidden');
+  els.panelLeaderboard.classList.add('hidden');
+
+  if (tab === 'challenges') {
+    const demo = [
+      { desc: 'Joue une partie', prog: '0/1' },
+      { desc: 'Gagne une partie', prog: '0/1' },
+      { desc: 'Marque au moins deux buts', prog: '0/2' }
+    ];
+    els.challengesList.innerHTML = demo.map(d => `
+      <div class="challenge-card">
+        <div>
+          <div class="challenge-desc">${d.desc}</div>
+          <div class="challenge-progress">${d.prog}</div>
+        </div>
+        <div class="challenge-check"></div>
+      </div>`).join('') +
+      '<p class="profile-empty-note">Aperçu — crée un compte (gratuit) pour recevoir tes 3 vrais défis chaque jour.</p>';
+  } else {
+    els.progressEmptyNote.classList.remove('hidden');
+    els.progressEmptyNote.textContent = 'Aperçu — crée un compte (gratuit) pour suivre ta vraie progression.';
+  }
 }
 
 function applyTutorialSpotlight(step) {
   if (tutorialSpotlightEl) {
-    tutorialSpotlightEl.classList.remove('tutorial-spotlight');
+    tutorialSpotlightEl.classList.remove('tutorial-spotlight', 'tutorial-spotlight-rect');
     tutorialSpotlightEl = null;
   }
 
@@ -1466,10 +1544,16 @@ function applyTutorialSpotlight(step) {
     targetEl = document.querySelector('.board-wrap');
   } else if (step.target) {
     targetEl = document.querySelector(step.target);
+    // Cible invisible (ex : compteur de pièces masqué hors connexion) :
+    // retomber sur la cible de secours de l'étape.
+    if ((!targetEl || targetEl.offsetParent === null) && step.fallbackTarget) {
+      targetEl = document.querySelector(step.fallbackTarget) || targetEl;
+    }
   }
 
   if (targetEl) {
     targetEl.classList.add('tutorial-spotlight');
+    if (step.spotlightShape === 'rect') targetEl.classList.add('tutorial-spotlight-rect');
     tutorialSpotlightEl = targetEl;
   }
 }
@@ -1506,9 +1590,12 @@ function endTutorial() {
   tutorial.stop();
   showToast('Tutoriel terminé ! Configure ta première vraie partie.');
   if (tutorialSpotlightEl) {
-    tutorialSpotlightEl.classList.remove('tutorial-spotlight');
+    tutorialSpotlightEl.classList.remove('tutorial-spotlight', 'tutorial-spotlight-rect');
     tutorialSpotlightEl = null;
   }
+  // La visite guidée a pu laisser le profil ou la boutique affichés.
+  els.profileScreen.classList.add('hidden');
+  els.shopScreen.classList.add('hidden');
   els.tutorialVeil.classList.add('hidden');
   els.tutorialBubble.classList.add('hidden');
   els.gameControls.classList.remove('hidden');
@@ -1603,6 +1690,9 @@ function init() {
     toOwnedShape,
     loadTeamPanel: profileModule.loadTeamPanel
   });
+
+  profileModuleRef = profileModule;
+  mercatoModuleRef = mercatoModule;
 
   // switchProfileTab reste dans main.js : c'est de l'orchestration pure
   // entre deux modules (profileUI et mercatoUI), pas de la logique d'un

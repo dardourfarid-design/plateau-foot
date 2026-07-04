@@ -39,9 +39,33 @@ export const TUTORIAL_STEPS = [
   },
   {
     id: 'goal',
-    text: 'Continue à pousser le ballon vers la cage rouge pour marquer ton premier but !',
+    text: 'Continue à pousser le ballon vers la cage rouge pour marquer ton premier but ! Le gardien rouge garde sa ligne : contourne-le en visant un côté de la cage.',
     target: null,
     advanceOn: 'goal-scored'
+  },
+  {
+    id: 'rule-coverage',
+    text: 'Astuce de pro : un pion adverse « couvre » les cases juste à côté de lui (haut, bas, gauche, droite). Une passe ne peut ni s\'y arrêter, ni les traverser. Pour percer, cherche les diagonales ou déplace tes pions pour ouvrir un couloir.',
+    target: '.board-wrap',
+    advanceOn: 'next'
+  },
+  {
+    id: 'rule-unedeux',
+    text: 'Le une-deux : si ta passe arrive juste à côté d\'un de tes pions (un appui), tu rejoues aussitôt un déplacement bonus ! Enchaîne les passes vers tes coéquipiers pour avancer plus vite.',
+    target: '.board-wrap',
+    advanceOn: 'next'
+  },
+  {
+    id: 'rule-special',
+    text: 'Deux zones spéciales : les ailes (colonnes de bord) permettent un « centre » que la couverture n\'arrête pas, et le point lumineux devant chaque cage est le point de penalty — de là, ton tir transperce un défenseur. Le gardien, lui, reste à battre.',
+    target: '.board-wrap',
+    advanceOn: 'next'
+  },
+  {
+    id: 'rule-powers',
+    text: 'Enfin, chaque partie te donne un pouvoir bonus tiré au sort sur un de tes pions (éclair, sprint, mur…), utilisable une fois. Les joueurs Rares et Légendaires du mercato en portent d\'encore plus forts. Repère le badge doré !',
+    target: '.board-wrap',
+    advanceOn: 'next'
   },
   {
     id: 'progress-xp',

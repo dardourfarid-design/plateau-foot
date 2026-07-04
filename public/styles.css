@@ -293,8 +293,51 @@ body{
   border: 1px solid rgba(200,132,26,0.07);
 }
 
+/* ---------- Toggle de langue FR|EN (topbar) ---------- */
+.lang-toggle{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid rgba(232,160,48,0.35);
+  border-radius:999px;
+  overflow:hidden;
+  margin-right:10px;
+}
+.lang-toggle .lang-opt{
+  background:transparent;
+  border:none;
+  color:var(--craie-att);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  padding:4px 9px;
+  cursor:pointer;
+  line-height:1;
+  transition:background .15s, color .15s;
+}
+.lang-toggle .lang-opt:hover{ color:var(--craie); }
+.lang-toggle .lang-opt.active{
+  background:var(--or);
+  color:var(--noir);
+}
+
 .cell.goal-zone-bleu{ background: rgba(42,95,165,0.12); }
 .cell.goal-zone-rouge{ background: rgba(200,50,34,0.12); }
+
+/* v0.5 — cases speciales : ailes (centres) et points de penalty. Reperes
+   discrets, pour ne pas surcharger le plateau tout en enseignant les regles. */
+.cell.wing-lane{ box-shadow: inset 0 0 0 1px rgba(232,160,48,0.10); }
+.cell.penalty-spot::after{
+  content:'';
+  position:absolute;
+  top:50%; left:50%;
+  width:6px; height:6px;
+  transform: translate(-50%,-50%);
+  border-radius:50%;
+  background: rgba(255,216,122,0.55);
+  box-shadow: 0 0 6px rgba(255,216,122,0.4);
+  pointer-events:none;
+}
 
 .center-mark{
   position:absolute;
@@ -2710,42 +2753,79 @@ body{
   padding: 6px 8px;
   width: 100%;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
+  display: flex
+/* ============ SÉANCE DE TIRS AU BUT (v0.5) ============ */
+.shootout-screen{
+  min-height: calc(100vh - 52px);
+  display:flex; align-items:center; justify-content:center;
+  padding: 20px;
 }
-.shop-kit-coin-btn {
-  background: rgba(200,132,26,0.1);
-  border: 1px solid rgba(200,132,26,0.3);
-  color: var(--ambre);
-  border-radius: 3px;
+.shootout-card{
+  width:100%; max-width: 460px;
+  background: var(--nuit-clair);
+  border:1px solid rgba(232,160,48,0.18);
+  border-radius:16px;
+  padding: 26px 22px 24px;
+  text-align:center;
 }
-.shop-kit-badge {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 3px 7px;
-  border-radius: 2px;
-  display: inline-block;
+.shootout-title{
+  font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:24px; letter-spacing:0.02em; color:var(--craie);
+  text-transform:uppercase; margin-bottom:8px;
 }
-.shop-kit-badge-active { background: rgba(200,132,26,0.15); color: var(--ambre); }
-.shop-kit-badge-owned  { background: rgba(240,230,211,0.06); color: var(--craie-att); }
-.shop-kit-badge-pass   { background: rgba(31,168,107,0.12);  color: var(--succes); font-size: 9px; }
-.shop-kit-badge-free   { background: rgba(240,230,211,0.06); color: var(--craie-att); }
-
-/* Skeleton boutique */
-.shop-skeleton {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 24px;
+.shootout-score{
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:44px; line-height:1; color:var(--craie); margin:4px 0 2px;
 }
-
-@media (max-width: 640px) {
-  .shop-passes-grid  { grid-template-columns: 1fr; }
-  .shop-packs-grid   { grid-template-columns: 1fr; }
-  .founders-perks    { grid-template-columns: 1fr; }
+#shootoutScoreBleu{ color:var(--bleu-equipe-clair); }
+#shootoutScoreRouge{ color:var(--rouge-equipe-clair); }
+.shootout-score-sep{ color:var(--craie-dim); }
+.shootout-shots{ margin:12px 0 4px; display:flex; flex-direction:column; gap:6px; }
+.shootout-shots-row{ display:flex; align-items:center; gap:10px; justify-content:center; }
+.shootout-team{ font-size:12px; font-weight:700; width:46px; text-align:right; }
+.shootout-team-bleu{ color:var(--bleu-equipe-clair); }
+.shootout-team-rouge{ color:var(--rouge-equipe-clair); }
+.shootout-dots{ display:inline-flex; gap:5px; }
+.shootout-dot{
+  width:13px; height:13px; border-radius:50%;
+  border:1.5px solid var(--craie-dim); display:inline-block;
+  font-size:9px; line-height:11px; color:var(--noir);
 }
+.shootout-dot.scored{ background:var(--succes); border-color:var(--succes); }
+.shootout-dot.missed{ background:var(--rouge-equipe); border-color:var(--rouge-equipe); }
+.shootout-goal{ margin:16px auto 8px; }
+.shootout-net{
+  position:relative; width:240px; height:96px; margin:0 auto;
+  border:3px solid var(--craie-att); border-bottom:none;
+  border-radius:6px 6px 0 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 22px, rgba(240,230,211,0.10) 22px 23px),
+    repeating-linear-gradient(0deg, transparent 0 22px, rgba(240,230,211,0.10) 22px 23px);
+  overflow:hidden;
+}
+.shootout-keeper{
+  position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+  font-size:30px; transition:left .35s cubic-bezier(.5,-0.4,.4,1.4);
+}
+.shootout-keeper.dive-gauche{ left:22%; }
+.shootout-keeper.dive-centre{ left:50%; }
+.shootout-keeper.dive-droite{ left:78%; }
+.shootout-ball{
+  position:absolute; bottom:2px; left:50%; transform:translateX(-50%);
+  font-size:20px; opacity:0; transition:all .32s ease-out;
+}
+.shootout-ball.shown{ opacity:1; }
+.shootout-ball.aim-gauche{ left:20%; bottom:60%; }
+.shootout-ball.aim-centre{ left:50%; bottom:64%; }
+.shootout-ball.aim-droite{ left:80%; bottom:60%; }
+.shootout-prompt{ font-size:14px; color:var(--craie-att); margin:10px 0 12px; min-height:20px; }
+.shootout-dirs{ display:flex; gap:8px; justify-content:center; }
+.shootout-dir{ flex:1; max-width:130px; }
+.shootout-dirs.hidden, .shootout-end-row.hidden{ display:none; }
+.shootout-feedback{
+  font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:22px; min-height:28px; margin-top:12px; letter-spacing:0.03em;
+}
+.shootout-feedback.goal{ color:var(--succes); }
+.shootout-feedback.save{ color:var(--rouge-equipe-clair); }
+.shootout-launch-btn{ border:1px dashed rgba(232,160,48,0.4); }

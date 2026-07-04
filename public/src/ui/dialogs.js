@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // ===================== DIALOGUES INTÉGRÉS =====================
 // Remplace les alert()/confirm() natifs du navigateur, qui bloquent le
 // thread, cassent l'immersion (surtout en PWA plein écran) et ne suivent
@@ -80,8 +81,8 @@ function openModal({ title, bodyHtml, bodyText, okLabel, cancelLabel, showCancel
     d.title.style.display = title ? '' : 'none';
     if (bodyHtml !== undefined) d.body.innerHTML = bodyHtml;
     else d.body.textContent = bodyText || '';
-    d.okBtn.textContent = okLabel || 'OK';
-    d.cancelBtn.textContent = cancelLabel || 'Annuler';
+    d.okBtn.textContent = okLabel || t('OK');
+    d.cancelBtn.textContent = cancelLabel || t('Annuler');
     d.cancelBtn.style.display = showCancel ? '' : 'none';
 
     const close = result => {
@@ -105,10 +106,10 @@ function openModal({ title, bodyHtml, bodyText, okLabel, cancelLabel, showCancel
 }
 
 export function showAlert(message, { title = '' } = {}) {
-  return openModal({ title, bodyText: message, okLabel: 'OK', showCancel: false });
+  return openModal({ title, bodyText: message, okLabel: t('OK'), showCancel: false });
 }
 
-export function showConfirm(message, { title = '', okLabel = 'Confirmer', cancelLabel = 'Annuler' } = {}) {
+export function showConfirm(message, { title = '', okLabel = t('Confirmer'), cancelLabel = t('Annuler') } = {}) {
   return openModal({ title, bodyText: message, okLabel, cancelLabel, showCancel: true });
 }
 
@@ -131,10 +132,10 @@ export function showConsentDialog(defaults = {}) {
     ${cb('consentDlgEmail', "Recevoir des emails sur les nouveautés et offres", defaults.emailMarketing)}
     ${cb('consentDlgSharing', "Partage de mes données avec des partenaires sélectionnés", defaults.dataSharing)}`;
   return openModal({
-    title: 'Mes préférences de données',
+    title: t('Mes préférences de données'),
     bodyHtml,
-    okLabel: 'Enregistrer',
-    cancelLabel: 'Annuler',
+    okLabel: t('Enregistrer'),
+    cancelLabel: t('Annuler'),
     showCancel: true
   }).then(ok => {
     if (!ok) return null;

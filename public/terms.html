@@ -22,6 +22,7 @@
 </style>
 </head>
 <body>
+<div id="langHost" style="position:fixed;top:12px;right:12px;z-index:100;"></div>
 <main class="legal-page">
   <a class="back" href="index.html">← Retour au jeu</a>
   <h1>Conditions d'utilisation et de vente</h1>
@@ -38,7 +39,7 @@
   <p>
     Le site et le jeu « Tactic Master » (ci-après « le Service ») sont édités par
     [NOM / RAISON SOCIALE], [statut — ex. entrepreneur individuel], [adresse],
-    [SIREN/SIRET le cas échéant]. Contact : <a href="mailto:legal@tactic-master.com">legal@tactic-master.com</a>.
+    [SIREN/SIRET le cas échéant]. Contact : <a href="mailto:dardour.farid@gmail.com">dardour.farid@gmail.com</a>.
     Hébergement du site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA.
     Hébergement des données : Supabase (base de données et authentification).
   </p>
@@ -133,5 +134,13 @@
     règlement en ligne des litiges.
   </p>
 </main>
+<script type="module">
+  import { initLang, applyTranslations, startAutoTranslate, mountLangToggle } from './src/ui/i18n.js';
+  import './src/ui/i18n-legal-en.js';
+  initLang();
+  mountLangToggle(document.getElementById('langHost'));
+  applyTranslations(document);
+  startAutoTranslate();
+</script>
 </body>
 </html>

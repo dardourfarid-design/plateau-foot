@@ -329,6 +329,7 @@ function applyPowersToGameState() {
 function startGame(goalsToWin) {
   gameState = createGame({ goalsToWin, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
+  els.shootoutScreen?.classList.add('hidden');
   // En local ou vs IA, l'humain principal joue toujours Bleu. Sans cette
   // remise à zéro, un joueur ayant rejoint une partie en ligne (myTeam =
   // Rouge) gardait ce camp en mémoire pour ses parties solo suivantes.
@@ -704,6 +705,7 @@ function backToSetup() {
   // silencieuse après une partie contre l'IA, sans que rien à l'écran ne
   // le laisse deviner.
   els.gameScreen.classList.add('hidden');
+  els.shootoutScreen?.classList.add('hidden');
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
   els.configScreen.classList.remove('hidden');
@@ -1489,6 +1491,7 @@ function startTutorial() {
   els.configScreen.classList.add('hidden');
   els.gameScreen.classList.remove('hidden');
   els.gameControls.classList.add('hidden'); // pas de sens pendant un script guidé
+  els.shootoutScreen?.classList.add('hidden');
   gameMode = 'local';
   gameState = createGame({ goalsToWin: 1 });
   // Formation scriptee simplifiee : couloir central degage pour que la regle de
@@ -1815,6 +1818,10 @@ function init() {
   const homeLogo = document.getElementById('homeLogoBtn');
   homeLogo?.addEventListener('click', goToLanding);
   homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToLanding(); } });
+  // La seance de tirs est un ecran plein : toute navigation vers un autre ecran
+  // doit la masquer (sinon elle "resterait" affichee par-dessous).
+  document.getElementById('shopBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
+  document.getElementById('profileBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
   registerServiceWorker();
   handlePaymentReturn();
 }
@@ -1898,12 +1905,33 @@ function registerServiceWorker() {
 
 
 // ===================== SÉANCE DE TIRS AU BUT (UI) =====================
-// S'appuie sur le moteur pur src/engine/penaltyShootout.js. Le joueur est
-// toujours Bleu : il tire quand c'est son tour, et plonge (choisit un côté)
-// quand l'IA (Rouge) tire. L'adversaire choisit au hasard (randomDirection).
+// Ecran plein a part entiere, branche sur le moteur pur penaltyShootout.js.
+// Joueur = toujours Bleu : il tire quand c'est son tour, il plonge (choisit un
+// cote) quand l'IA (Rouge) tire. L'adversaire choisit au hasard.
 let shootoutState = null;
 let shootoutBusy = false;
 let shootoutMode = 'standalone'; // 'standalone' | 'departage'
+let shootoutCrowdBuilt = false;
+
+const SO_ZONE_X = { gauche: 80, centre: 150, droite: 220 };
+const SO_CROWD_COLORS = ['#2A5FA5', '#3f78c4', '#C83222', '#e0543f', '#E8A030', '#F0E6D3', '#7AAEE8', '#9a9a9a'];
+
+function buildShootoutCrowd() {
+  const g = els.shootoutCrowd;
+  if (!g || shootoutCrowdBuilt) return;
+  let html = '';
+  for (let row = 0; row < 3; row++) {
+    for (let x = 16; x <= 284; x += 15) {
+      const cx = x + (row % 2 ? 7 : 0);
+      const cy = 12 + row * 13;
+      const c = SO_CROWD_COLORS[Math.floor(Math.random() * SO_CROWD_COLORS.length)];
+      const d = Math.random().toFixed(2);
+      html += '<circle class="crowd-head" cx="' + cx + '" cy="' + cy + '" r="4.4" fill="' + c + '" style="animation-delay:' + d + 's"/>';
+    }
+  }
+  g.innerHTML = html;
+  shootoutCrowdBuilt = true;
+}
 
 function wireShootout() {
   els.shootoutScreen     = document.getElementById('shootoutScreen');
@@ -1913,7 +1941,10 @@ function wireShootout() {
   els.shootoutDotsBleu   = document.getElementById('shootoutDotsBleu');
   els.shootoutDotsRouge  = document.getElementById('shootoutDotsRouge');
   els.shootoutKeeper     = document.getElementById('shootoutKeeper');
+  els.shootoutShooter    = document.getElementById('shootoutShooter');
   els.shootoutBall       = document.getElementById('shootoutBall');
+  els.shootoutBallSpin   = document.getElementById('shootoutBallSpin');
+  els.shootoutCrowd      = document.getElementById('shootoutCrowd');
   els.shootoutPrompt     = document.getElementById('shootoutPrompt');
   els.shootoutDirs       = document.getElementById('shootoutDirs');
   els.shootoutFeedback   = document.getElementById('shootoutFeedback');
@@ -1921,35 +1952,49 @@ function wireShootout() {
 
   document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
   document.getElementById('shootoutReplayBtn')?.addEventListener('click', () => {
-    if (shootoutMode === 'departage') {
-      els.shootoutScreen.classList.add('hidden');
-      els.configScreen.classList.remove('hidden'); // rejoue une manche depuis la config
-    } else {
-      openShootout();
-    }
+    if (shootoutMode === 'departage') { leaveShootout(); els.configScreen.classList.remove('hidden'); }
+    else openShootout();
   });
   document.getElementById('shootoutBackBtn')?.addEventListener('click', () => {
-    els.shootoutScreen.classList.add('hidden');
-    if (shootoutMode === 'departage') els.setupScreen.classList.remove('hidden');
-    else els.configScreen.classList.remove('hidden');
+    const departage = shootoutMode === 'departage';
+    leaveShootout();
+    (departage ? els.setupScreen : els.configScreen).classList.remove('hidden');
   });
   els.shootoutDirs?.querySelectorAll('.shootout-dir').forEach(btn =>
     btn.addEventListener('click', () => playShootoutDir(btn.dataset.dir)));
+  els.shootoutScreen?.querySelectorAll('.shootout-zone').forEach(z =>
+    z.addEventListener('click', () => playShootoutDir(z.dataset.dir)));
+}
+
+// Masque tous les autres ecrans avant d'afficher la seance (ecran a part entiere).
+function hideAllScreensForShootout() {
+  ['setupScreen', 'configScreen', 'waitingScreen', 'gameScreen', 'shopScreen', 'profileScreen']
+    .forEach(k => els[k] && els[k].classList.add('hidden'));
+  els.endOverlay?.classList.remove('show');
+  els.goalOverlay?.classList.remove('show');
+}
+
+function resetShootoutScene() {
+  buildShootoutCrowd();
+  shootoutBusy = false;
+  if (els.shootoutFeedback) { els.shootoutFeedback.textContent = ''; els.shootoutFeedback.className = 'shootout-feedback'; }
+  els.shootoutKeeper?.setAttribute('transform', 'translate(0,0)');
+  els.shootoutBall?.setAttribute('transform', 'translate(0,0)');
+  els.shootoutBallSpin?.setAttribute('transform', 'translate(126,198)');
+  els.shootoutShooter?.classList.remove('kick');
+}
+
+function leaveShootout() {
+  els.shootoutScreen?.classList.add('hidden');
 }
 
 function openShootout() {
   shootoutMode = 'standalone';
   if (els.shootoutTitle) els.shootoutTitle.textContent = t('Séance de tirs au but');
-  els.setupScreen?.classList.add('hidden');
-  els.configScreen?.classList.add('hidden');
-  els.gameScreen?.classList.add('hidden');
+  hideAllScreensForShootout();
   els.shootoutScreen.classList.remove('hidden');
   shootoutState = createShootout();
-  shootoutBusy = false;
-  els.shootoutFeedback.textContent = '';
-  els.shootoutFeedback.className = 'shootout-feedback';
-  els.shootoutKeeper.className = 'shootout-keeper';
-  els.shootoutBall.className = 'shootout-ball';
+  resetShootoutScene();
   renderShootout();
 }
 
@@ -1957,14 +2002,10 @@ function openShootout() {
 function startShootoutDepartage() {
   shootoutMode = 'departage';
   if (els.shootoutTitle) els.shootoutTitle.textContent = t('Départage aux tirs au but');
-  els.gameScreen?.classList.add('hidden');
+  hideAllScreensForShootout();
   els.shootoutScreen.classList.remove('hidden');
   shootoutState = createShootout();
-  shootoutBusy = false;
-  els.shootoutFeedback.textContent = '';
-  els.shootoutFeedback.className = 'shootout-feedback';
-  els.shootoutKeeper.className = 'shootout-keeper';
-  els.shootoutBall.className = 'shootout-ball';
+  resetShootoutScene();
   renderShootout();
 }
 
@@ -1976,10 +2017,7 @@ function renderShootoutDots() {
     for (let i = 0; i < shootoutState.bestOf; i++) {
       const dot = document.createElement('span');
       dot.className = 'shootout-dot';
-      if (i < hist.length) {
-        dot.classList.add(hist[i].scored ? 'scored' : 'missed');
-        dot.textContent = hist[i].scored ? '✓' : '✗';
-      }
+      if (i < hist.length) dot.classList.add(hist[i].scored ? 'scored' : 'missed');
       el.appendChild(dot);
     }
   };
@@ -2001,10 +2039,8 @@ function renderShootout() {
     } else {
       els.shootoutPrompt.textContent = w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
     }
-    els.shootoutFeedback.textContent = '';
-    els.shootoutFeedback.className = 'shootout-feedback';
   } else if (s.taker === TEAMS.BLEU) {
-    els.shootoutPrompt.textContent = t('À toi de tirer : choisis un côté');
+    els.shootoutPrompt.textContent = t('À toi de tirer : vise un coin');
   } else {
     els.shootoutPrompt.textContent = t('Arrête le tir : choisis où plonger');
   }
@@ -2018,24 +2054,32 @@ function playShootoutDir(dir) {
   let shooterDir, keeperDir;
   if (s.taker === TEAMS.BLEU) { shooterDir = dir; keeperDir = randomDirection(); }
   else { keeperDir = dir; shooterDir = randomDirection(); }
-
   const scored = shooterDir !== keeperDir;
+
   els.shootoutDirs.classList.add('hidden');
-  els.shootoutKeeper.className = 'shootout-keeper dive-' + keeperDir;
-  els.shootoutBall.className = 'shootout-ball shown aim-' + shooterDir;
-  els.shootoutFeedback.textContent = scored ? t('BUT !') : t('Arrêt !');
-  els.shootoutFeedback.className = 'shootout-feedback ' + (scored ? 'goal' : 'save');
+  els.shootoutShooter?.classList.add('kick');
+
+  setTimeout(() => {
+    const kRot = keeperDir === 'gauche' ? -18 : keeperDir === 'droite' ? 18 : 0;
+    els.shootoutKeeper?.setAttribute('transform', 'translate(' + (SO_ZONE_X[keeperDir] - 150) + ',0) rotate(' + kRot + ' 150 110)');
+    els.shootoutBall?.setAttribute('transform', 'translate(' + (SO_ZONE_X[shooterDir] - 126) + ',-96)');
+    els.shootoutBallSpin?.setAttribute('transform', 'translate(126,198) rotate(720)');
+    if (els.shootoutFeedback) {
+      els.shootoutFeedback.textContent = scored ? t('BUT !') : t('Arrêt !');
+      els.shootoutFeedback.className = 'shootout-feedback ' + (scored ? 'goal' : 'save');
+    }
+    if (scored && els.shootoutCrowd) {
+      els.shootoutCrowd.classList.add('cheer');
+      setTimeout(() => els.shootoutCrowd.classList.remove('cheer'), 900);
+    }
+  }, 170);
 
   const next = shoot(s, shooterDir, keeperDir);
   setTimeout(() => {
     shootoutState = next;
-    els.shootoutBall.className = 'shootout-ball';
-    els.shootoutKeeper.className = 'shootout-keeper';
-    els.shootoutFeedback.textContent = '';
-    els.shootoutFeedback.className = 'shootout-feedback';
-    shootoutBusy = false;
+    resetShootoutScene();
     renderShootout();
-  }, 1150);
+  }, 1250);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -78,6 +78,7 @@
 </style>
 </head>
 <body>
+<div id="langHost" style="position:fixed;top:12px;right:12px;z-index:100;"></div>
 
 <div class="privacy-page">
   <a href="index.html" class="back-link">← Retour au jeu</a>
@@ -159,5 +160,13 @@
   </p>
 </div>
 
+<script type="module">
+  import { initLang, applyTranslations, startAutoTranslate, mountLangToggle } from './src/ui/i18n.js';
+  import './src/ui/i18n-legal-en.js';
+  initLang();
+  mountLangToggle(document.getElementById('langHost'));
+  applyTranslations(document);
+  startAutoTranslate();
+</script>
 </body>
 </html>

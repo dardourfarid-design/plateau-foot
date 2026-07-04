@@ -27,6 +27,10 @@ export function buildBoardGrid(container, onCellClick) {
       cell.dataset.col = c;
       if (r === GOAL_ROW_TOP && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-rouge');
       if (r === GOAL_ROW_BOTTOM && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-bleu');
+      // v0.5 : reperes visuels des cases speciales. Ailes (colonnes de bord) =
+      // "centre" ignorant la couverture ; points de penalty = tir perforant.
+      if (c === 0 || c === BOARD_COLS - 1) cell.classList.add('wing-lane');
+      if ((r === 2 || r === BOARD_ROWS - 3) && c === 3) cell.classList.add('penalty-spot');
       cell.addEventListener('click', () => onCellClick(r, c));
       container.appendChild(cell);
     }

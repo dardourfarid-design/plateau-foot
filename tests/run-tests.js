@@ -10,6 +10,7 @@ await import('./multiplayer-protocol.test.js');
 await import('./playerIdentity.test.js');
 await import('./playerAvatar.test.js');
 await import('./powers.test.js');
+await import('./penaltyShootout.test.js');
 await import('./profileUI.test.js');
 await import('./mercatoUI.test.js');
 

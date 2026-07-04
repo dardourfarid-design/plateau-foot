@@ -11,6 +11,7 @@ import {
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
+import { createShootout, shoot, shootoutWinner, randomDirection } from '../engine/penaltyShootout.js';
 import {
   POWER_TYPES, POWER_LABELS, canActivatePower, getPowerShotDestinations, activateTirPuissant,
   getSprintDestinations, activateSprint, activateMur, activateRelais, confirmRelaisAfterPass,
@@ -25,6 +26,8 @@ import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWith
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession, cancelGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
+import { initLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
+import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
@@ -92,6 +95,9 @@ let purchasedThemeIds = [];
 let activeThemeId = loadSavedThemeId();
 let gameMode = 'local'; // 'local' | 'ai' | 'online'
 let aiLevel = AI_LEVELS.MOYEN;
+let selectedVariant = 'standard'; // 'standard' (6 pions) | 'tactique' (8 pions)
+let freePowersOn = true;          // pouvoir bonus tire au sort par equipe/match
+let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limite de tours, departage TAB)
 let aiThinking = false;
 const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujours Bleu en mode IA
 
@@ -154,6 +160,9 @@ function cacheDomRefs() {
   els.modeOptions = document.getElementById('modeOptions');
   els.aiDifficultyField = document.getElementById('aiDifficultyField');
   els.aiDifficultyOptions = document.getElementById('aiDifficultyOptions');
+  els.variantOptions = document.getElementById('variantOptions');
+  els.powersOptions = document.getElementById('powersOptions');
+  els.formatOptions = document.getElementById('formatOptions');
   els.localAiBlock = document.getElementById('localAiBlock');
   els.onlineBlock = document.getElementById('onlineBlock');
   els.createOnlineBtn = document.getElementById('createOnlineBtn');
@@ -318,7 +327,7 @@ function applyPowersToGameState() {
 }
 
 function startGame(goalsToWin) {
-  gameState = createGame({ goalsToWin });
+  gameState = createGame({ goalsToWin, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
   // En local ou vs IA, l'humain principal joue toujours Bleu. Sans cette
   // remise à zéro, un joueur ayant rejoint une partie en ligne (myTeam =
@@ -354,16 +363,16 @@ function render() {
   els.sidebarScoreBleu.textContent = gameState.score[TEAMS.BLEU];
   els.sidebarScoreRouge.textContent = gameState.score[TEAMS.ROUGE];
   els.sidebarTurn.textContent = gameState.gameOver
-    ? 'Partie terminée'
-    : (gameState.turn === TEAMS.BLEU ? 'Bleu' : 'Rouge');
+    ? t('Partie terminée')
+    : (gameState.turn === TEAMS.BLEU ? t('Bleu') : t('Rouge'));
 
   els.turnBanner.classList.remove('active-bleu', 'active-rouge');
   if (gameState.gameOver) {
-    els.turnBanner.textContent = 'Partie terminée';
+    els.turnBanner.textContent = t('Partie terminée');
   } else {
     els.turnBanner.textContent = gameState.gameOver
-      ? 'Partie terminée'
-      : (gameState.turn === TEAMS.BLEU ? 'Au tour de bleu' : 'Au tour de rouge');
+      ? t('Partie terminée')
+      : (gameState.turn === TEAMS.BLEU ? t('Au tour de bleu') : t('Au tour de rouge'));
     els.turnBanner.classList.add(gameState.turn === TEAMS.BLEU ? 'active-bleu' : 'active-rouge');
   }
 
@@ -376,19 +385,19 @@ function render() {
 function updateHint() {
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
   if (gameMode === 'ai' && gameState.turn === AI_TEAM) {
-    els.hintBar.textContent = 'L\'ordinateur réfléchit…';
+    els.hintBar.textContent = t('L\'ordinateur réfléchit…');
     return;
   }
   if (gameMode === 'online' && gameState.turn !== myTeam) {
-    els.hintBar.textContent = 'En attente du coup de ton adversaire…';
+    els.hintBar.textContent = t('En attente du coup de ton adversaire…');
     return;
   }
   if (gameState.phase === PHASES.SELECT) {
     els.hintBar.textContent = gameState.selectedTokenId
-      ? 'Clique une case pour bouger, ou directement le ballon pour le pousser'
-      : 'Touche un de tes pions pour le jouer';
+      ? t('Clique une case pour bouger, ou directement le ballon pour le pousser')
+      : t('Touche un de tes pions pour le jouer');
   } else if (gameState.phase === PHASES.MOVED_CAN_PASS) {
-    els.hintBar.textContent = 'Tu touches le ballon : pousse-le, ou clique « Terminer le tour »';
+    els.hintBar.textContent = t('Tu touches le ballon : pousse-le, ou clique « Terminer le tour »');
   }
 }
 
@@ -426,7 +435,7 @@ function updatePowerButton() {
   const canShow = token && canActivatePower(gameState, token) && !pendingPowerActivation;
   els.activatePowerBtn.classList.toggle('hidden', !canShow);
   if (canShow) {
-    els.activatePowerBtn.textContent = `Utiliser : ${POWER_LABELS[token.power]}`;
+    els.activatePowerBtn.textContent = t('Utiliser : {power}', { power: t(POWER_LABELS[token.power]) });
   }
 }
 
@@ -523,6 +532,17 @@ function handlePostActionEffects(previousState) {
     return; // pas d'IA pendant le tutoriel
   }
 
+  // Fin de manche courte : si egalite -> departage aux tirs au but, sinon fin
+  // de partie classique. (Le cas gameOver APRES un but est traite plus haut.)
+  if (gameState.gameOver) {
+    if (gameState.isDraw) {
+      setTimeout(() => startShootoutDepartage(), 450);
+    } else {
+      setTimeout(() => showEndOverlay(gameState.winner), 350);
+    }
+    return;
+  }
+
   // Si une passe venait de se jouer et qu'un Relais était en attente sur le
   // pion qui a tiré, on confirme le bonus de second mouvement maintenant
   // (jamais avant un but, traité dans la branche ci-dessus séparément).
@@ -586,10 +606,18 @@ function handleCancel() {
 
 // ---------- Overlays ----------
 
+// v0.5 — un peu de "juice" : titres/mini-commentaires varies, et une mention
+// speciale quand le but conclut une belle serie de passes (momentum).
+const GOAL_TITLES = ['BUT !', 'BUUUT !', 'MAGNIFIQUE !', 'QUEL BUT !', 'GOLAZO !'];
+const GOAL_LINES = ['Frappe imparable', 'Le gardien battu', 'En pleine lucarne', 'Ça fait mouche', 'Le public exulte'];
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
 function showGoalOverlay(scoringTeam) {
   els.goalTitle.className = 'overlay-title ' + scoringTeam;
-  els.goalTitle.textContent = 'BUT !';
-  els.goalSub.textContent = scoringTeam === TEAMS.BLEU ? "L'équipe bleue marque" : "L'équipe rouge marque";
+  const streak = gameState.lastGoalPassStreak || 0;
+  els.goalTitle.textContent = t(streak >= 3 ? pickRandom(GOAL_TITLES.slice(1)) : pickRandom(GOAL_TITLES));
+  const who = scoringTeam === TEAMS.BLEU ? t("L'équipe bleue marque") : t("L'équipe rouge marque");
+  els.goalSub.textContent = streak >= 3 ? t('{who} — action à {n} passes !', { who, n: streak }) : `${who} · ${t(pickRandom(GOAL_LINES))}`;
   // Affiche le nouveau score dans l'overlay pour un retour immédiat
   if (els.goalScoreFlash) {
     els.goalScoreFlash.textContent =
@@ -613,7 +641,7 @@ function showEndOverlay(winningTeam) {
   // l'IA), ne pas réafficher l'écran de fin par-dessus un autre écran.
   if (els.gameScreen.classList.contains('hidden')) return;
   els.endTitle.className = 'overlay-title ' + winningTeam;
-  els.endTitle.textContent = winningTeam === TEAMS.BLEU ? 'BLEU GAGNE' : 'ROUGE GAGNE';
+  els.endTitle.textContent = winningTeam === TEAMS.BLEU ? t('BLEU GAGNE') : t('ROUGE GAGNE');
   els.endSub.textContent = `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
 
   // Colorier le trophée selon l'équipe gagnante
@@ -632,11 +660,11 @@ function showEndOverlay(winningTeam) {
     els.endStatsRow.innerHTML = `
       <div class="end-stat">
         <span class="end-stat-val">${winner}</span>
-        <span class="end-stat-lbl">Buts marqués</span>
+        <span class="end-stat-lbl">${t('Buts marqués')}</span>
       </div>
       <div class="end-stat">
         <span class="end-stat-val">${loser}</span>
-        <span class="end-stat-lbl">Buts encaissés</span>
+        <span class="end-stat-lbl">${t('Buts encaissés')}</span>
       </div>
     `;
   }
@@ -737,6 +765,34 @@ function wireSetupScreen() {
     });
   });
 
+  // v0.5 — style de jeu (variante) + pouvoirs bonus
+  const variantOpts = els.variantOptions ? els.variantOptions.querySelectorAll('.setup-option') : [];
+  variantOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      variantOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedVariant = opt.dataset.val;
+    });
+  });
+
+  const powersOpts = els.powersOptions ? els.powersOptions.querySelectorAll('.setup-option') : [];
+  powersOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      powersOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      freePowersOn = opt.dataset.val === 'on';
+    });
+  });
+
+  const formatOpts = els.formatOptions ? els.formatOptions.querySelectorAll('.setup-option') : [];
+  formatOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      formatOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedFormat = opt.dataset.val;
+    });
+  });
+
   els.startBtn.addEventListener('click', () => startGame(selectedGoals));
 
   els.goToSetupBtn.addEventListener('click', () => {
@@ -803,7 +859,7 @@ async function handleJoinOnlineGame() {
   els.onlineError.textContent = '';
   const code = els.joinCodeInput.value.trim();
   if (code.length < 4) {
-    els.onlineError.textContent = 'Entre le code complet de la partie.';
+    els.onlineError.textContent = t('Entre le code complet de la partie.');
     return;
   }
 
@@ -879,7 +935,7 @@ function handleActivatePowerClick() {
       // handlePowerDestinationClick() plutôt que traité normalement.
       pendingPowerActivation = { tokenId: token.id, power: token.power };
       highlightPowerDestinations(token);
-      els.hintBar.textContent = `${POWER_LABELS[token.power]} : choisis une case.`;
+      els.hintBar.textContent = t('{power} : choisis une case.', { power: t(POWER_LABELS[token.power]) });
       break;
 
     case POWER_TYPES.MUR: {
@@ -896,7 +952,7 @@ function handleActivatePowerClick() {
       // vraie passe normalement, confirmRelaisAfterPass() prendra le relais
       // au bon moment dans handlePostActionEffects.
       render();
-      els.hintBar.textContent = 'Relais activé : pousse le ballon, tu pourras ensuite déplacer un second pion.';
+      els.hintBar.textContent = t('Relais activé : pousse le ballon, tu pourras ensuite déplacer un second pion.');
       break;
     }
 
@@ -1073,7 +1129,7 @@ async function _refreshNotifications() {
     if (els.dailyHint) {
       const remaining = (challenges || []).filter(c => !c.completed).length;
       if (remaining > 0) {
-        els.dailyHint.textContent = `🎯 ${remaining} défi${remaining > 1 ? 's' : ''} du jour à relever (+15 pièces chacun)`;
+        els.dailyHint.textContent = t(remaining > 1 ? '🎯 {n} défis du jour à relever (+15 pièces chacun)' : '🎯 {n} défi du jour à relever (+15 pièces chacun)', { n: remaining });
         els.dailyHint.classList.remove('hidden');
       } else {
         els.dailyHint.classList.add('hidden');
@@ -1168,7 +1224,7 @@ async function handleAuthSubmit() {
   els.authError.style.color = '';
 
   if (!email || !password) {
-    els.authError.textContent = 'Email et mot de passe requis.';
+    els.authError.textContent = t('Email et mot de passe requis.');
     return;
   }
 
@@ -1228,7 +1284,7 @@ async function handleAuthSubmit() {
       }
 
       els.authError.style.color = 'var(--craie-att)';
-      els.authError.textContent = 'Compte créé ! Un email de confirmation t\'a été envoyé — clique sur le lien qu\'il contient puis connecte-toi (pense aux spams).';
+      els.authError.textContent = t('Compte créé ! Un email de confirmation t\'a été envoyé — clique sur le lien qu\'il contient puis connecte-toi (pense aux spams).');
       // Bascule le formulaire en mode connexion pour que l'etape suivante
       // soit evidente une fois l'email confirme.
       authMode = 'signin';
@@ -1317,7 +1373,7 @@ function wireAccount() {
     const email = els.forgotPasswordEmail.value.trim();
     els.forgotPasswordError.textContent = '';
     if (!email) {
-      els.forgotPasswordError.textContent = 'Indique ton email.';
+      els.forgotPasswordError.textContent = t('Indique ton email.');
       return;
     }
     try {
@@ -1327,7 +1383,7 @@ function wireAccount() {
       // pas, pour éviter qu'un tiers puisse vérifier l'existence de
       // comptes par essais successifs (énumération d'utilisateurs).
       els.forgotPasswordError.style.color = 'var(--craie-att)';
-      els.forgotPasswordError.textContent = 'Si un compte existe avec cet email, un lien de réinitialisation vient d\'être envoyé.';
+      els.forgotPasswordError.textContent = t('Si un compte existe avec cet email, un lien de réinitialisation vient d\'être envoyé.');
     } catch (err) {
       els.forgotPasswordError.style.color = 'var(--rouge-equipe-clair)';
       els.forgotPasswordError.textContent = err.message || 'Envoi impossible pour le moment.';
@@ -1356,14 +1412,14 @@ function wireAccount() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      showAlert(err.message || 'Export impossible pour le moment.');
+      showAlert(err.message || t('Export impossible pour le moment.'));
     }
   });
 
   els.deleteDataBtn?.addEventListener('click', async () => {
     const confirmed = await showConfirm(
-      'Supprimer définitivement ton compte et toutes tes données (achats, parties, préférences) ? Cette action est irréversible.',
-      { title: 'Supprimer mon compte', okLabel: 'Supprimer définitivement' }
+      t('Supprimer définitivement ton compte et toutes tes données (achats, parties, préférences) ? Cette action est irréversible.'),
+      { title: t('Supprimer mon compte'), okLabel: t('Supprimer définitivement') }
     );
     if (!confirmed) return;
     try {
@@ -1372,9 +1428,9 @@ function wireAccount() {
       currentUser = null;
       updateAccountUI();
       els.accountOverlay.classList.remove('show');
-      showAlert('Tes données ont été supprimées.');
+      showAlert(t('Tes données ont été supprimées.'));
     } catch (err) {
-      showAlert(err.message || 'Suppression impossible pour le moment.');
+      showAlert(err.message || t('Suppression impossible pour le moment.'));
     }
   });
 
@@ -1395,9 +1451,9 @@ async function openConsentManagementPanel() {
     [CONSENT_PURPOSES.EMAIL_MARKETING]: choices.emailMarketing,
     [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing
   }).then(() => {
-    showToast('Tes préférences ont été mises à jour.');
+    showToast(t('Tes préférences ont été mises à jour.'));
   }).catch(err => {
-    showAlert(err.message || 'Mise à jour impossible pour le moment.');
+    showAlert(err.message || t('Mise à jour impossible pour le moment.'));
   });
 }
 
@@ -1418,6 +1474,21 @@ function startTutorial() {
   els.gameControls.classList.add('hidden'); // pas de sens pendant un script guidé
   gameMode = 'local';
   gameState = createGame({ goalsToWin: 1 });
+  // Formation scriptee simplifiee : couloir central degage pour que la regle de
+  // couverture (v0.5) ne bloque pas la demonstration "pousse le ballon vers la
+  // cage". Un seul defenseur rouge, sur une aile, hors du couloir de tir ; le
+  // gardien rouge reste a contourner (c'est le sens de l'etape "but").
+  gameState = {
+    ...gameState,
+    tokens: [
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'b-att0', team: TEAMS.BLEU, row: 6, col: 2, isGK: false },
+      { id: 'b-att1', team: TEAMS.BLEU, row: 6, col: 3, isGK: false },
+      { id: 'b-att2', team: TEAMS.BLEU, row: 6, col: 4, isGK: false },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true },
+      { id: 'r-def0', team: TEAMS.ROUGE, row: 1, col: 1, isGK: false }
+    ]
+  };
   undoSnapshot = null;
   buildBoardGrid(els.boardGrid, handleCellClick);
 
@@ -1429,10 +1500,10 @@ function startTutorial() {
 }
 
 function renderTutorialStep(step) {
-  els.tutorialProgress.textContent = tutorial.progressLabel();
-  els.tutorialText.textContent = step.text;
+  els.tutorialProgress.textContent = tutorial.progressLabel().replace('Étape', t('Étape'));
+  els.tutorialText.textContent = t(step.text);
   els.tutorialNextBtn.classList.toggle('hidden', step.advanceOn !== 'next' && step.advanceOn !== 'finish');
-  els.tutorialNextBtn.textContent = step.advanceOn === 'finish' ? 'Lancer une vraie partie →' : 'Suivant →';
+  els.tutorialNextBtn.textContent = step.advanceOn === 'finish' ? t('Lancer une vraie partie →') : t('Suivant →');
 
   showTutorialView(step.view);
   applyTutorialSpotlight(step);
@@ -1514,7 +1585,7 @@ function _showProfilePanelStatic(tab) {
       '<p class="profile-empty-note">Ta collection apparaîtra ici : joueurs communs offerts, Rares et Légendaires à pouvoir spécial à gagner ou débloquer.</p>';
   } else {
     els.progressEmptyNote.classList.remove('hidden');
-    els.progressEmptyNote.textContent = 'Aperçu — crée un compte (gratuit) pour suivre ta vraie progression.';
+    els.progressEmptyNote.textContent = t('Aperçu — crée un compte (gratuit) pour suivre ta vraie progression.');
   }
 }
 
@@ -1595,7 +1666,7 @@ function advanceTutorialStep() {
 
 function endTutorial() {
   tutorial.stop();
-  showToast('Tutoriel terminé ! Configure ta première vraie partie.');
+  showToast(t('Tutoriel terminé ! Configure ta première vraie partie.'));
   if (tutorialSpotlightEl) {
     tutorialSpotlightEl.classList.remove('tutorial-spotlight', 'tutorial-spotlight-rect');
     tutorialSpotlightEl = null;
@@ -1637,6 +1708,19 @@ function switchProfileTab(tabName, profileModule, mercatoModule) {
 
 function init() {
   cacheDomRefs();
+
+  // i18n : langue memorisee (fr par defaut), toggle FR|EN en haut a droite,
+  // traduction initiale du DOM statique. Le contenu dynamique se re-render via
+  // onLanguageChanged() a chaque changement.
+  initLang();
+  const langHost = document.querySelector('.topbar-right');
+  if (langHost) {
+    const toggle = mountLangToggle(langHost, null);
+    if (toggle) langHost.insertBefore(toggle, langHost.firstChild);
+  }
+  onLangChange(onLanguageChanged);
+  applyTranslations(document);
+  startAutoTranslate();
 
   // Applique immédiatement le thème mémorisé (avant tout appel réseau),
   // pour que le visiteur revoie instantanément l'ambiance qu'il a choisie,
@@ -1710,6 +1794,7 @@ function init() {
   wirePowers();
   wireAccount();
   wireTutorial();
+  wireShootout();
   registerServiceWorker();
   handlePaymentReturn();
 }
@@ -1726,7 +1811,7 @@ function handlePaymentReturn() {
   if (!checkoutResult) return;
 
   if (checkoutResult === 'success') {
-    showPurchaseToast('🎉', 'Achat confirmé ! Ton nouveau contenu est débloqué.', false);
+    showPurchaseToast('🎉', t('Achat confirmé ! Ton nouveau contenu est débloqué.'), false);
     // Ouvre directement la boutique avec les données fraîches, pour que
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
@@ -1736,11 +1821,11 @@ function handlePaymentReturn() {
     // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
     // L'activation passe par le webhook Stripe : elle peut prendre quelques
     // secondes — le message le dit pour éviter un rechargement paniqué.
-    showPurchaseToast('🎫', 'Pass Saison activé ! (quelques secondes de délai possibles)', false);
+    showPurchaseToast('🎫', t('Pass Saison activé ! (quelques secondes de délai possibles)'), false);
     els.shopBtn?.click();
     _refreshAfterCheckout();
   } else if (checkoutResult === 'cancelled') {
-    showPurchaseToast('↩️', 'Achat annulé — aucun montant n\'a été débité.', true);
+    showPurchaseToast('↩️', t('Achat annulé — aucun montant n\'a été débité.'), true);
   }
 
   // Retire le paramètre de l'URL sans recharger la page, pour qu'un
@@ -1764,6 +1849,20 @@ function showPurchaseToast(icon, text, isCancelled) {
 }
 
 /**
+ * Re-render du contenu dynamique apres un changement de langue. Le DOM statique
+ * (attributs data-i18n) est deja pris en charge par applyTranslations() dans
+ * setLang(). Ici on rejoue les rendus qui construisent leur texte via t().
+ */
+function onLanguageChanged() {
+  try { if (gameState) render(); } catch (_) { /* pas de partie en cours */ }
+  try {
+    // Rafraichit la boutique / le profil s'ils sont ouverts.
+    if (els.shopScreen && !els.shopScreen.classList.contains('hidden')) els.shopBtn?.click();
+  } catch (_) { /* ignore */ }
+  try { applyTranslations(document); } catch (_) { /* ignore */ }
+}
+
+/**
  * Enregistre le service worker pour permettre l'installation PWA et un
  * fonctionnement minimal hors-ligne (écran d'accueil, jeu local/IA).
  * Échoue silencieusement si le navigateur ne supporte pas les service
@@ -1775,6 +1874,148 @@ function registerServiceWorker() {
   navigator.serviceWorker.register('./sw.js').catch(err => {
     console.error('Service worker non enregistré :', err);
   });
+}
+
+
+// ===================== SÉANCE DE TIRS AU BUT (UI) =====================
+// S'appuie sur le moteur pur src/engine/penaltyShootout.js. Le joueur est
+// toujours Bleu : il tire quand c'est son tour, et plonge (choisit un côté)
+// quand l'IA (Rouge) tire. L'adversaire choisit au hasard (randomDirection).
+let shootoutState = null;
+let shootoutBusy = false;
+let shootoutMode = 'standalone'; // 'standalone' | 'departage'
+
+function wireShootout() {
+  els.shootoutScreen     = document.getElementById('shootoutScreen');
+  els.shootoutTitle      = document.getElementById('shootoutTitle');
+  els.shootoutScoreBleu  = document.getElementById('shootoutScoreBleu');
+  els.shootoutScoreRouge = document.getElementById('shootoutScoreRouge');
+  els.shootoutDotsBleu   = document.getElementById('shootoutDotsBleu');
+  els.shootoutDotsRouge  = document.getElementById('shootoutDotsRouge');
+  els.shootoutKeeper     = document.getElementById('shootoutKeeper');
+  els.shootoutBall       = document.getElementById('shootoutBall');
+  els.shootoutPrompt     = document.getElementById('shootoutPrompt');
+  els.shootoutDirs       = document.getElementById('shootoutDirs');
+  els.shootoutFeedback   = document.getElementById('shootoutFeedback');
+  els.shootoutEndRow     = document.getElementById('shootoutEndRow');
+
+  document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
+  document.getElementById('shootoutReplayBtn')?.addEventListener('click', () => {
+    if (shootoutMode === 'departage') {
+      els.shootoutScreen.classList.add('hidden');
+      els.configScreen.classList.remove('hidden'); // rejoue une manche depuis la config
+    } else {
+      openShootout();
+    }
+  });
+  document.getElementById('shootoutBackBtn')?.addEventListener('click', () => {
+    els.shootoutScreen.classList.add('hidden');
+    if (shootoutMode === 'departage') els.setupScreen.classList.remove('hidden');
+    else els.configScreen.classList.remove('hidden');
+  });
+  els.shootoutDirs?.querySelectorAll('.shootout-dir').forEach(btn =>
+    btn.addEventListener('click', () => playShootoutDir(btn.dataset.dir)));
+}
+
+function openShootout() {
+  shootoutMode = 'standalone';
+  if (els.shootoutTitle) els.shootoutTitle.textContent = t('Séance de tirs au but');
+  els.setupScreen?.classList.add('hidden');
+  els.configScreen?.classList.add('hidden');
+  els.gameScreen?.classList.add('hidden');
+  els.shootoutScreen.classList.remove('hidden');
+  shootoutState = createShootout();
+  shootoutBusy = false;
+  els.shootoutFeedback.textContent = '';
+  els.shootoutFeedback.className = 'shootout-feedback';
+  els.shootoutKeeper.className = 'shootout-keeper';
+  els.shootoutBall.className = 'shootout-ball';
+  renderShootout();
+}
+
+// Depart au nul d'une manche courte : la seance designe le vainqueur du MATCH.
+function startShootoutDepartage() {
+  shootoutMode = 'departage';
+  if (els.shootoutTitle) els.shootoutTitle.textContent = t('Départage aux tirs au but');
+  els.gameScreen?.classList.add('hidden');
+  els.shootoutScreen.classList.remove('hidden');
+  shootoutState = createShootout();
+  shootoutBusy = false;
+  els.shootoutFeedback.textContent = '';
+  els.shootoutFeedback.className = 'shootout-feedback';
+  els.shootoutKeeper.className = 'shootout-keeper';
+  els.shootoutBall.className = 'shootout-ball';
+  renderShootout();
+}
+
+function renderShootoutDots() {
+  const build = (team, el) => {
+    if (!el) return;
+    el.innerHTML = '';
+    const hist = shootoutState.history.filter(h => h.taker === team);
+    for (let i = 0; i < shootoutState.bestOf; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'shootout-dot';
+      if (i < hist.length) {
+        dot.classList.add(hist[i].scored ? 'scored' : 'missed');
+        dot.textContent = hist[i].scored ? '✓' : '✗';
+      }
+      el.appendChild(dot);
+    }
+  };
+  build(TEAMS.BLEU, els.shootoutDotsBleu);
+  build(TEAMS.ROUGE, els.shootoutDotsRouge);
+}
+
+function renderShootout() {
+  const s = shootoutState;
+  els.shootoutScoreBleu.textContent = s.score[TEAMS.BLEU];
+  els.shootoutScoreRouge.textContent = s.score[TEAMS.ROUGE];
+  renderShootoutDots();
+  els.shootoutEndRow.classList.toggle('hidden', !s.over);
+  els.shootoutDirs.classList.toggle('hidden', s.over);
+  if (s.over) {
+    const w = shootoutWinner(s);
+    if (shootoutMode === 'departage') {
+      els.shootoutPrompt.textContent = w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
+    } else {
+      els.shootoutPrompt.textContent = w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
+    }
+    els.shootoutFeedback.textContent = '';
+    els.shootoutFeedback.className = 'shootout-feedback';
+  } else if (s.taker === TEAMS.BLEU) {
+    els.shootoutPrompt.textContent = t('À toi de tirer : choisis un côté');
+  } else {
+    els.shootoutPrompt.textContent = t('Arrête le tir : choisis où plonger');
+  }
+}
+
+function playShootoutDir(dir) {
+  const s = shootoutState;
+  if (!s || s.over || shootoutBusy) return;
+  shootoutBusy = true;
+
+  let shooterDir, keeperDir;
+  if (s.taker === TEAMS.BLEU) { shooterDir = dir; keeperDir = randomDirection(); }
+  else { keeperDir = dir; shooterDir = randomDirection(); }
+
+  const scored = shooterDir !== keeperDir;
+  els.shootoutDirs.classList.add('hidden');
+  els.shootoutKeeper.className = 'shootout-keeper dive-' + keeperDir;
+  els.shootoutBall.className = 'shootout-ball shown aim-' + shooterDir;
+  els.shootoutFeedback.textContent = scored ? t('BUT !') : t('Arrêt !');
+  els.shootoutFeedback.className = 'shootout-feedback ' + (scored ? 'goal' : 'save');
+
+  const next = shoot(s, shooterDir, keeperDir);
+  setTimeout(() => {
+    shootoutState = next;
+    els.shootoutBall.className = 'shootout-ball';
+    els.shootoutKeeper.className = 'shootout-keeper';
+    els.shootoutFeedback.textContent = '';
+    els.shootoutFeedback.className = 'shootout-feedback';
+    shootoutBusy = false;
+    renderShootout();
+  }, 1150);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

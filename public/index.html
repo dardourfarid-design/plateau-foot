@@ -259,6 +259,30 @@
       <!-- Bloc Local/IA -->
       <div id="localAiBlock">
         <div class="setup-field">
+          <span class="setup-label">Style de jeu</span>
+          <div class="setup-options" id="variantOptions">
+            <div class="setup-option active" data-val="standard">Classique · 6</div>
+            <div class="setup-option" data-val="tactique">Tactique · 8</div>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <span class="setup-label">Pouvoirs bonus</span>
+          <div class="setup-options" id="powersOptions">
+            <div class="setup-option active" data-val="on">Activés</div>
+            <div class="setup-option" data-val="off">Désactivés</div>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <span class="setup-label">Format</span>
+          <div class="setup-options" id="formatOptions">
+            <div class="setup-option active" data-val="score">Au score</div>
+            <div class="setup-option" data-val="manche">Manche courte</div>
+          </div>
+        </div>
+
+        <div class="setup-field">
           <span class="setup-label">Buts pour gagner</span>
           <div class="setup-options setup-options-goals" id="goalOptions">
             <div class="setup-option" data-val="1"><span class="goal-val">1</span></div>
@@ -271,6 +295,9 @@
         <button class="btn primary config-start-btn" id="startBtn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="currentColor"/></svg>
           Lancer la partie
+        </button>
+        <button class="btn shootout-launch-btn" id="launchShootoutBtn" type="button" style="width:100%;margin-top:10px;">
+          ⚽ Séance de tirs au but
         </button>
       </div>
 
@@ -713,6 +740,35 @@
       <button class="btn account-submit" id="signOutBtn">Se déconnecter</button>
     </div>
     <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>
+  </div>
+</div>
+
+<!-- ECRAN SEANCE DE TIRS AU BUT -->
+<div class="shootout-screen hidden" id="shootoutScreen">
+  <div class="shootout-card">
+    <div class="shootout-title" id="shootoutTitle">Séance de tirs au but</div>
+    <div class="shootout-score"><span id="shootoutScoreBleu">0</span> <span class="shootout-score-sep">–</span> <span id="shootoutScoreRouge">0</span></div>
+    <div class="shootout-shots">
+      <div class="shootout-shots-row"><span class="shootout-team shootout-team-bleu">Bleu</span><span class="shootout-dots" id="shootoutDotsBleu"></span></div>
+      <div class="shootout-shots-row"><span class="shootout-team shootout-team-rouge">Rouge</span><span class="shootout-dots" id="shootoutDotsRouge"></span></div>
+    </div>
+    <div class="shootout-goal" aria-hidden="true">
+      <div class="shootout-net">
+        <span class="shootout-keeper" id="shootoutKeeper">🧤</span>
+        <span class="shootout-ball" id="shootoutBall">⚽</span>
+      </div>
+    </div>
+    <div class="shootout-prompt" id="shootoutPrompt">À toi de tirer : choisis un côté</div>
+    <div class="shootout-dirs" id="shootoutDirs">
+      <button class="btn shootout-dir" data-dir="gauche" type="button">◀ Gauche</button>
+      <button class="btn shootout-dir" data-dir="centre" type="button">Centre</button>
+      <button class="btn shootout-dir" data-dir="droite" type="button">Droite ▶</button>
+    </div>
+    <div class="shootout-feedback" id="shootoutFeedback"></div>
+    <div class="btn-row shootout-end-row hidden" id="shootoutEndRow" style="justify-content:center;gap:10px;">
+      <button class="btn" id="shootoutBackBtn" type="button">← Accueil</button>
+      <button class="btn primary" id="shootoutReplayBtn" type="button">Rejouer</button>
+    </div>
   </div>
 </div>
 

@@ -2,7 +2,9 @@ import { describe, test, expect } from './test-utils.js';
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
   resetBallAfterGoal, getMoveDestinations, getPassDestinations,
-  tokenAt, isAdjacent, PHASES, listLegalMoves, applyMove
+  tokenAt, isAdjacent, PHASES, listLegalMoves, applyMove,
+  isCellCoveredBy, isWingPass, applyBallMovement, STALL_LIMIT,
+  penaltySpotFor, isPenaltyShot
 } from '../src/engine/gameEngine.js';
 import { TEAMS, CENTER } from '../src/engine/constants.js';
 
@@ -316,3 +318,269 @@ describe('applyMove', () => {
     expect(allOk).toBe(true);
   });
 });
+
+// ===================== v0.5 : COUVERTURE / INTERCEPTION =====================
+describe('couverture / interception (v0.5)', () => {
+  function bare(ball, tokens, turn = TEAMS.BLEU) {
+    return { ...createGame({ goalsToWin: 99 }), ball, tokens, turn };
+  }
+
+  test('un pion adverse coupe la case orthogonalement adjacente et le reste de la ligne', () => {
+    const state = bare({ row: 6, col: 3 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 3, col: 3, isGK: false }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    // (5,3) reste libre et non couverte -> atteignable
+    expect(passes.some(([r, c]) => r === 5 && c === 3)).toBeTruthy();
+    // (4,3) est couverte par le pion rouge en (3,3) -> interceptee, injouable
+    expect(passes.some(([r, c]) => r === 4 && c === 3)).toBeFalsy();
+    // et rien au-dela non plus
+    expect(passes.some(([r, c]) => r <= 3 && c === 3)).toBeFalsy();
+  });
+
+  test('une passe partant d une aile (centre) ignore la couverture', () => {
+    const state = bare({ row: 6, col: 0 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 3, col: 0, isGK: false }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    // (4,0) serait couverte par (3,0), mais le centre l ignore -> atteignable
+    expect(passes.some(([r, c]) => r === 4 && c === 0)).toBeTruthy();
+  });
+
+  test('le gardien adverse ne couvre pas (il defend en occupant sa cage)', () => {
+    const state = bare({ row: 6, col: 3 }, [
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 3, col: 3, isGK: true }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(passes.some(([r, c]) => r === 4 && c === 3)).toBeTruthy();
+  });
+
+  test('nos propres pions ne couvrent jamais nos passes', () => {
+    const state = bare({ row: 6, col: 3 }, [
+      { id: 'b-x', team: TEAMS.BLEU, row: 3, col: 3, isGK: false }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(passes.some(([r, c]) => r === 4 && c === 3)).toBeTruthy();
+  });
+
+  test('isCellCoveredBy et isWingPass exposees et coherentes', () => {
+    const state = bare({ row: 6, col: 0 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 5, col: 1, isGK: false }
+    ]);
+    expect(isWingPass(state)).toBeTruthy();
+    expect(isCellCoveredBy(state, 5, 0, TEAMS.ROUGE)).toBeTruthy();
+    expect(isCellCoveredBy(state, 5, 0, TEAMS.BLEU)).toBeFalsy();
+  });
+});
+
+// ===================== v0.5 : UNE-DEUX / MOMENTUM / ANTI-BLOCAGE =============
+describe('une-deux (combo v0.5)', () => {
+  function bare(ball, tokens, extra = {}) {
+    return { ...createGame({ goalsToWin: 99 }), ball, tokens, turn: TEAMS.BLEU, ...extra };
+  }
+
+  test('une passe qui arrive a cote d un appui allie offre un mouvement bonus (meme camp)', () => {
+    let state = bare({ row: 6, col: 3 }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 7, col: 3, isGK: false }, // passeur, adjacent au ballon
+      { id: 'b-a', team: TEAMS.BLEU, row: 4, col: 3, isGK: false }  // appui : (5,3) sera a cote de lui
+    ]);
+    state = selectToken(state, 'b-p');
+    const after = passBall(state, 5, 3);
+    expect(after.ball).toEqual({ row: 5, col: 3 });
+    expect(after.comboMoveAvailable).toBe(true);
+    expect(after.turn).toBe(TEAMS.BLEU); // meme equipe rejoue
+    expect(after.phase).toBe(PHASES.SELECT);
+  });
+
+  test('le mouvement bonus une-deux rend ensuite la main a l adversaire', () => {
+    let state = bare({ row: 6, col: 3 }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 7, col: 3, isGK: false },
+      { id: 'b-a', team: TEAMS.BLEU, row: 4, col: 3, isGK: false }
+    ]);
+    state = selectToken(state, 'b-p');
+    state = passBall(state, 5, 3); // combo arme
+    state = selectToken(state, 'b-p');
+    state = moveSelectedToken(state, 7, 2); // deplacement bonus, loin du ballon
+    expect(state.turn).toBe(TEAMS.ROUGE); // handoff propre
+    expect(state.comboMoveAvailable).toBeFalsy();
+  });
+
+  test('pas de seconde passe pendant le bonus une-deux', () => {
+    let state = bare({ row: 6, col: 3 }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 7, col: 3, isGK: false },
+      { id: 'b-a', team: TEAMS.BLEU, row: 4, col: 3, isGK: false }
+    ]);
+    state = selectToken(state, 'b-p');
+    state = passBall(state, 5, 3);
+    const blocked = passBall(state, 5, 2); // tentative de 2e passe
+    expect(blocked).toBe(state); // refusee
+  });
+});
+
+describe('momentum (v0.5)', () => {
+  test('les passes consecutives de la meme possession incrementent passStreak', () => {
+    const state = { ...createGame({ goalsToWin: 99 }), ball: { row: 5, col: 3 },
+      turn: TEAMS.BLEU, possession: TEAMS.BLEU, passStreak: 2, tokens: [] };
+    const after = applyBallMovement(state, 4, 3);
+    expect(after.passStreak).toBe(3);
+    expect(after.possession).toBe(TEAMS.BLEU);
+  });
+
+  test('la possession qui change remet passStreak a 1', () => {
+    const state = { ...createGame({ goalsToWin: 99 }), ball: { row: 5, col: 3 },
+      turn: TEAMS.ROUGE, possession: TEAMS.BLEU, passStreak: 4, tokens: [] };
+    const after = applyBallMovement(state, 6, 3);
+    expect(after.possession).toBe(TEAMS.ROUGE);
+    expect(after.passStreak).toBe(1);
+  });
+
+  test('un but expose lastGoalPassStreak pour le bonus', () => {
+    const state = { ...createGame({ goalsToWin: 99 }), ball: { row: 1, col: 2 },
+      turn: TEAMS.BLEU, possession: TEAMS.BLEU, passStreak: 3, tokens: [] };
+    const after = applyBallMovement(state, 0, 2); // cage rouge
+    expect(after.score[TEAMS.BLEU]).toBe(1);
+    expect(after.lastGoalPassStreak).toBe(4); // 3 + la passe du but
+  });
+});
+
+describe('anti-blocage (v0.5)', () => {
+  test('STALL_LIMIT tours sans passe declenchent un engagement neutre au centre', () => {
+    let state = { ...createGame({ goalsToWin: 99 }), ball: { row: 6, col: 0 },
+      turn: TEAMS.BLEU, ballIdleTurns: STALL_LIMIT - 1,
+      tokens: [{ id: 'b-p', team: TEAMS.BLEU, row: 8, col: 6, isGK: false }] };
+    state = selectToken(state, 'b-p');
+    state = moveSelectedToken(state, 7, 6); // deplacement seul, aucune passe
+    expect(state.stalled).toBe(true);
+    expect(state.ball).toEqual({ row: CENTER.row, col: CENTER.col });
+    expect(state.ballIdleTurns).toBe(0);
+  });
+
+  test('une passe remet le compteur d inactivite a zero', () => {
+    const state = { ...createGame({ goalsToWin: 99 }), ball: { row: 5, col: 3 },
+      turn: TEAMS.BLEU, ballIdleTurns: 5, tokens: [] };
+    const after = applyBallMovement(state, 4, 3);
+    expect(after.ballIdleTurns).toBe(0);
+  });
+});
+
+// ===================== v0.5 : POINT DE PENALTY ==============================
+describe('point de penalty (v0.5)', () => {
+  function bare(ball, tokens) {
+    return { ...createGame({ goalsToWin: 99 }), ball, tokens, turn: TEAMS.BLEU };
+  }
+
+  test('depuis le point de penalty, le tir transperce un defenseur de champ jusqu a la cage', () => {
+    const sp = penaltySpotFor(TEAMS.BLEU); // (2,3)
+    let state = bare({ row: sp.row, col: sp.col }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 3, col: 3, isGK: false }, // passeur adjacent
+      { id: 'r-d', team: TEAMS.ROUGE, row: 1, col: 3, isGK: false }, // defenseur devant la cage
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 1, isGK: true }  // gardien decale
+    ]);
+    expect(isPenaltyShot(state)).toBeTruthy();
+    const dests = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(dests.some(([r, c]) => r === 0 && c === 3)).toBeTruthy(); // cage atteignable
+    state = selectToken(state, 'b-p');
+    const scored = passBall(state, 0, 3);
+    expect(scored.score[TEAMS.BLEU]).toBe(1);
+  });
+
+  test('le gardien sur la case visee arrete quand meme le penalty', () => {
+    const sp = penaltySpotFor(TEAMS.BLEU);
+    const state = bare({ row: sp.row, col: sp.col }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 3, col: 3, isGK: false },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true } // pile dans l axe
+    ]);
+    const dests = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(dests.some(([r, c]) => r === 0 && c === 3)).toBeFalsy(); // stoppe par le gardien
+  });
+
+  test('hors du point de penalty, pas de tir perforant', () => {
+    let state = bare({ row: 3, col: 3 }, [ // ballon ailleurs
+      { id: 'b-p', team: TEAMS.BLEU, row: 4, col: 3, isGK: false },
+      { id: 'r-d', team: TEAMS.ROUGE, row: 2, col: 3, isGK: false }
+    ]);
+    const dests = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(dests.some(([r, c]) => r <= 1 && c === 3)).toBeFalsy(); // rien ne traverse r-d
+  });
+});
+
+// ===================== v0.5 : VARIANTE + POUVOIRS GRATUITS ===================
+describe('variante Tactique et pouvoirs gratuits (v0.5)', () => {
+  test('la variante tactique cree 8 pions par equipe', () => {
+    const state = createGame({ variant: 'tactique' });
+    expect(state.variant).toBe('tactique');
+    expect(state.tokens.filter(t => t.team === TEAMS.BLEU)).toHaveLength(8);
+    expect(state.tokens.filter(t => t.team === TEAMS.ROUGE)).toHaveLength(8);
+  });
+
+  test('la partie standard reste a 6 pions par equipe', () => {
+    const state = createGame();
+    expect(state.variant).toBe('standard');
+    expect(state.tokens.filter(t => t.team === TEAMS.BLEU)).toHaveLength(6);
+  });
+
+  test('freePowers distribue exactement un pouvoir par equipe, sur un pion de champ', () => {
+    const state = createGame({ freePowers: true, rng: () => 0.42 });
+    const withPower = state.tokens.filter(t => t.power);
+    expect(withPower).toHaveLength(2);
+    expect(withPower.every(t => !t.isGK)).toBeTruthy();
+    expect(withPower.every(t => t.powerUsed === false)).toBeTruthy();
+    const teams = withPower.map(t => t.team).sort();
+    expect(teams).toEqual([TEAMS.BLEU, TEAMS.ROUGE]);
+  });
+
+  test('sans freePowers, aucun pouvoir sur la formation de depart', () => {
+    const state = createGame();
+    expect(state.tokens.some(t => t.power)).toBeFalsy();
+  });
+
+  test('apres un but, la variante est preservee au replacement des pions', () => {
+    let state = createGame({ variant: 'tactique', goalsToWin: 99 });
+    state = { ...state, ball: { row: 1, col: 2 }, lastGoalBy: TEAMS.BLEU };
+    const reset = resetBallAfterGoal(state);
+    expect(reset.tokens.filter(t => t.team === TEAMS.BLEU)).toHaveLength(8);
+  });
+});
+
+// ===================== v0.5 : MANCHE COURTE / DEPARTAGE =====================
+describe('manche courte (turnLimit) et depart au nul (v0.5)', () => {
+  test('turnCount s incremente a chaque tour joue', () => {
+    let state = createGame({ turnLimit: 10, goalsToWin: 99 });
+    expect(state.turnCount).toBe(0);
+    state = selectToken(state, 'b-att0');
+    state = moveSelectedToken(state, 5, 1); // deplacement simple, loin du ballon -> fin de tour
+    expect(state.turnCount).toBe(1);
+    expect(state.turn).toBe(TEAMS.ROUGE);
+  });
+
+  test('atteindre la limite de tours a egalite termine sur un match nul', () => {
+    let state = createGame({ turnLimit: 1, goalsToWin: 99 });
+    state = selectToken(state, 'b-att0');
+    state = moveSelectedToken(state, 5, 1);
+    expect(state.gameOver).toBe(true);
+    expect(state.isDraw).toBe(true);
+    expect(state.winner).toBeNull();
+  });
+
+  test('atteindre la limite avec un score different designe le vainqueur (pas de nul)', () => {
+    let state = { ...createGame({ turnLimit: 1, goalsToWin: 99 }), score: { [TEAMS.BLEU]: 1, [TEAMS.ROUGE]: 0 } };
+    state = selectToken(state, 'b-att0');
+    state = moveSelectedToken(state, 5, 1);
+    expect(state.gameOver).toBe(true);
+    expect(state.isDraw).toBe(false);
+    expect(state.winner).toBe(TEAMS.BLEU);
+  });
+
+  test('sans turnLimit, une partie ne se termine jamais par le compteur de tours', () => {
+    let state = createGame({ goalsToWin: 99 });
+    for (let i = 0; i < 5; i++) {
+      const myAtt = state.turn === TEAMS.BLEU ? 'b-att0' : 'r-att0';
+      state = selectToken(state, myAtt);
+      const dests = getMoveDestinations(state, state.tokens.find(t => t.id === myAtt));
+      state = moveSelectedToken(state, dests[0][0], dests[0][1]);
+    }
+    expect(state.gameOver).toBe(false);
+    expect(state.turnLimit).toBeNull();
+  });
+});
+

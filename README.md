@@ -61,6 +61,8 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 23. `0023_tactical_coins.sql` — pièces tactiques (monnaie in-game)
 24. `0024_ui_skins.sql` — habillages complets de plateau (skins)
 25. `0025_commercial_hardening.sql` — **AUDIT COMMERCIALISATION (à exécuter absolument)** : suppression des fonctions de paiement mock (self-grant gratuit possible sinon), earn_coins à montant fixe + anti-spam, achat de kit par pièces atomique et persisté, enregistrement + livraison réelle des packs (Académie, Légendes, 3 Kits → crédits, Fondateurs), récompense Rare du pass, bonus XP +20 % du pass, verrouillage des RPCs webhook
+26. `0026_coin_economy.sql` — packs de pièces achetables (Stripe), gains en jouant : +10 victoire, +3 défaite, +15 par défi complété (tout dans record_game_result), suppression d'earn_coins
+27. `0027_shop_rationalization.sql` — rationalisation boutique : kit du jour à 100 pièces, packs de pièces réalignés (100/250/600 à 1,99/3,99/7,99 €) pour préserver la vente de kits à l'unité (2,49 €), pack 3 Kits à 5,49 €
 
 ## Activer la réinitialisation de mot de passe
 

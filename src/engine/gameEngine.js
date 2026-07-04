@@ -13,14 +13,41 @@ export const PHASES = Object.freeze({
   MOVED_CAN_PASS: 'moved-can-pass'
 });
 
+// Anti-blocage v0.5 : au bout de STALL_LIMIT tours consecutifs SANS aucune
+// passe (pur repositionnement de pions), on remet le ballon au centre en
+// engagement neutre pour debloquer une situation figee. Volontairement eleve :
+// ne se declenche qu'en cas de vraie impasse (4 tours par camp sans passe).
+export const STALL_LIMIT = 8;
+
 /**
  * Crée un nouvel état de partie initial.
  * @param {{goalsToWin?: number}} options
  */
+// Pool des pouvoirs distribuables gratuitement (une occurrence par equipe et
+// par match si options.freePowers). Duplique volontairement les chaines de
+// POWER_TYPES (powers.js) pour eviter une dependance circulaire entre modules.
+const FREE_POWER_POOL = ['tir_puissant', 'sprint', 'mur', 'relais', 'repli_adverse'];
+
+function assignFreePowers(tokens, rng) {
+  const pick = (arr) => arr[Math.floor(rng() * arr.length)];
+  return [TEAMS.BLEU, TEAMS.ROUGE].reduce((toks, team) => {
+    const field = toks.filter(t => t.team === team && !t.isGK);
+    if (field.length === 0) return toks;
+    const chosen = pick(field);
+    const power = pick(FREE_POWER_POOL);
+    return toks.map(t => t.id === chosen.id ? { ...t, power, powerUsed: false } : t);
+  }, tokens);
+}
+
 export function createGame(options = {}) {
   const goalsToWin = options.goalsToWin ?? 3;
+  const variant = options.variant === 'tactique' ? 'tactique' : 'standard';
+  const rng = options.rng || Math.random;
+  let tokens = buildStartingFormation(variant);
+  if (options.freePowers) tokens = assignFreePowers(tokens, rng);
   return Object.freeze({
-    tokens: buildStartingFormation(),
+    tokens,
+    variant,
     ball: { row: CENTER.row, col: CENTER.col },
     turn: TEAMS.BLEU,
     score: { [TEAMS.BLEU]: 0, [TEAMS.ROUGE]: 0 },
@@ -32,6 +59,16 @@ export function createGame(options = {}) {
     gameOver: false,
     winner: null,
     lastGoalBy: null,
+    // --- v0.5 : manche courte / departage ---
+    turnLimit: options.turnLimit ?? null, // nb de tours avant fin de manche (null = illimite)
+    turnCount: 0,
+    isDraw: false,
+    // --- v0.5 : possession / momentum / anti-blocage ---
+    possession: TEAMS.BLEU, // derniere equipe a avoir touche (passe) le ballon
+    passStreak: 0,          // passes consecutives de l'equipe en possession (momentum)
+    lastGoalPassStreak: 0,  // momentum du but qui vient d'etre marque (pour bonus XP/pieces)
+    ballIdleTurns: 0,       // tours consecutifs sans passe (anti-blocage)
+    stalled: false,         // vrai le tour ou l'engagement neutre s'est declenche
     history: [] // pile d'événements pour debug / replay éventuel
   });
 }
@@ -54,6 +91,45 @@ export function isAdjacent(r1, c1, r2, c2) {
   const dr = Math.abs(r1 - r2);
   const dc = Math.abs(c1 - c2);
   return dr <= 1 && dc <= 1 && !(dr === 0 && dc === 0);
+}
+
+// Directions strictement orthogonales, utilisees par la regle de couverture
+// v0.5. On exclut volontairement les diagonales : un defenseur ne "coupe" que
+// les cases juste a cote de lui, jamais en biais, ce qui laisse les lignes
+// diagonales comme espace d'expression tactique et garde la regle lisible.
+export const ORTHOGONAL_DIRS = Object.freeze([[-1, 0], [1, 0], [0, -1], [0, 1]]);
+
+// Une case est "couverte" par une equipe si un pion de champ (non gardien) de
+// cette equipe occupe une case orthogonalement adjacente. Base de
+// l'interception v0.5 : l'adversaire coupe les cases juste a cote de ses pions.
+// Le gardien est exclu (il defend en occupant physiquement sa cage, pas par une
+// aura, sinon marquer deviendrait impossible).
+export function isCellCoveredBy(state, row, col, team) {
+  return ORTHOGONAL_DIRS.some(([dr, dc]) => {
+    const t = tokenAt(state, row + dr, col + dc);
+    return t && t.team === team && !t.isGK;
+  });
+}
+
+// Une passe partant d'une aile (colonne de bord) est un "centre" : plus dur a
+// couper, elle ignore la couverture adverse sur ce coup. Recompense le jeu large.
+export function isWingPass(state) {
+  return state.ball.col === 0 || state.ball.col === BOARD_COLS - 1;
+}
+
+// Point de penalty : case centrale a deux rangees de la cage adverse. Depuis
+// cette case, un tir vers la cage transperce UN defenseur de champ (pas le
+// gardien) et ignore la couverture -> recompense le fait d'amener le ballon
+// jusque-la. Symetrique pour les deux equipes.
+export function penaltySpotFor(team) {
+  return team === TEAMS.BLEU
+    ? { row: 2, col: 3 }
+    : { row: BOARD_ROWS - 3, col: 3 };
+}
+
+export function isPenaltyShot(state) {
+  const sp = penaltySpotFor(state.turn);
+  return state.ball.row === sp.row && state.ball.col === sp.col;
 }
 
 function gkAllowedCells(team) {
@@ -92,7 +168,15 @@ export function getMoveDestinations(state, token) {
  * dans les 8 directions, en ligne droite, jusqu'au premier obstacle ou bord.
  * Chaque case libre du trajet est une destination valide (le joueur choisit où s'arrêter).
  */
-export function getPassDestinations(state) {
+export function getPassDestinations(state, options = {}) {
+  // Couverture adverse (interception v0.5) : une passe ne peut ni s'arreter
+  // sur, ni traverser une case couverte par l'equipe adverse. Ignoree si l'on
+  // part d'une aile ("centre") ou si l'appelant force ignoreCoverage (pouvoirs,
+  // sequences internes).
+  const penalty = isPenaltyShot(state);
+  const ignoreCoverage = options.ignoreCoverage ?? (isWingPass(state) || penalty);
+  const opponent = state.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU;
+
   const dests = [];
   const directions = [
     [-1, 0], [1, 0], [0, -1], [0, 1],
@@ -102,11 +186,33 @@ export function getPassDestinations(state) {
     let r = state.ball.row + dr;
     let c = state.ball.col + dc;
     while (inBounds(r, c) && !tokenAt(state, r, c)) {
+      if (!ignoreCoverage && isCellCoveredBy(state, r, c, opponent)) break;
       dests.push([r, c, dr, dc]);
       r += dr;
       c += dc;
     }
   });
+
+  // Tir de penalty : dans la direction de la cage, on transperce UN seul
+  // defenseur de champ. Le gardien et nos propres pions restent infranchissables.
+  if (penalty && options.ignoreCoverage !== false) {
+    const dr = state.turn === TEAMS.BLEU ? -1 : 1;
+    let r = state.ball.row + dr;
+    let c = state.ball.col;
+    let pierced = false;
+    while (inBounds(r, c)) {
+      const occ = tokenAt(state, r, c);
+      if (occ) {
+        if (occ.isGK || occ.team === state.turn || pierced) break;
+        pierced = true;
+        r += dr;
+        continue;
+      }
+      if (!dests.some(([rr, cc]) => rr === r && cc === c)) dests.push([r, c, dr, 0]);
+      r += dr;
+    }
+  }
+
   return dests;
 }
 
@@ -178,7 +284,7 @@ export function passBall(state, row, col) {
   // déplacement de pion, jamais une seconde passe — sinon un même joueur
   // pourrait enchaîner deux poussées de ballon en un seul tour, ce qui
   // dépasse largement l'intention du pouvoir tel que conçu.
-  if (state.relaisBonusMoveAvailable) return state;
+  if (state.relaisBonusMoveAvailable || state.comboMoveAvailable) return state;
 
   const inSelectPhaseAdjacent =
     state.phase === PHASES.SELECT &&
@@ -208,11 +314,20 @@ export function passBall(state, row, col) {
  * un mouvement déjà jugé légal dans son contexte.
  */
 export function applyBallMovement(state, row, col) {
+  const passingTeam = state.turn;
+  // Momentum : suite de passes de l'equipe en possession. Repart a 1 quand la
+  // possession change de camp.
+  const sameOwner = state.possession === passingTeam;
+  const passStreak = sameOwner ? (state.passStreak || 0) + 1 : 1;
+
   const newState = {
     ...state,
     ball: { row, col },
     selectedTokenId: null,
-    movedTokenPos: null
+    movedTokenPos: null,
+    possession: passingTeam,
+    passStreak,
+    ballIdleTurns: 0
   };
 
   const scoringTeam = checkGoalCell(row, col);
@@ -220,7 +335,27 @@ export function applyBallMovement(state, row, col) {
     return registerGoal(newState, scoringTeam);
   }
 
-  return endTurn(newState);
+  // UNE-DEUX (combo) : si le ballon arrive a cote d'un appui allie (un pion de
+  // champ orthogonalement adjacent), l'equipe rejoue immediatement un
+  // deplacement bonus (jamais une 2e passe). Non cumulable, jamais pendant un
+  // bonus deja en cours ou un Relais.
+  const eligibleForCombo =
+    !state.comboMoveAvailable &&
+    !state.relaisBonusMoveAvailable &&
+    !state.relaisPendingForTeam &&
+    isCellCoveredBy(newState, row, col, passingTeam);
+
+  if (eligibleForCombo) {
+    return Object.freeze({
+      ...newState,
+      phase: PHASES.SELECT,
+      comboMoveAvailable: true,
+      canUndo: false
+      // turn inchange : la meme equipe joue son mouvement bonus une-deux
+    });
+  }
+
+  return endTurn(newState, { passed: true });
 }
 
 /**
@@ -234,7 +369,9 @@ export function passTurn(state) {
   return endTurn({ ...state, selectedTokenId: null, movedTokenPos: null });
 }
 
-function endTurn(state) {
+function endTurn(state, opts = {}) {
+  const passed = opts.passed || false;
+
   // Si un bonus de second mouvement (Relais) est disponible, ce tour-ci ne
   // change pas de camp : on consomme juste le bonus, le déplacement qui
   // vient d'être joué EST le second mouvement accordé par le pouvoir.
@@ -249,14 +386,60 @@ function endTurn(state) {
     });
   }
 
-  return Object.freeze({
-    ...state,
+  // Consommation du bonus UNE-DEUX : le mouvement bonus vient d'etre joue. On
+  // retire le flag ET on rend la main a l'adversaire (handoff propre).
+  let base = state;
+  if (base.comboMoveAvailable) {
+    const { comboMoveAvailable, ...rest } = base;
+    base = rest;
+  }
+
+  // Anti-blocage : compteur de tours sans passe (remis a 0 par une passe).
+  const nextIdle = passed ? 0 : (base.ballIdleTurns || 0) + 1;
+
+  const turnCount = (base.turnCount || 0) + 1;
+  const switched = {
+    ...base,
     selectedTokenId: null,
     phase: PHASES.SELECT,
     movedTokenPos: null,
-    turn: state.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU,
-    canUndo: true
-  });
+    turn: base.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU,
+    canUndo: true,
+    ballIdleTurns: nextIdle,
+    stalled: false,
+    turnCount
+  };
+
+  // Fin de manche courte : a la limite de tours, la partie s'arrete. Score
+  // egal => match nul (isDraw), a departager (tirs au but cote UI).
+  if (base.turnLimit && turnCount >= base.turnLimit) {
+    const b = base.score[TEAMS.BLEU];
+    const r = base.score[TEAMS.ROUGE];
+    const draw = b === r;
+    return Object.freeze({
+      ...switched,
+      gameOver: true,
+      isDraw: draw,
+      winner: draw ? null : (b > r ? TEAMS.BLEU : TEAMS.ROUGE)
+    });
+  }
+
+  if (nextIdle >= STALL_LIMIT) {
+    // Engagement neutre : ballon au centre s'il est libre, compteurs remis a
+    // zero. On ne touche jamais aux pions (pas de reset de formation ici, pour
+    // ne pas effacer une composition mercato/perso en cours de partie).
+    const centerFree = !tokenAt(base, CENTER.row, CENTER.col);
+    return Object.freeze({
+      ...switched,
+      ball: centerFree ? { row: CENTER.row, col: CENTER.col } : switched.ball,
+      ballIdleTurns: 0,
+      possession: null,
+      passStreak: 0,
+      stalled: true
+    });
+  }
+
+  return Object.freeze(switched);
 }
 
 function registerGoal(state, scoringTeam) {
@@ -271,6 +454,11 @@ function registerGoal(state, scoringTeam) {
     movedTokenPos: null,
     canUndo: false,
     lastGoalBy: scoringTeam,
+    lastGoalPassStreak: state.passStreak || 0, // momentum du but (bonus si >= 3)
+    possession: null,
+    passStreak: 0,
+    ballIdleTurns: 0,
+    stalled: false,
     // L'équipe qui encaisse engage le ballon
     turn: scoringTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU,
     gameOver: isGameOver,
@@ -290,7 +478,7 @@ export function resetBallAfterGoal(state) {
   return Object.freeze({
     ...state,
     ball: { row: CENTER.row, col: CENTER.col },
-    tokens: buildStartingFormation()
+    tokens: buildStartingFormation(state.variant || 'standard')
   });
 }
 
@@ -317,9 +505,13 @@ export function listLegalMoves(state) {
   const moves = [];
   const myTokens = state.tokens.filter(t => t.team === state.turn);
 
+  // Pendant un mouvement bonus (une-deux ou Relais), seul un DEPLACEMENT est
+  // autorise, jamais une passe : on n'enumere alors que les coups 'move'.
+  const bonusMoveOnly = !!(state.comboMoveAvailable || state.relaisBonusMoveAvailable);
+
   for (const token of myTokens) {
     // Cas 1 : le pion est déjà adjacent au ballon sans bouger -> passe directe possible
-    if (isAdjacent(token.row, token.col, state.ball.row, state.ball.col)) {
+    if (!bonusMoveOnly && isAdjacent(token.row, token.col, state.ball.row, state.ball.col)) {
       const passes = getPassDestinations(state);
       passes.forEach(([pr, pc]) => {
         moves.push({ type: 'pass', tokenId: token.id, passTo: [pr, pc] });
@@ -331,7 +523,7 @@ export function listLegalMoves(state) {
     destinations.forEach(([dr, dc]) => {
       moves.push({ type: 'move', tokenId: token.id, to: [dr, dc] });
 
-      if (isAdjacent(dr, dc, state.ball.row, state.ball.col)) {
+      if (!bonusMoveOnly && isAdjacent(dr, dc, state.ball.row, state.ball.col)) {
         // Simuler l'état juste après ce déplacement pour énumérer les passes
         // réellement disponibles depuis cette nouvelle position du pion.
         const simulatedTokens = state.tokens.map(t =>

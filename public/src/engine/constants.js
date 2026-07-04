@@ -35,24 +35,29 @@ export const CENTER = Object.freeze({
 // Position de départ simplifiée : 1 gardien + 2 défenseurs + 3 attaquants
 // par équipe (6 pions), au lieu des 11 pions et 3 lignes de la v1. Assez
 // pour garder de vrais choix tactiques, largement plus lisible d'un regard.
-export function buildStartingFormation() {
+export function buildStartingFormation(variant = 'standard') {
+  // Deux formations possibles. 'standard' : 6 pions (promesse "simple comme
+  // les dames"). 'tactique' : 8 pions par equipe, plus dense, pour les joueurs
+  // qui veulent plus de duels et d'options (voir docs/team/regles-bible-v0.5.md).
+  const defCols = variant === 'tactique' ? [1, 3, 5] : [1, 5];
+  const attCols = variant === 'tactique' ? [0, 2, 4, 6] : [1, 3, 5];
   const tokens = [];
 
   // --- BLEU : attaque vers le haut (row décroissant), cage en row BOARD_ROWS-1 ---
   tokens.push({ id: 'b-gk', team: TEAMS.BLEU, row: BOARD_ROWS - 1, col: 3, isGK: true });
-  [1, 5].forEach((c, i) =>
+  defCols.forEach((c, i) =>
     tokens.push({ id: 'b-def' + i, team: TEAMS.BLEU, row: BOARD_ROWS - 2, col: c, isGK: false })
   );
-  [1, 3, 5].forEach((c, i) =>
+  attCols.forEach((c, i) =>
     tokens.push({ id: 'b-att' + i, team: TEAMS.BLEU, row: BOARD_ROWS - 3, col: c, isGK: false })
   );
 
   // --- ROUGE : attaque vers le bas (row croissant), cage en row 0. Miroir exact de Bleu. ---
   tokens.push({ id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true });
-  [1, 5].forEach((c, i) =>
+  defCols.forEach((c, i) =>
     tokens.push({ id: 'r-def' + i, team: TEAMS.ROUGE, row: 1, col: c, isGK: false })
   );
-  [1, 3, 5].forEach((c, i) =>
+  attCols.forEach((c, i) =>
     tokens.push({ id: 'r-att' + i, team: TEAMS.ROUGE, row: 2, col: c, isGK: false })
   );
 

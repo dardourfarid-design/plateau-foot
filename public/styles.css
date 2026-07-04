@@ -2626,10 +2626,11 @@ body{
   gap: 12px;
 }
 .shop-pack-card {
+  position: relative; /* ancre le badge "MEILLEUR TAUX" sur la carte (sinon il fuit en haut de page) */
   background: var(--noir-clair);
   border: 1px solid rgba(240,230,211,0.1);
   border-radius: 6px;
-  padding: 16px;
+  padding: 18px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2754,78 +2755,77 @@ body{
   width: 100%;
   font-weight: 700;
   display: flex
-/* ============ SÉANCE DE TIRS AU BUT (v0.5) ============ */
+/* ============ SÉANCE DE TIRS AU BUT (v0.5) — overlay plein écran ============ */
 .shootout-screen{
-  min-height: calc(100vh - 52px);
+  position:fixed; inset:0; z-index:300;
   display:flex; align-items:center; justify-content:center;
-  padding: 20px;
+  padding:16px;
+  background:radial-gradient(circle at 50% 28%, rgba(18,42,24,0.97), rgba(8,10,7,0.99));
+  overflow-y:auto;
 }
-.shootout-card{
-  width:100%; max-width: 460px;
-  background: var(--nuit-clair);
-  border:1px solid rgba(232,160,48,0.18);
-  border-radius:16px;
-  padding: 26px 22px 24px;
+.shootout-screen.hidden{ display:none !important; }
+.shootout-modal{
+  width:100%; max-width:440px;
+  background:var(--nuit-clair);
+  border:1px solid rgba(232,160,48,0.22);
+  border-radius:18px;
+  padding:22px 20px 20px;
   text-align:center;
+  box-shadow:0 24px 70px rgba(0,0,0,0.55);
 }
 .shootout-title{
   font-family:'Barlow Condensed',sans-serif; font-weight:800;
-  font-size:24px; letter-spacing:0.02em; color:var(--craie);
-  text-transform:uppercase; margin-bottom:8px;
+  font-size:22px; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--or-pale); margin-bottom:10px;
 }
-.shootout-score{
-  font-family:'Barlow Condensed',sans-serif; font-weight:900;
-  font-size:44px; line-height:1; color:var(--craie); margin:4px 0 2px;
-}
-#shootoutScoreBleu{ color:var(--bleu-equipe-clair); }
-#shootoutScoreRouge{ color:var(--rouge-equipe-clair); }
-.shootout-score-sep{ color:var(--craie-dim); }
-.shootout-shots{ margin:12px 0 4px; display:flex; flex-direction:column; gap:6px; }
-.shootout-shots-row{ display:flex; align-items:center; gap:10px; justify-content:center; }
-.shootout-team{ font-size:12px; font-weight:700; width:46px; text-align:right; }
-.shootout-team-bleu{ color:var(--bleu-equipe-clair); }
-.shootout-team-rouge{ color:var(--rouge-equipe-clair); }
-.shootout-dots{ display:inline-flex; gap:5px; }
+.shootout-scoreline{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:8px; }
+.so-team{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:14px; letter-spacing:.08em; text-transform:uppercase; }
+.so-bleu{ color:var(--bleu-equipe-clair); }
+.so-rouge{ color:var(--rouge-equipe-clair); }
+.so-score{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:34px; color:var(--craie); }
+.shootout-dots-wrap{ display:flex; flex-direction:column; gap:5px; align-items:center; margin-bottom:12px; }
+.shootout-dots{ display:inline-flex; gap:5px; min-height:12px; }
 .shootout-dot{
-  width:13px; height:13px; border-radius:50%;
-  border:1.5px solid var(--craie-dim); display:inline-block;
-  font-size:9px; line-height:11px; color:var(--noir);
+  width:12px; height:12px; border-radius:50%;
+  border:1.5px solid var(--craie-dim);
+  font-size:8px; line-height:10px; color:#fff; text-align:center; box-sizing:border-box;
 }
 .shootout-dot.scored{ background:var(--succes); border-color:var(--succes); }
 .shootout-dot.missed{ background:var(--rouge-equipe); border-color:var(--rouge-equipe); }
-.shootout-goal{ margin:16px auto 8px; }
-.shootout-net{
-  position:relative; width:240px; height:96px; margin:0 auto;
-  border:3px solid var(--craie-att); border-bottom:none;
-  border-radius:6px 6px 0 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 22px, rgba(240,230,211,0.10) 22px 23px),
-    repeating-linear-gradient(0deg, transparent 0 22px, rgba(240,230,211,0.10) 22px 23px);
-  overflow:hidden;
+
+/* Scène : cage SVG + gardien + ballon */
+.shootout-stage{
+  position:relative; width:100%; max-width:340px; height:190px; margin:0 auto 6px;
 }
+.shootout-goal-svg{ position:absolute; inset:0; width:100%; height:100%; }
 .shootout-keeper{
-  position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
-  font-size:30px; transition:left .35s cubic-bezier(.5,-0.4,.4,1.4);
+  position:absolute; top:48px; left:50%; width:44px; margin-left:-22px;
+  font-size:34px; line-height:1; text-align:center; z-index:2;
+  transition:left .34s cubic-bezier(.5,-0.3,.4,1.4), transform .34s ease;
 }
-.shootout-keeper.dive-gauche{ left:22%; }
+.shootout-keeper.dive-gauche{ left:26%; transform:rotate(-24deg); }
 .shootout-keeper.dive-centre{ left:50%; }
-.shootout-keeper.dive-droite{ left:78%; }
+.shootout-keeper.dive-droite{ left:74%; transform:rotate(24deg); }
 .shootout-ball{
-  position:absolute; bottom:2px; left:50%; transform:translateX(-50%);
-  font-size:20px; opacity:0; transition:all .32s ease-out;
+  position:absolute; bottom:8px; left:50%; width:24px; margin-left:-12px;
+  font-size:22px; line-height:1; text-align:center; z-index:3;
+  opacity:0; transition:left .34s ease-out, bottom .34s cubic-bezier(.3,.7,.5,1), opacity .12s;
 }
 .shootout-ball.shown{ opacity:1; }
-.shootout-ball.aim-gauche{ left:20%; bottom:60%; }
-.shootout-ball.aim-centre{ left:50%; bottom:64%; }
-.shootout-ball.aim-droite{ left:80%; bottom:60%; }
-.shootout-prompt{ font-size:14px; color:var(--craie-att); margin:10px 0 12px; min-height:20px; }
+.shootout-ball.aim-gauche{ left:26%; bottom:118px; }
+.shootout-ball.aim-centre{ left:50%; bottom:128px; }
+.shootout-ball.aim-droite{ left:74%; bottom:118px; }
+
+.shootout-prompt{ font-size:14px; color:var(--craie-att); margin:6px 0 12px; min-height:20px; font-weight:600; }
 .shootout-dirs{ display:flex; gap:8px; justify-content:center; }
-.shootout-dir{ flex:1; max-width:130px; }
-.shootout-dirs.hidden, .shootout-end-row.hidden{ display:none; }
+.shootout-dirs.hidden{ display:none; }
+.shootout-dir{ flex:1; max-width:120px; font-weight:700; }
 .shootout-feedback{
-  font-family:'Barlow Condensed',sans-serif; font-weight:800;
-  font-size:22px; min-height:28px; margin-top:12px; letter-spacing:0.03em;
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:24px; min-height:30px; margin-top:12px; letter-spacing:.03em;
 }
 .shootout-feedback.goal{ color:var(--succes); }
 .shootout-feedback.save{ color:var(--rouge-equipe-clair); }
-.shootout-launch-btn{ border:1px dashed rgba(232,160,48,0.4); }
+.shootout-end-row{ display:flex; justify-content:center; gap:10px; margin-top:8px; }
+.shootout-end-row.hidden{ display:none; }
+.shootout-launch-btn{ border:1px dashed rgba(232,160,48,0.45); }

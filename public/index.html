@@ -74,7 +74,7 @@
   <!-- BARRE SUPÉRIEURE : compte + boutique, visible partout -->
   <div class="topbar">
     <div class="topbar-brand">
-      <svg class="topbar-badge" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+      <svg class="topbar-badge" id="homeLogoBtn" role="button" tabindex="0" aria-label="Accueil" style="cursor:pointer" width="28" height="28" viewBox="0 0 28 28">
         <rect width="28" height="28" rx="3" fill="#C8841A"/>
         <text x="14" y="20" font-family="'Barlow Condensed',sans-serif" font-size="14" font-weight="900" fill="#0C0A07" text-anchor="middle" letter-spacing="-0.5">TM</text>
       </svg>
@@ -745,18 +745,21 @@
 
 <!-- ECRAN SEANCE DE TIRS AU BUT -->
 <div class="shootout-screen hidden" id="shootoutScreen">
-  <div class="shootout-card">
+  <div class="shootout-modal">
     <div class="shootout-title" id="shootoutTitle">Séance de tirs au but</div>
-    <div class="shootout-score"><span id="shootoutScoreBleu">0</span> <span class="shootout-score-sep">–</span> <span id="shootoutScoreRouge">0</span></div>
-    <div class="shootout-shots">
-      <div class="shootout-shots-row"><span class="shootout-team shootout-team-bleu">Bleu</span><span class="shootout-dots" id="shootoutDotsBleu"></span></div>
-      <div class="shootout-shots-row"><span class="shootout-team shootout-team-rouge">Rouge</span><span class="shootout-dots" id="shootoutDotsRouge"></span></div>
+    <div class="shootout-scoreline">
+      <span class="so-team so-bleu">Bleu</span>
+      <span class="so-score"><b id="shootoutScoreBleu">0</b> : <b id="shootoutScoreRouge">0</b></span>
+      <span class="so-team so-rouge">Rouge</span>
     </div>
-    <div class="shootout-goal" aria-hidden="true">
-      <div class="shootout-net">
-        <span class="shootout-keeper" id="shootoutKeeper">🧤</span>
-        <span class="shootout-ball" id="shootoutBall">⚽</span>
-      </div>
+    <div class="shootout-dots-wrap">
+      <span class="shootout-dots" id="shootoutDotsBleu"></span>
+      <span class="shootout-dots" id="shootoutDotsRouge"></span>
+    </div>
+    <div class="shootout-stage">
+      <svg class="shootout-goal-svg" viewBox="0 0 340 190" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><rect x="0" y="150" width="340" height="40" fill="rgba(28,58,34,0.55)"/><line x1="0" y1="150" x2="340" y2="150" stroke="rgba(240,230,211,0.25)" stroke-width="2"/><g stroke="rgba(240,230,211,0.13)" stroke-width="1"><line x1="66" y1="34" x2="66" y2="150"/><line x1="92" y1="34" x2="92" y2="150"/><line x1="118" y1="34" x2="118" y2="150"/><line x1="144" y1="34" x2="144" y2="150"/><line x1="170" y1="34" x2="170" y2="150"/><line x1="196" y1="34" x2="196" y2="150"/><line x1="222" y1="34" x2="222" y2="150"/><line x1="248" y1="34" x2="248" y2="150"/><line x1="274" y1="34" x2="274" y2="150"/><line x1="40" y1="56" x2="300" y2="56"/><line x1="40" y1="78" x2="300" y2="78"/><line x1="40" y1="100" x2="300" y2="100"/><line x1="40" y1="122" x2="300" y2="122"/><line x1="40" y1="144" x2="300" y2="144"/></g><path d="M40 150 V32 H300 V150" fill="none" stroke="rgba(240,230,211,0.55)" stroke-width="4" stroke-linejoin="round"/></svg>
+      <span class="shootout-keeper" id="shootoutKeeper">🧤</span>
+      <span class="shootout-ball" id="shootoutBall">⚽</span>
     </div>
     <div class="shootout-prompt" id="shootoutPrompt">À toi de tirer : choisis un côté</div>
     <div class="shootout-dirs" id="shootoutDirs">
@@ -765,7 +768,7 @@
       <button class="btn shootout-dir" data-dir="droite" type="button">Droite ▶</button>
     </div>
     <div class="shootout-feedback" id="shootoutFeedback"></div>
-    <div class="btn-row shootout-end-row hidden" id="shootoutEndRow" style="justify-content:center;gap:10px;">
+    <div class="shootout-end-row hidden" id="shootoutEndRow">
       <button class="btn" id="shootoutBackBtn" type="button">← Accueil</button>
       <button class="btn primary" id="shootoutReplayBtn" type="button">Rejouer</button>
     </div>

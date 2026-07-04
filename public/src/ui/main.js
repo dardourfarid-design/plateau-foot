@@ -709,6 +709,23 @@ function backToSetup() {
   els.configScreen.classList.remove('hidden');
 }
 
+// Retour a la page d'accueil (landing / hero) — declenche par un clic sur le
+// logo TM en haut a gauche. Ferme tous les ecrans/overlays et reaffiche l'accueil.
+function goToLanding() {
+  if (unsubscribeFromSession) { unsubscribeFromSession(); unsubscribeFromSession = null; }
+  onlineSessionId = null;
+  els.gameScreen?.classList.add('hidden');
+  els.configScreen?.classList.add('hidden');
+  els.waitingScreen?.classList.add('hidden');
+  els.shopScreen?.classList.add('hidden');
+  els.profileScreen?.classList.add('hidden');
+  els.shootoutScreen?.classList.add('hidden');
+  els.endOverlay?.classList.remove('show');
+  els.goalOverlay?.classList.remove('show');
+  els.accountOverlay?.classList.remove('show');
+  els.setupScreen?.classList.remove('hidden');
+}
+
 // ---------- Écran d'accueil et configuration ----------
 
 /**
@@ -1795,6 +1812,9 @@ function init() {
   wireAccount();
   wireTutorial();
   wireShootout();
+  const homeLogo = document.getElementById('homeLogoBtn');
+  homeLogo?.addEventListener('click', goToLanding);
+  homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToLanding(); } });
   registerServiceWorker();
   handlePaymentReturn();
 }

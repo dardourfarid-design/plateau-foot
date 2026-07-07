@@ -2756,61 +2756,71 @@ body{
   font-weight: 700;
   display: flex
 
-/* ============ SÉANCE DE TIRS AU BUT (v1) — écran plein "stade" ============ */
+/* ============ SÉANCE DE TIRS AU BUT (Arcade v1) — écran plein "stade" ============ */
 .shootout-screen{
   width:100%;
   min-height:calc(100vh - 96px);
   display:flex; align-items:center; justify-content:center;
-  padding:24px 12px 36px; box-sizing:border-box;
-  background:radial-gradient(circle at 50% 20%, #17351f 0%, #0c1109 70%);
+  padding:18px 12px 28px; box-sizing:border-box;
+  background:radial-gradient(circle at 50% 18%, #17351f 0%, #0b0f16 72%);
   border-radius:16px;
 }
 .shootout-modal{
-  width:100%; max-width:600px;
-  background:rgba(24,20,16,0.94);
-  border:1px solid rgba(232,160,48,0.30);
+  width:100%; max-width:540px;
+  background:#141a24;
+  border:2px solid #ffd23f;
   border-radius:20px;
-  padding:26px clamp(18px,4vw,34px) 24px;
+  padding:20px clamp(18px,4vw,28px) 18px;
   text-align:center;
-  box-shadow:0 30px 80px rgba(0,0,0,0.55);
+  box-shadow:0 26px 70px rgba(0,0,0,0.55);
 }
+.shootout-modal.shake{ animation:soShake .42s; }
+@keyframes soShake{ 0%,100%{transform:translate(0,0)} 20%{transform:translate(-6px,2px)} 40%{transform:translate(6px,-2px)} 60%{transform:translate(-4px,-2px)} 80%{transform:translate(4px,2px)} }
 .shootout-title{
-  font-family:'Barlow Condensed',sans-serif; font-weight:800;
-  font-size:clamp(22px,3.4vw,28px); text-transform:uppercase; letter-spacing:.05em;
-  color:var(--or-pale); margin-bottom:8px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(20px,3vw,24px); text-transform:uppercase; letter-spacing:.05em;
+  color:#ffd23f; margin-bottom:4px;
 }
-.shootout-scoreline{ display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:4px; }
-.so-team{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:clamp(14px,2.2vw,17px); letter-spacing:.08em; text-transform:uppercase; }
-.so-bleu{ color:var(--bleu-equipe-clair); }
-.so-rouge{ color:var(--rouge-equipe-clair); }
-.so-score{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:clamp(30px,6vw,44px); color:var(--craie); line-height:1; }
-.shootout-dots-wrap{ display:flex; flex-direction:column; gap:6px; align-items:center; margin:6px 0 8px; }
-.shootout-dots{ display:inline-flex; gap:6px; min-height:14px; }
+.shootout-scoreline{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:2px; }
+.so-team{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:clamp(13px,2vw,16px); letter-spacing:.06em; text-transform:uppercase; }
+.so-bleu{ color:#3fa9f5; }
+.so-rouge{ color:#ff5a4d; }
+.so-score{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:clamp(28px,5vw,38px); color:#fff; line-height:1; }
+.shootout-dots-wrap{ display:flex; flex-direction:column; gap:5px; align-items:center; margin:4px 0 6px; }
+.shootout-dots{ display:inline-flex; gap:6px; min-height:13px; }
 .shootout-dot{
-  width:14px; height:14px; border-radius:50%; box-sizing:border-box;
-  border:1.5px solid var(--craie-dim);
+  display:inline-block; vertical-align:middle;
+  width:13px; height:13px; border-radius:50%; box-sizing:border-box;
+  border:2px solid rgba(255,255,255,0.28);
 }
-.shootout-dot.scored{ background:var(--succes); border-color:var(--succes); }
-.shootout-dot.missed{ background:var(--rouge-equipe); border-color:var(--rouge-equipe); }
+.shootout-dot.scored{ background:#4dffa1; border-color:#111; }
+.shootout-dot.missed{ background:#ff5a4d; border-color:#111; }
 
-.shootout-scene{ width:100%; max-width:540px; height:auto; display:block; margin:4px auto 0; }
+.shootout-scene{ width:100%; max-width:420px; height:auto; display:block; margin:2px auto 0; }
 .shootout-zone{ cursor:pointer; }
 .shootout-zone rect{ transition:opacity .12s; }
-.shootout-zone:hover rect{ opacity:0.18 !important; }
+.shootout-zone:hover rect{ opacity:0.20 !important; }
 
-.crowd-head{ transform-box:fill-box; transform-origin:center; animation:soBob 1.1s ease-in-out infinite; }
-@keyframes soBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-2.2px); } }
-#shootoutCrowd.cheer .crowd-head{ animation-duration:.4s; }
-#shootoutShooter.kick #shootoutKickLeg{ transform:rotate(-46deg); }
+.crowd-head{ transform-box:fill-box; transform-origin:center; animation:soBob 1s ease-in-out infinite; }
+@keyframes soBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+#shootoutCrowd.cheer .crowd-head{ animation-duration:.28s; }
+#shootoutShooter.kick #shootoutKickLeg{ transform:rotate(-52deg); }
 
-.shootout-prompt{ font-size:clamp(14px,2.2vw,16px); color:var(--craie-att); font-weight:600; margin:10px 0 12px; min-height:20px; }
+.shootout-prompt{ font-size:clamp(14px,2.2vw,16px); color:#cfe0ee; font-weight:700; margin:8px 0 10px; min-height:20px; }
 .shootout-dirs{ display:flex; gap:10px; justify-content:center; max-width:440px; margin:0 auto; }
-.shootout-dir{ flex:1; max-width:150px; font-weight:700; padding:12px 10px; font-size:15px; }
+.shootout-dir{
+  flex:1; max-width:150px; font-weight:900; padding:11px 10px; font-size:15px;
+  background:#ffd23f !important; color:#12202e !important; border:2px solid #111 !important; border-radius:10px !important;
+}
+.shootout-dir:active{ transform:scale(.95); }
 .shootout-feedback{
   font-family:'Barlow Condensed',sans-serif; font-weight:900;
-  font-size:clamp(24px,4vw,30px); min-height:32px; margin-top:12px; letter-spacing:.03em;
+  font-size:clamp(24px,4vw,30px); min-height:32px; margin-top:8px; letter-spacing:.03em;
+  -webkit-text-stroke:0.5px #111;
 }
-.shootout-feedback.goal{ color:var(--succes); }
-.shootout-feedback.save{ color:var(--rouge-equipe-clair); }
+.shootout-feedback.goal{ color:#4dffa1; }
+.shootout-feedback.save{ color:#ff5a4d; }
+.shootout-feedback .so-pop{ display:inline-block; animation:soPop .34s ease-out; }
+@keyframes soPop{ 0%{transform:scale(.3) rotate(-8deg);opacity:0} 55%{transform:scale(1.25) rotate(3deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
 .shootout-end-row{ display:flex; justify-content:center; gap:12px; margin-top:8px; }
 .shootout-launch-btn{ border:1px dashed rgba(232,160,48,0.45); }

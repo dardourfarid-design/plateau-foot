@@ -22,6 +22,19 @@ let mercatoMySelectedOwnershipId = null;
 let mercatoFriendSelectedOwnershipId = null;
 let myFriendsCache = [];
 
+// ---------- Sécurité ----------
+
+// Échappe le HTML avant toute insertion via innerHTML. Les pseudos
+// (display_name) et noms de joueurs (custom_name) sont choisis librement par
+// les utilisateurs : sans échappement, un pseudo tel que
+// `<img src=x onerror=…>` s'exécuterait dans la session d'un AUTRE joueur
+// affichant la demande/offre — XSS stocké menant au vol de session.
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 // ---------- Point d'entrée ----------
 
 /**
@@ -98,7 +111,7 @@ async function renderFriendshipsSection(deps) {
       pendingReceived.forEach(req => {
         const row = document.createElement('div');
         row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${req.other_pseudo || 'Joueur'}</span>`;
+        row.innerHTML = `<span class="friend-row-name">${escapeHtml(req.other_pseudo || 'Joueur')}</span>`;
         const actions = document.createElement('div');
         actions.className = 'friend-row-actions';
 
@@ -136,7 +149,7 @@ async function renderFriendshipsSection(deps) {
         sentList.forEach(req => {
           const row = document.createElement('div');
           row.className = 'friend-row';
-          row.innerHTML = `<span class="friend-row-name">${req.other_pseudo || 'Joueur'} <span style="opacity:.6;font-size:12px;">(en attente)</span></span>`;
+          row.innerHTML = `<span class="friend-row-name">${escapeHtml(req.other_pseudo || 'Joueur')} <span style="opacity:.6;font-size:12px;">(en attente)</span></span>`;
           const cancelBtn = document.createElement('button');
           cancelBtn.className = 'btn-small danger';
           cancelBtn.textContent = 'Annuler';
@@ -160,7 +173,7 @@ async function renderFriendshipsSection(deps) {
       friends.forEach(friendship => {
         const row = document.createElement('div');
         row.className = 'friend-row';
-        row.innerHTML = `<span class="friend-row-name">${friendship.other_pseudo || 'Joueur'}</span>`;
+        row.innerHTML = `<span class="friend-row-name">${escapeHtml(friendship.other_pseudo || 'Joueur')}</span>`;
         const tradeBtn = document.createElement('button');
         tradeBtn.className = 'btn-small primary';
         tradeBtn.textContent = 'Proposer un échange';
@@ -231,9 +244,9 @@ async function renderMercatoOffersSection(deps) {
         const row = document.createElement('div');
         row.className = 'offer-row';
         const who = offer.other_pseudo || 'Un ami';
-        const give = offer.requested_player_name ? ` — il demande <strong>${offer.requested_player_name}</strong>` : '';
-        const get = offer.offered_player_name ? ` contre <strong>${offer.offered_player_name}</strong>` : '';
-        row.innerHTML = `<span class="offer-row-desc">${who} te propose un échange${give}${get}</span>`;
+        const give = offer.requested_player_name ? ` — il demande <strong>${escapeHtml(offer.requested_player_name)}</strong>` : '';
+        const get = offer.offered_player_name ? ` contre <strong>${escapeHtml(offer.offered_player_name)}</strong>` : '';
+        row.innerHTML = `<span class="offer-row-desc">${escapeHtml(who)} te propose un échange${give}${get}</span>`;
         const actions = document.createElement('div');
         actions.className = 'friend-row-actions';
 
@@ -270,9 +283,9 @@ async function renderMercatoOffersSection(deps) {
         row.className = 'offer-row';
         const who2 = offer.other_pseudo || 'ton ami';
         const detail = (offer.offered_player_name && offer.requested_player_name)
-          ? ` : ${offer.offered_player_name} contre ${offer.requested_player_name}`
+          ? ` : ${escapeHtml(offer.offered_player_name)} contre ${escapeHtml(offer.requested_player_name)}`
           : '';
-        row.innerHTML = `<span class="offer-row-desc">En attente de réponse de ${who2}${detail}</span>`;
+        row.innerHTML = `<span class="offer-row-desc">En attente de réponse de ${escapeHtml(who2)}${detail}</span>`;
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'btn-small danger';
         cancelBtn.textContent = 'Annuler';

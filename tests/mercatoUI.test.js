@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { renderMercatoPlayerOptions, renderMercatoFriendOptions } from '../src/ui/mercatoUI.js';
+import { renderMercatoPlayerOptions, renderMercatoFriendOptions, escapeHtml } from '../src/ui/mercatoUI.js';
 
 // ===================== TESTS mercatoUI.js =====================
 // Couvre renderMercatoPlayerOptions et renderMercatoFriendOptions : les deux
@@ -169,5 +169,32 @@ describe('renderMercatoFriendOptions', () => {
     const collection = [{ id: 'fp1', player_name: 'X', custom_name: null }];
     renderMercatoFriendOptions(deps, collection);
     expect(deps.els.friendPlayerSelect._children[0].className).toBe('mercato-player-option');
+  });
+});
+
+// ---------- escapeHtml (garde anti-XSS) ----------
+
+describe('escapeHtml', () => {
+  test('neutralise les chevrons et guillemets d\'une charge XSS', () => {
+    const payload = '<img src=x onerror="alert(1)">';
+    const out = escapeHtml(payload);
+    // Plus aucun caractère capable d\'ouvrir une balise ou un attribut.
+    expect(out.includes('<')).toBe(false);
+    expect(out.includes('>')).toBe(false);
+    expect(out.includes('"')).toBe(false);
+    expect(out).toBe('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+  });
+
+  test('échappe l\'esperluette et l\'apostrophe', () => {
+    expect(escapeHtml(`Tom & Jerry's`)).toBe('Tom &amp; Jerry&#39;s');
+  });
+
+  test('un pseudo normal reste inchangé', () => {
+    expect(escapeHtml('Marco Brio 10')).toBe('Marco Brio 10');
+  });
+
+  test('null / undefined donnent une chaîne vide', () => {
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
   });
 });

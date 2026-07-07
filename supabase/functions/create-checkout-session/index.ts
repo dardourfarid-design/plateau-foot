@@ -49,6 +49,14 @@ const COIN_CATALOG: Record<string, { cents: number; label: string }> = {
   'coins-600': { cents: 799, label: '600 Pièces Tactiques' }
 };
 
+// Bundle Mondial : ENSEMBLE FIXE défini côté serveur (les 5 thèmes Mondial
+// de la migration 0006), au prix groupé de 6,99 €. On n'utilise JAMAIS la
+// liste de thèmes envoyée par le client : sinon un client malveillant pouvait
+// passer `themeIds: [<tous les thèmes>]` et débloquer le catalogue entier
+// pour 6,99 € (le webhook octroie chaque id présent dans metadata.theme_ids).
+const MONDIAL_BUNDLE_THEME_IDS = ['or-mondial', 'samba', 'tricolore', 'albiceleste', 'nuit-americaine'];
+const BUNDLE_PRICE_CENTS = 699;
+
 // Prix des packs (one-time)
 const PACK_CATALOG: Record<string, { cents: number; label: string; kind: string }> = {
   'pack-3-kits':   { cents: 549,  label: 'Pack 3 Kits',              kind: 'pack' },
@@ -291,12 +299,13 @@ async function resolveProduct(supabase: any, body: any) {
     return { themeId: theme.id, priceCents: theme.price_cents, productName: theme.name, allThemeIds: null };
   }
   if (body.kind === 'bundle') {
+    // On IGNORE body.themeIds : le contenu du bundle est fixé côté serveur.
     const { data: themes, error } = await supabase
-      .from('themes').select('id, price_cents').in('id', body.themeIds).eq('is_active', true);
+      .from('themes').select('id, price_cents').in('id', MONDIAL_BUNDLE_THEME_IDS).eq('is_active', true);
     if (error || !themes?.length) throw new Error('Bundle introuvable.');
     return {
       themeId: themes[0].id,
-      priceCents: 699,
+      priceCents: BUNDLE_PRICE_CENTS,
       productName: 'Pack Mondial complet',
       allThemeIds: themes.map((t: { id: string }) => t.id).join(',')
     };

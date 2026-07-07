@@ -46,14 +46,21 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
 
         if (session.mode === 'payment') {
-          // Débloque l'achat dans purchases (+ fulfillment packs, voir 0025)
+          // Débloque l'achat dans purchases (+ fulfillment packs, voir 0025).
+          // complete_stripe_purchase est IDEMPOTENTE (garde pending→completed) :
+          // en cas d'erreur on renvoie 5xx pour que Stripe RÉ-ESSAYE, plutôt que
+          // de renvoyer 200 et laisser le client débité sans produit livré.
           const { error } = await supabaseAdmin.rpc('complete_stripe_purchase', {
             p_stripe_session_id: session.id
           });
-          if (error) console.error('complete_stripe_purchase:', error.message);
+          if (error) {
+            console.error('complete_stripe_purchase:', error.message);
+            return new Response('Fulfillment échoué, nouvelle tentative attendue.', { status: 500 });
+          }
 
           // Bundle : metadata.theme_ids contient TOUS les thèmes du lot —
           // on octroie chacun (avant l'audit, seul le premier était livré).
+          // L'upsert onConflict est idempotent → 5xx sûr pour retry Stripe.
           if (session.metadata?.theme_ids && session.client_reference_id) {
             const themeIds = session.metadata.theme_ids.split(',');
             const rows = themeIds.map((id: string) => ({
@@ -66,13 +73,15 @@ Deno.serve(async (req) => {
             const { error: bundleError } = await supabaseAdmin
               .from('purchases')
               .upsert(rows, { onConflict: 'user_id,theme_id' });
-            if (bundleError) console.error('octroi bundle:', bundleError.message);
+            if (bundleError) {
+              console.error('octroi bundle:', bundleError.message);
+              return new Response('Octroi bundle échoué, nouvelle tentative attendue.', { status: 500 });
+            }
           }
 
-          // Décrémente le compteur si c'est un Pack Fondateurs
-          if (session.metadata?.pack_id === 'pack-fondateurs') {
-            await supabaseAdmin.rpc('decrement_founders_counter');
-          }
+          // Le décrément du compteur Fondateurs est désormais fait DANS
+          // complete_stripe_purchase (une seule fois par session, migration
+          // 0031) — plus ici, pour éviter le double décrément sur redélivraison.
         }
 
         // Mode subscription : le pass est activé via customer.subscription.created

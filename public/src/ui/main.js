@@ -1945,6 +1945,8 @@ function wireShootout() {
   els.shootoutBall       = document.getElementById('shootoutBall');
   els.shootoutBallSpin   = document.getElementById('shootoutBallSpin');
   els.shootoutCrowd      = document.getElementById('shootoutCrowd');
+  els.shootoutScene      = document.getElementById('shootoutScene');
+  els.shootoutModal      = els.shootoutScreen ? els.shootoutScreen.querySelector('.shootout-modal') : null;
   els.shootoutPrompt     = document.getElementById('shootoutPrompt');
   els.shootoutDirs       = document.getElementById('shootoutDirs');
   els.shootoutFeedback   = document.getElementById('shootoutFeedback');
@@ -2046,6 +2048,30 @@ function renderShootout() {
   }
 }
 
+// Confettis arcade projetes depuis la lucarne sur un but.
+function spawnShootoutConfetti() {
+  const svg = els.shootoutScene;
+  if (!svg) return;
+  const cols = ['#ffd23f', '#3fa9f5', '#ff5a4d', '#4dffa1', '#b06bff', '#ffffff'];
+  const NS = 'http://www.w3.org/2000/svg';
+  for (let i = 0; i < 22; i++) {
+    const r = document.createElementNS(NS, 'rect');
+    let x = 150 + (Math.random() * 150 - 75);
+    r.setAttribute('x', x); r.setAttribute('y', 62);
+    r.setAttribute('width', 4 + Math.random() * 3);
+    r.setAttribute('height', 6 + Math.random() * 4);
+    r.setAttribute('fill', cols[(Math.random() * cols.length) | 0]);
+    r.setAttribute('transform', 'rotate(' + (Math.random() * 360) + ' ' + x + ' 62)');
+    svg.appendChild(r);
+    const dx = Math.random() * 2 - 1; let tick = 0;
+    const iv = setInterval(() => {
+      tick++; const y = 62 + tick * 6;
+      r.setAttribute('y', y); x += dx; r.setAttribute('x', x);
+      if (y > 212) { clearInterval(iv); r.remove(); }
+    }, 30);
+  }
+}
+
 function playShootoutDir(dir) {
   const s = shootoutState;
   if (!s || s.over || shootoutBusy) return;
@@ -2065,12 +2091,19 @@ function playShootoutDir(dir) {
     els.shootoutBall?.setAttribute('transform', 'translate(' + (SO_ZONE_X[shooterDir] - 126) + ',-96)');
     els.shootoutBallSpin?.setAttribute('transform', 'translate(126,198) rotate(720)');
     if (els.shootoutFeedback) {
-      els.shootoutFeedback.textContent = scored ? t('BUT !') : t('Arrêt !');
+      els.shootoutFeedback.innerHTML = '<span class="so-pop">' + (scored ? t('BUT !') : t('Arrêt !')) + '</span>';
       els.shootoutFeedback.className = 'shootout-feedback ' + (scored ? 'goal' : 'save');
     }
-    if (scored && els.shootoutCrowd) {
-      els.shootoutCrowd.classList.add('cheer');
-      setTimeout(() => els.shootoutCrowd.classList.remove('cheer'), 900);
+    if (scored) {
+      if (els.shootoutCrowd) {
+        els.shootoutCrowd.classList.add('cheer');
+        setTimeout(() => els.shootoutCrowd.classList.remove('cheer'), 850);
+      }
+      spawnShootoutConfetti();
+      if (els.shootoutModal) {
+        els.shootoutModal.classList.add('shake');
+        setTimeout(() => els.shootoutModal.classList.remove('shake'), 440);
+      }
     }
   }, 170);
 

@@ -14,7 +14,7 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v6'; // v4 : + dialogs.js (oubli qui cassait TOUT le site en mode cache/hors-ligne : l'import échouait et aucun bouton ne répondait)
+const CACHE_NAME = 'tactic-master-v7'; // v4 : + dialogs.js (oubli qui cassait TOUT le site en mode cache/hors-ligne : l'import échouait et aucun bouton ne répondait)
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',

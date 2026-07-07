@@ -285,8 +285,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ url: session.url });
 
   } catch (err) {
+    // On journalise le détail côté serveur mais on ne renvoie JAMAIS err.message
+    // au client : il peut contenir des détails internes (SQL, Stripe, etc.).
     console.error('create-checkout-session error:', err);
-    return jsonResponse({ error: err.message || 'Erreur inattendue.' }, 500);
+    return jsonResponse({ error: 'Erreur inattendue.' }, 500);
   }
 });
 

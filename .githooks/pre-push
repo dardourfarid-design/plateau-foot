@@ -1,0 +1,32 @@
+#!/bin/sh
+# ============================================================
+# Garde-fou local : empêche les push directs vers `main`.
+# But : rappeler de passer par une branche + Pull Request, même si la
+# protection de branche côté GitHub n'est pas disponible (repo privé sur
+# le plan Free). Ce hook est LOCAL à ce clone — il ne remplace pas une
+# vraie protection serveur ; il se contourne avec `git push --no-verify`.
+#
+# Activation (une fois par clone) :
+#   git config core.hooksPath .githooks
+# ============================================================
+
+protected="refs/heads/main"
+
+while read -r local_ref local_sha remote_ref remote_sha
+do
+  if [ "$remote_ref" = "$protected" ]; then
+    echo ""
+    echo "  ✋ Push direct vers 'main' bloqué."
+    echo "     Passe par une branche + une Pull Request :"
+    echo ""
+    echo "       git switch -c ma-branche"
+    echo "       git push -u origin ma-branche"
+    echo "       gh pr create      # puis merge la PR"
+    echo ""
+    echo "     (contournement d'urgence, à éviter : git push --no-verify)"
+    echo ""
+    exit 1
+  fi
+done
+
+exit 0

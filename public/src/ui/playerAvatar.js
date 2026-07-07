@@ -52,6 +52,15 @@ export function hashSeedToAvatar(seed) {
  * réservé à l'UI où l'avatar a la place d'être détaillé.
  */
 export function renderAvatarSvg({ color, pattern, accessory }) {
+  // Défense en profondeur : `color` provient d'un champ choisi par
+  // l'utilisateur (custom_players.avatar_color) et est injecté brut dans les
+  // attributs SVG ci-dessous via innerHTML. On n'accepte qu'une couleur hex
+  // #RRGGBB ; toute autre valeur (tentative d'injection, ou donnée héritée)
+  // retombe sur la couleur par défaut. La contrainte CHECK côté base
+  // (migration 0032) empêche déjà le stockage de valeurs non hex — ceci
+  // protège en plus le rendu direct et les lignes antérieures à la contrainte.
+  if (!/^#[0-9A-Fa-f]{6}$/.test(color)) color = '#3A6EA5';
+
   const kit = color;                       // couleur d'équipe brute (champ du blason)
   const kitDark = darken(color, 0.42);     // ombre du champ, bas du blason
   const kitLight = lighten(color, 0.42);   // lumière de contour (rim light)

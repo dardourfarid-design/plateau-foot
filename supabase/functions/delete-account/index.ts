@@ -31,8 +31,12 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+// CORS restreint au front de production (au lieu de '*'), cohérent avec
+// create-checkout-session : cette fonction n'est appelée que par le site.
+const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://tactic-master.vercel.app';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': FRONTEND_URL,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };

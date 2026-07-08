@@ -11,7 +11,7 @@ import {
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
-import { createShootout, shoot, shootoutWinner, randomDirection } from '../engine/penaltyShootout.js';
+import { createShootout, playerShoot, cpuShoot, shootoutWinner, isShootoutOver, isSuddenDeath, readKeeperZone, randomSweet } from '../engine/penaltyShootoutV2.js';
 import {
   POWER_TYPES, POWER_LABELS, canActivatePower, getPowerShotDestinations, activateTirPuissant,
   getSprintDestinations, activateSprint, activateMur, activateRelais, confirmRelaisAfterPass,
@@ -1904,33 +1904,57 @@ function registerServiceWorker() {
 }
 
 
-// ===================== SÉANCE DE TIRS AU BUT (UI) =====================
-// Ecran plein a part entiere, branche sur le moteur pur penaltyShootout.js.
-// Joueur = toujours Bleu : il tire quand c'est son tour, il plonge (choisit un
-// cote) quand l'IA (Rouge) tire. L'adversaire choisit au hasard.
-let shootoutState = null;
-let shootoutBusy = false;
-let shootoutMode = 'standalone'; // 'standalone' | 'departage'
-let shootoutCrowdBuilt = false;
+// ===================== SÉANCE DE TIRS AU BUT (UI v2) =====================
+// Écran plein, branché sur le moteur penaltyShootoutV2 (6 zones + jauge de
+// puissance/timing). Le joueur est toujours Bleu et TIRE ; l'IA (Rouge) tire
+// seule (résultat résolu par le moteur, annoncé par un toast).
+// Machine à états : ready → aim → power → shooting → result → (cpu) → over.
 
-const SO_ZONE_X = { gauche: 80, centre: 150, droite: 220 };
-const SO_CROWD_COLORS = ['#2A5FA5', '#3f78c4', '#C83222', '#e0543f', '#E8A030', '#F0E6D3', '#7AAEE8', '#9a9a9a'];
+const SO_DIFFICULTY = 55;
+const PK_ZONES = [
+  { id: 'tl', x: 25, y: 30 }, { id: 'tc', x: 50, y: 26 }, { id: 'tr', x: 75, y: 30 },
+  { id: 'bl', x: 25, y: 47 }, { id: 'bc', x: 50, y: 50 }, { id: 'br', x: 75, y: 47 },
+];
+const PK_BALL_REST = { x: 50, y: 79 };
+const PK_KEEPER_REST = { x: 50, y: 40 };
+const PK_CROWD_COLORS = ['#4f8cff', '#ff5b5b', '#9fb0cf'];
 
-function buildShootoutCrowd() {
-  const g = els.shootoutCrowd;
-  if (!g || shootoutCrowdBuilt) return;
+let so = null;              // { phase, mode, engine, selectedZone, sweet, powerPct, dir, raf }
+let soCrowdBuilt = false;
+
+function soPick(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+function buildPkCrowd() {
+  if (soCrowdBuilt || !els.pkCrowd) return;
   let html = '';
-  for (let row = 0; row < 3; row++) {
-    for (let x = 16; x <= 284; x += 15) {
-      const cx = x + (row % 2 ? 7 : 0);
-      const cy = 12 + row * 13;
-      const c = SO_CROWD_COLORS[Math.floor(Math.random() * SO_CROWD_COLORS.length)];
-      const d = Math.random().toFixed(2);
-      html += '<circle class="crowd-head" cx="' + cx + '" cy="' + cy + '" r="4.4" fill="' + c + '" style="animation-delay:' + d + 's"/>';
+  const cols = 30, rows = 5;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = ((c + 0.5) / cols) * 100 + (Math.random() - 0.5) * (60 / cols);
+      const y = 14 + r * 18 + (Math.random() - 0.5) * 5;
+      const col = PK_CROWD_COLORS[Math.floor(Math.random() * PK_CROWD_COLORS.length)];
+      const d = (Math.random() * 2).toFixed(2);
+      html += '<span class="pk-fan" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1)
+            + '%;background:' + col + ';animation-delay:' + d + 's"></span>';
     }
   }
-  g.innerHTML = html;
-  shootoutCrowdBuilt = true;
+  els.pkCrowd.innerHTML = html;
+  soCrowdBuilt = true;
+}
+
+function buildPkZones() {
+  if (!els.pkZones) return;
+  els.pkZones.innerHTML = '';
+  PK_ZONES.forEach(z => {
+    const zone = document.createElement('div');
+    zone.className = 'pk-zone';
+    zone.style.left = z.x + '%';
+    zone.style.top = z.y + '%';
+    zone.dataset.zone = z.id;
+    zone.innerHTML = '<div class="pk-zone-ring"><span class="pk-zone-dot"></span></div>';
+    zone.addEventListener('click', () => pkPickZone(z.id));
+    els.pkZones.appendChild(zone);
+  });
 }
 
 function wireShootout() {
@@ -1940,35 +1964,41 @@ function wireShootout() {
   els.shootoutScoreRouge = document.getElementById('shootoutScoreRouge');
   els.shootoutDotsBleu   = document.getElementById('shootoutDotsBleu');
   els.shootoutDotsRouge  = document.getElementById('shootoutDotsRouge');
-  els.shootoutKeeper     = document.getElementById('shootoutKeeper');
-  els.shootoutShooter    = document.getElementById('shootoutShooter');
-  els.shootoutBall       = document.getElementById('shootoutBall');
-  els.shootoutBallSpin   = document.getElementById('shootoutBallSpin');
-  els.shootoutCrowd      = document.getElementById('shootoutCrowd');
-  els.shootoutScene      = document.getElementById('shootoutScene');
-  els.shootoutModal      = els.shootoutScreen ? els.shootoutScreen.querySelector('.shootout-modal') : null;
-  els.shootoutPrompt     = document.getElementById('shootoutPrompt');
-  els.shootoutDirs       = document.getElementById('shootoutDirs');
-  els.shootoutFeedback   = document.getElementById('shootoutFeedback');
+  els.shootoutRound      = document.getElementById('shootoutRound');
   els.shootoutEndRow     = document.getElementById('shootoutEndRow');
+  els.pkStage    = document.getElementById('pkStage');
+  els.pkCrowd    = document.getElementById('pkCrowd');
+  els.pkKeeper   = document.getElementById('pkKeeper');
+  els.pkShooter  = document.getElementById('pkShooter');
+  els.pkBall     = document.getElementById('pkBall');
+  els.pkZones    = document.getElementById('pkZones');
+  els.pkResult   = document.getElementById('pkResult');
+  els.pkResultMain = document.getElementById('pkResultMain');
+  els.pkResultSub  = document.getElementById('pkResultSub');
+  els.pkToast    = document.getElementById('pkToast');
+  els.pkFlash    = document.getElementById('pkFlash');
+  els.pkControls = document.getElementById('pkControls');
+  els.pkHint     = document.getElementById('pkHint');
+  els.pkPowerWrap   = document.getElementById('pkPowerWrap');
+  els.pkPowerSweet  = document.getElementById('pkPowerSweet');
+  els.pkPowerMarker = document.getElementById('pkPowerMarker');
+  els.pkCta      = document.getElementById('pkCta');
+
+  buildPkZones();
 
   document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
+  els.pkCta?.addEventListener('click', pkOnCta);
   document.getElementById('shootoutReplayBtn')?.addEventListener('click', () => {
-    if (shootoutMode === 'departage') { leaveShootout(); els.configScreen.classList.remove('hidden'); }
+    if (so && so.mode === 'departage') { leaveShootout(); els.configScreen.classList.remove('hidden'); }
     else openShootout();
   });
   document.getElementById('shootoutBackBtn')?.addEventListener('click', () => {
-    const departage = shootoutMode === 'departage';
+    const departage = so && so.mode === 'departage';
     leaveShootout();
     (departage ? els.setupScreen : els.configScreen).classList.remove('hidden');
   });
-  els.shootoutDirs?.querySelectorAll('.shootout-dir').forEach(btn =>
-    btn.addEventListener('click', () => playShootoutDir(btn.dataset.dir)));
-  els.shootoutScreen?.querySelectorAll('.shootout-zone').forEach(z =>
-    z.addEventListener('click', () => playShootoutDir(z.dataset.dir)));
 }
 
-// Masque tous les autres ecrans avant d'afficher la seance (ecran a part entiere).
 function hideAllScreensForShootout() {
   ['setupScreen', 'configScreen', 'waitingScreen', 'gameScreen', 'shopScreen', 'profileScreen']
     .forEach(k => els[k] && els[k].classList.add('hidden'));
@@ -1976,143 +2006,245 @@ function hideAllScreensForShootout() {
   els.goalOverlay?.classList.remove('show');
 }
 
-function resetShootoutScene() {
-  buildShootoutCrowd();
-  shootoutBusy = false;
-  if (els.shootoutFeedback) { els.shootoutFeedback.textContent = ''; els.shootoutFeedback.className = 'shootout-feedback'; }
-  els.shootoutKeeper?.setAttribute('transform', 'translate(0,0)');
-  els.shootoutBall?.setAttribute('transform', 'translate(0,0)');
-  els.shootoutBallSpin?.setAttribute('transform', 'translate(126,198)');
-  els.shootoutShooter?.classList.remove('kick');
+function openShootout() { launchShootout('standalone', 'Séance de tirs au but'); }
+function startShootoutDepartage() { launchShootout('departage', 'Départage aux tirs au but'); }
+
+function launchShootout(mode, title) {
+  so = {
+    phase: 'ready', mode, engine: createShootout({ difficulty: SO_DIFFICULTY }),
+    selectedZone: null, sweet: 50, powerPct: 0, dir: 1, raf: null
+  };
+  if (els.shootoutTitle) els.shootoutTitle.textContent = t(title);
+  hideAllScreensForShootout();
+  els.shootoutScreen.classList.remove('hidden');
+  buildPkCrowd();
+  pkResetScene();
+  renderShootout();
 }
 
 function leaveShootout() {
+  if (so && so.raf) { cancelAnimationFrame(so.raf); so.raf = null; }
   els.shootoutScreen?.classList.add('hidden');
 }
 
-function openShootout() {
-  shootoutMode = 'standalone';
-  if (els.shootoutTitle) els.shootoutTitle.textContent = t('Séance de tirs au but');
-  hideAllScreensForShootout();
-  els.shootoutScreen.classList.remove('hidden');
-  shootoutState = createShootout();
-  resetShootoutScene();
+function pkResetScene() {
+  pkSetKeeper(PK_KEEPER_REST.x, PK_KEEPER_REST.y, 0);
+  pkSetBall(PK_BALL_REST.x, PK_BALL_REST.y, 1);
+  els.pkResult?.classList.remove('show');
+  els.pkToast?.classList.remove('show');
+  els.pkShooter?.classList.remove('kick');
+}
+
+function pkSetKeeper(x, y, rot) {
+  if (!els.pkKeeper) return;
+  els.pkKeeper.style.left = x + '%';
+  els.pkKeeper.style.top = y + '%';
+  els.pkKeeper.style.transform = 'translate(-50%,-50%) rotate(' + rot + 'deg)';
+}
+function pkSetBall(x, y, scale) {
+  if (!els.pkBall) return;
+  els.pkBall.style.left = x + '%';
+  els.pkBall.style.top = y + '%';
+  els.pkBall.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
+}
+
+function pkOnCta() {
+  if (!so) return;
+  if (so.phase === 'ready' || so.phase === 'over') pkStartRound();
+  else if (so.phase === 'power') pkLockPower();
+}
+
+function pkStartRound() {
+  if (so.phase === 'over') return; // "Rejouer" passe par le bouton dédié
+  so.phase = 'aim';
+  so.selectedZone = null;
+  pkResetScene();
   renderShootout();
 }
 
-// Depart au nul d'une manche courte : la seance designe le vainqueur du MATCH.
-function startShootoutDepartage() {
-  shootoutMode = 'departage';
-  if (els.shootoutTitle) els.shootoutTitle.textContent = t('Départage aux tirs au but');
-  hideAllScreensForShootout();
-  els.shootoutScreen.classList.remove('hidden');
-  shootoutState = createShootout();
-  resetShootoutScene();
+function pkPickZone(id) {
+  if (!so || so.phase !== 'aim') return;
+  so.selectedZone = id;
+  so.sweet = randomSweet();
+  so.powerPct = 0; so.dir = 1;
+  so.phase = 'power';
   renderShootout();
+  pkStartPower();
+}
+
+function pkStartPower() {
+  let last = performance.now();
+  const speed = 118;
+  const loop = (now) => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    so.powerPct += so.dir * speed * dt;
+    if (so.powerPct >= 100) { so.powerPct = 100; so.dir = -1; }
+    if (so.powerPct <= 0) { so.powerPct = 0; so.dir = 1; }
+    if (els.pkPowerMarker) els.pkPowerMarker.style.left = so.powerPct + '%';
+    so.raf = requestAnimationFrame(loop);
+  };
+  so.raf = requestAnimationFrame(loop);
+}
+
+function pkLockPower() {
+  if (!so || so.phase !== 'power') return;
+  if (so.raf) { cancelAnimationFrame(so.raf); so.raf = null; }
+  so.phase = 'shooting';
+
+  const zone = PK_ZONES.find(z => z.id === so.selectedZone) || PK_ZONES[4];
+  const keeperId = readKeeperZone(zone.id, SO_DIFFICULTY);
+  const kz = PK_ZONES.find(z => z.id === keeperId) || PK_ZONES[4];
+  so.engine = playerShoot(so.engine, { zone: zone.id, power: so.powerPct, sweet: so.sweet, keeperZone: keeperId });
+  const outcome = so.engine.history[so.engine.history.length - 1].outcome;
+  const wide = outcome === 'miss';
+
+  renderShootout();
+  els.pkShooter?.classList.add('kick');
+
+  const ky = 40 + (kz.y < 38 ? -11 : 8);
+  const krot = kz.x < 50 ? -44 : (kz.x > 50 ? 44 : 0);
+  pkSetKeeper(kz.x, ky, krot);
+
+  let bx = zone.x, by = zone.y;
+  if (wide) { if (zone.x === 50) { by = 14; } else { bx = zone.x < 50 ? -8 : 108; by = zone.y - 3; } }
+  pkSetBall(bx, by, wide ? 0.8 : 0.55);
+
+  setTimeout(() => pkShowResult(outcome), 660);
+}
+
+function pkShowResult(outcome) {
+  so.phase = 'result';
+  const goal = outcome === 'goal';
+  const main = goal ? t('BUT !') : (outcome === 'save' ? t('ARRÊT !') : t('RATÉ !'));
+  const sub = goal
+    ? soPick([t('Imparable !'), t('Quel sang-froid !'), t('En pleine lucarne !')])
+    : (outcome === 'save'
+      ? soPick([t('Le gardien dit non !'), t('Détente parfaite !')])
+      : soPick([t('À côté !'), t('Au-dessus !'), t('Trop de puissance !')]));
+  if (els.pkResultMain) els.pkResultMain.textContent = main;
+  if (els.pkResultSub) els.pkResultSub.textContent = sub;
+  if (els.pkResult) {
+    els.pkResult.className = 'pk-result ' + outcome;
+    void els.pkResult.offsetWidth;   // retrigger animation
+    els.pkResult.classList.add('show');
+  }
+  if (goal) {
+    pkSpawnConfetti();
+    if (els.pkFlash) { els.pkFlash.classList.remove('on'); void els.pkFlash.offsetWidth; els.pkFlash.classList.add('on'); }
+    els.pkStage?.classList.add('shake'); setTimeout(() => els.pkStage?.classList.remove('shake'), 440);
+    els.pkCrowd?.classList.add('roar'); setTimeout(() => els.pkCrowd?.classList.remove('roar'), 700);
+  }
+  renderShootout();
+  setTimeout(() => {
+    els.pkResult?.classList.remove('show');
+    pkAfterPlayer();
+  }, 1600);
+}
+
+function pkAfterPlayer() {
+  if (isShootoutOver(so.engine)) { pkEnd(); return; }
+  pkResetScene();
+  renderShootout();
+  setTimeout(pkCpuTurn, 450);
+}
+
+function pkCpuTurn() {
+  so.engine = cpuShoot(so.engine);
+  const outcome = so.engine.history[so.engine.history.length - 1].outcome;
+  const scored = outcome === 'goal';
+  if (els.pkToast) {
+    els.pkToast.textContent = scored ? t('⚽ Rouge marque') : t('✕ Rouge manque');
+    els.pkToast.className = 'pk-toast ' + (scored ? 'goal' : 'miss') + ' show';
+  }
+  renderShootout();
+  setTimeout(() => els.pkToast?.classList.remove('show'), 1150);
+  setTimeout(() => {
+    if (isShootoutOver(so.engine)) { pkEnd(); return; }
+    pkStartRound();
+  }, 1250);
+}
+
+function pkEnd() {
+  so.phase = 'over';
+  renderShootout();
+}
+
+function pkSpawnConfetti() {
+  const stage = els.pkStage;
+  if (!stage) return;
+  const cols = ['#f5c542', '#4f8cff', '#ffffff', '#ff5b5b', '#4dffa1'];
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement('span');
+    p.className = 'pk-confetti';
+    const ang = Math.random() * Math.PI * 2;
+    const d = 40 + Math.random() * 150;
+    p.style.background = cols[i % cols.length];
+    p.style.setProperty('--tx', (Math.cos(ang) * d) + 'px');
+    p.style.setProperty('--ty', (Math.sin(ang) * d - 30) + 'px');
+    p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    p.style.width = (6 + Math.random() * 8) + 'px';
+    p.style.height = (6 + Math.random() * 10) + 'px';
+    stage.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
 }
 
 function renderShootoutDots() {
-  const build = (team, el) => {
+  const s = so.engine;
+  const build = (shots, el) => {
     if (!el) return;
     el.innerHTML = '';
-    const hist = shootoutState.history.filter(h => h.taker === team);
-    for (let i = 0; i < shootoutState.bestOf; i++) {
+    const n = Math.max(s.bestOf, shots.length);
+    for (let i = 0; i < n; i++) {
       const dot = document.createElement('span');
       dot.className = 'shootout-dot';
-      if (i < hist.length) dot.classList.add(hist[i].scored ? 'scored' : 'missed');
+      const o = shots[i];
+      if (o === 'goal') dot.classList.add('scored');
+      else if (o === 'save' || o === 'miss') dot.classList.add('missed');
       el.appendChild(dot);
     }
   };
-  build(TEAMS.BLEU, els.shootoutDotsBleu);
-  build(TEAMS.ROUGE, els.shootoutDotsRouge);
+  build(s.shots[TEAMS.BLEU], els.shootoutDotsBleu);
+  build(s.shots[TEAMS.ROUGE], els.shootoutDotsRouge);
+}
+
+function pkHintText(phase, s) {
+  if (phase === 'over') {
+    const w = shootoutWinner(s);
+    if (so.mode === 'departage') return w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
+    return w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
+  }
+  if (phase === 'ready') return t('Prêt ? Choisis un coin et marque !');
+  if (phase === 'aim') return t('À toi ! Touche un coin du but');
+  if (phase === 'power') return t('Stoppe la jauge dans la zone verte');
+  return '';
 }
 
 function renderShootout() {
-  const s = shootoutState;
-  els.shootoutScoreBleu.textContent = s.score[TEAMS.BLEU];
-  els.shootoutScoreRouge.textContent = s.score[TEAMS.ROUGE];
+  const s = so.engine;
+  if (els.shootoutScoreBleu) els.shootoutScoreBleu.textContent = s.score[TEAMS.BLEU];
+  if (els.shootoutScoreRouge) els.shootoutScoreRouge.textContent = s.score[TEAMS.ROUGE];
   renderShootoutDots();
-  els.shootoutEndRow.classList.toggle('hidden', !s.over);
-  els.shootoutDirs.classList.toggle('hidden', s.over);
-  if (s.over) {
-    const w = shootoutWinner(s);
-    if (shootoutMode === 'departage') {
-      els.shootoutPrompt.textContent = w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
-    } else {
-      els.shootoutPrompt.textContent = w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
-    }
-  } else if (s.taker === TEAMS.BLEU) {
-    els.shootoutPrompt.textContent = t('À toi de tirer : vise un coin');
-  } else {
-    els.shootoutPrompt.textContent = t('Arrête le tir : choisis où plonger');
+  if (els.shootoutRound) els.shootoutRound.textContent = isSuddenDeath(s) ? t('MORT SUBITE') : t('MEILLEUR DES 5');
+
+  const phase = so.phase;
+  const over = phase === 'over';
+  els.shootoutEndRow?.classList.toggle('hidden', !over);
+  els.pkControls?.classList.toggle('hidden', over);
+  els.pkPowerWrap?.classList.toggle('hidden', phase !== 'power');
+
+  if (els.pkCta) {
+    const showCta = phase === 'ready' || phase === 'power';
+    els.pkCta.classList.toggle('hidden', !showCta);
+    els.pkCta.textContent = phase === 'power' ? t('TIRER !') : t('JOUER');
   }
-}
+  if (phase === 'power' && els.pkPowerSweet) els.pkPowerSweet.style.left = (so.sweet - 9) + '%';
 
-// Confettis arcade projetes depuis la lucarne sur un but.
-function spawnShootoutConfetti() {
-  const svg = els.shootoutScene;
-  if (!svg) return;
-  const cols = ['#ffd23f', '#3fa9f5', '#ff5a4d', '#4dffa1', '#b06bff', '#ffffff'];
-  const NS = 'http://www.w3.org/2000/svg';
-  for (let i = 0; i < 22; i++) {
-    const r = document.createElementNS(NS, 'rect');
-    let x = 150 + (Math.random() * 150 - 75);
-    r.setAttribute('x', x); r.setAttribute('y', 62);
-    r.setAttribute('width', 4 + Math.random() * 3);
-    r.setAttribute('height', 6 + Math.random() * 4);
-    r.setAttribute('fill', cols[(Math.random() * cols.length) | 0]);
-    r.setAttribute('transform', 'rotate(' + (Math.random() * 360) + ' ' + x + ' 62)');
-    svg.appendChild(r);
-    const dx = Math.random() * 2 - 1; let tick = 0;
-    const iv = setInterval(() => {
-      tick++; const y = 62 + tick * 6;
-      r.setAttribute('y', y); x += dx; r.setAttribute('x', x);
-      if (y > 212) { clearInterval(iv); r.remove(); }
-    }, 30);
-  }
-}
+  els.pkZones?.classList.toggle('aim', phase === 'aim');
+  els.pkZones?.querySelectorAll('.pk-zone').forEach(z =>
+    z.classList.toggle('selected', z.dataset.zone === so.selectedZone));
 
-function playShootoutDir(dir) {
-  const s = shootoutState;
-  if (!s || s.over || shootoutBusy) return;
-  shootoutBusy = true;
-
-  let shooterDir, keeperDir;
-  if (s.taker === TEAMS.BLEU) { shooterDir = dir; keeperDir = randomDirection(); }
-  else { keeperDir = dir; shooterDir = randomDirection(); }
-  const scored = shooterDir !== keeperDir;
-
-  els.shootoutDirs.classList.add('hidden');
-  els.shootoutShooter?.classList.add('kick');
-
-  setTimeout(() => {
-    const kRot = keeperDir === 'gauche' ? -18 : keeperDir === 'droite' ? 18 : 0;
-    els.shootoutKeeper?.setAttribute('transform', 'translate(' + (SO_ZONE_X[keeperDir] - 150) + ',0) rotate(' + kRot + ' 150 110)');
-    els.shootoutBall?.setAttribute('transform', 'translate(' + (SO_ZONE_X[shooterDir] - 126) + ',-96)');
-    els.shootoutBallSpin?.setAttribute('transform', 'translate(126,198) rotate(720)');
-    if (els.shootoutFeedback) {
-      els.shootoutFeedback.innerHTML = '<span class="so-pop">' + (scored ? t('BUT !') : t('Arrêt !')) + '</span>';
-      els.shootoutFeedback.className = 'shootout-feedback ' + (scored ? 'goal' : 'save');
-    }
-    if (scored) {
-      if (els.shootoutCrowd) {
-        els.shootoutCrowd.classList.add('cheer');
-        setTimeout(() => els.shootoutCrowd.classList.remove('cheer'), 850);
-      }
-      spawnShootoutConfetti();
-      if (els.shootoutModal) {
-        els.shootoutModal.classList.add('shake');
-        setTimeout(() => els.shootoutModal.classList.remove('shake'), 440);
-      }
-    }
-  }, 170);
-
-  const next = shoot(s, shooterDir, keeperDir);
-  setTimeout(() => {
-    shootoutState = next;
-    resetShootoutScene();
-    renderShootout();
-  }, 1250);
+  if (els.pkHint) els.pkHint.textContent = pkHintText(phase, s);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -14,7 +14,7 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v7'; // v4 : + dialogs.js (oubli qui cassait TOUT le site en mode cache/hors-ligne : l'import échouait et aucun bouton ne répondait)
+const CACHE_NAME = 'tactic-master-v8'; // v8 : refonte tirs au but (moteur v2 6 zones + jauge, PNG gardien/tireur)
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -24,10 +24,13 @@ const STATIC_ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
+  './img/shootout/keeper.png',
+  './img/shootout/shooter.png',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
   './src/engine/ai.js',
   './src/engine/powers.js',
+  './src/engine/penaltyShootoutV2.js',
   './src/ui/main.js',
   './src/ui/boardRenderer.js',
   './src/ui/themeManager.js',

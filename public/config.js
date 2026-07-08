@@ -14,6 +14,8 @@ window.__PLATEAU_FOOT_CONFIG__ = {
   // renseignés en PR 0 (issue #25) une fois les comptes Google validés.
   ads: {
     enabled: true,        // interrupteur global (kill switch) de toute la pub
+    rolloutPercent: 100,  // % de clients exposés (0=personne, 100=tous). Pour un
+                          // déploiement progressif : 5 → 25 → 50 → 100. Réversible.
     // Flags par format (n'ont d'effet que si enabled=true). Absent ou true =
     // format actif ; false = format désactivé (rollout progressif, A/B).
     banner: true,         // bannières AdSense hors-jeu (PR C / #28) — ACTIF

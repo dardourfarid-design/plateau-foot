@@ -61,6 +61,16 @@ export function areAdsAllowed() {
 }
 
 /**
+ * La pub est-elle autorisée ET le format demandé activé ?
+ * Un format est actif par défaut quand la pub est activée ; il faut le mettre
+ * explicitement à false dans la config pour le couper (rollout progressif, A/B).
+ * @param {'banner'|'interstitial'|'rewarded'} format
+ */
+export function isFormatAllowed(format) {
+  return areAdsAllowed() && adsConfig()[format] !== false;
+}
+
+/**
  * Initialise la couche pub si (et seulement si) elle est autorisée. Idempotent.
  * Ne charge le SDK du provider qu'une fois les trois verrous levés.
  * @returns {Promise<boolean>} true si la pub est prête à être affichée.
@@ -87,6 +97,7 @@ async function ensureReady() {
  * @returns {Promise<boolean>}
  */
 export async function showBanner(slot) {
+  if (!isFormatAllowed('banner')) return false;
   if (!(await ensureReady())) return false;
   return provider.showBanner(slot);
 }
@@ -102,6 +113,7 @@ export function hideBanner(slot) {
  * @returns {Promise<{ shown: boolean }>}
  */
 export async function showInterstitial() {
+  if (!isFormatAllowed('interstitial')) return { shown: false };
   if (!(await ensureReady())) return { shown: false };
   return provider.showInterstitial();
 }
@@ -113,7 +125,7 @@ export async function showInterstitial() {
  * @returns {Promise<{ completed: boolean, reason?: string }>}
  */
 export async function showRewarded() {
-  if (!areAdsAllowed()) return { completed: false, reason: 'ads-not-allowed' };
+  if (!isFormatAllowed('rewarded')) return { completed: false, reason: 'ads-not-allowed' };
   if (!(await ensureReady())) return { completed: false, reason: 'init-failed' };
   return provider.showRewarded();
 }

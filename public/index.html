@@ -267,6 +267,14 @@
         <p class="feature-desc">Rares et légendaires : Sprint, Tir Puissant, Mur, Relais, Repli adverse. À collecter et aligner.</p>
       </div>
     </div>
+
+    <!-- Emplacement publicitaire (hors-jeu). Vit dans l'écran d'accueil : il
+         est donc automatiquement masqué dès qu'on entre en configuration ou
+         en partie. Rempli uniquement si la pub est autorisée (kill switch +
+         consentement + non-payant) — sinon reste vide et replié. Épic pub,
+         PR C (#28). -->
+    <div id="adBannerHome" class="ad-banner-slot" aria-hidden="true"
+         style="width:100%;max-width:728px;margin:28px auto 8px;"></div>
   </div>
 
   <!-- ECRAN DE CONFIGURATION DE PARTIE -->

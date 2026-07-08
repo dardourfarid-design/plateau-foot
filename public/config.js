@@ -14,6 +14,11 @@ window.__PLATEAU_FOOT_CONFIG__ = {
   // renseignés en PR 0 (issue #25) une fois les comptes Google validés.
   ads: {
     enabled: false,       // interrupteur global (kill switch) de toute la pub
+    // Flags par format (n'ont d'effet que si enabled=true). Absent ou true =
+    // format actif ; false = format désactivé (rollout progressif, A/B).
+    banner: false,        // bannières hors-jeu (PR C / #28)
+    interstitial: false,  // interstitiels entre matchs (PR D / #29)
+    rewarded: false,      // vidéos récompensées (PR E / #30)
     cmp: {
       enabled: false,     // active le CMP certifié Google (IAB TCF v2.2)
       publisherId: null   // ex. 'ca-pub-XXXXXXXXXXXXXXXX' (AdSense/Ad Manager)

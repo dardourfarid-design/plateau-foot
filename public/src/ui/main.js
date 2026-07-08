@@ -31,6 +31,7 @@ import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
+import * as adService from '../services/ads/adService.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
@@ -728,6 +729,27 @@ function goToLanding() {
   els.goalOverlay?.classList.remove('show');
   els.accountOverlay?.classList.remove('show');
   els.setupScreen?.classList.remove('hidden');
+  refreshHomeBanner();
+}
+
+// ---------- Publicité (bannière hors-jeu, épic pub PR C) ----------
+
+// Remplit (ou vide) l'emplacement bannière de l'accueil. Tout le gating
+// (kill switch + consentement + non-payant + format activé) est fait dans
+// adService : ici on ne fait qu'appeler, et vider le slot si non autorisé.
+const AD_SLOT_HOME = 'adBannerHome';
+function refreshHomeBanner() {
+  if (adService.isFormatAllowed('banner')) {
+    adService.showBanner(AD_SLOT_HOME).catch(() => {});
+  } else {
+    adService.hideBanner(AD_SLOT_HOME);
+  }
+}
+
+// Recalcule le droit « sans pub » (pass actif) puis rafraîchit la bannière.
+// Appelé quand la session change : les droits payants en dépendent.
+function refreshAdsForSession() {
+  adService.refreshAdFreeStatus().then(refreshHomeBanner).catch(() => {});
 }
 
 // ---------- Écran d'accueil et configuration ----------
@@ -1293,6 +1315,7 @@ async function handleAuthSubmit() {
       // Le consentement pub a aussi un signal local (gating des SDK pub, y
       // compris hors connexion). On l'aligne sur la case cochée.
       await setAdvertisingConsent(els.consentAdvertising.checked);
+      refreshHomeBanner();
 
       els.authSubmitBtn.disabled = false;
       els.authSubmitBtn.textContent = originalLabel;
@@ -1361,10 +1384,12 @@ function wireAccount() {
   onAuthStateChange(user => {
     currentUser = user;
     updateAccountUI();
+    refreshAdsForSession(); // le statut « sans pub » dépend du pass de la session
   });
   getCurrentUser().then(user => {
     currentUser = user;
     updateAccountUI();
+    refreshAdsForSession();
   });
 
   els.accountBtn?.addEventListener('click', () => {
@@ -1477,6 +1502,7 @@ async function openConsentManagementPanel() {
   // Le signal pub local est mis à jour immédiatement (gating), indépendamment
   // de la synchro serveur ci-dessous.
   setAdvertisingConsent(choices.advertising);
+  refreshHomeBanner(); // reflète tout de suite l'octroi/retrait à l'écran
 
   recordConsents({
     [CONSENT_PURPOSES.ANALYTICS]: choices.analytics,
@@ -1838,6 +1864,11 @@ function init() {
   document.getElementById('profileBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
   registerServiceWorker();
   handlePaymentReturn();
+
+  // Pub : premier affichage de la bannière d'accueil (le gating décide s'il y
+  // a réellement quelque chose à montrer). L'état « sans pub » sera affiné dès
+  // que la session sera résolue (voir refreshAdsForSession dans wireAccount).
+  refreshHomeBanner();
 }
 
 /**

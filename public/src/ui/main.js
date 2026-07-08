@@ -30,6 +30,7 @@ import { initLang, t, applyTranslations, onLangChange, mountLangToggle, startAut
 import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
+import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
@@ -272,6 +273,7 @@ function cacheDomRefs() {
   els.consentAnalytics = document.getElementById('consentAnalytics');
   els.consentEmailMarketing = document.getElementById('consentEmailMarketing');
   els.consentDataSharing = document.getElementById('consentDataSharing');
+  els.consentAdvertising = document.getElementById('consentAdvertising');
   els.accountRequiredNote = document.getElementById('accountRequiredNote');
   els.manageConsentBtn = document.getElementById('manageConsentBtn');
   els.exportDataBtn = document.getElementById('exportDataBtn');
@@ -1281,11 +1283,16 @@ async function handleAuthSubmit() {
         await recordConsents({
           [CONSENT_PURPOSES.ANALYTICS]: els.consentAnalytics.checked,
           [CONSENT_PURPOSES.EMAIL_MARKETING]: els.consentEmailMarketing.checked,
-          [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked
+          [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked,
+          [CONSENT_PURPOSES.ADVERTISING]: els.consentAdvertising.checked
         });
       } catch (consentErr) {
         console.error('Consentement non enregistré :', consentErr);
       }
+
+      // Le consentement pub a aussi un signal local (gating des SDK pub, y
+      // compris hors connexion). On l'aligne sur la case cochée.
+      await setAdvertisingConsent(els.consentAdvertising.checked);
 
       els.authSubmitBtn.disabled = false;
       els.authSubmitBtn.textContent = originalLabel;
@@ -1462,13 +1469,20 @@ function wireAccount() {
 }
 
 async function openConsentManagementPanel() {
-  const choices = await showConsentDialog();
+  // Pré-coche la case pub selon le signal local courant (le retrait doit être
+  // aussi simple que l'octroi — exigence CNIL).
+  const choices = await showConsentDialog({ advertising: hasAdvertisingConsent() });
   if (!choices) return; // annulé : aucun changement enregistré
+
+  // Le signal pub local est mis à jour immédiatement (gating), indépendamment
+  // de la synchro serveur ci-dessous.
+  setAdvertisingConsent(choices.advertising);
 
   recordConsents({
     [CONSENT_PURPOSES.ANALYTICS]: choices.analytics,
     [CONSENT_PURPOSES.EMAIL_MARKETING]: choices.emailMarketing,
-    [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing
+    [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing,
+    [CONSENT_PURPOSES.ADVERTISING]: choices.advertising
   }).then(() => {
     showToast(t('Tes préférences ont été mises à jour.'));
   }).catch(err => {

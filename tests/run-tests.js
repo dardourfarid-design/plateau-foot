@@ -13,6 +13,7 @@ await import('./powers.test.js');
 await import('./penaltyShootoutV2.test.js');
 await import('./profileUI.test.js');
 await import('./mercatoUI.test.js');
+await import('./advertisingConsent.test.js');
 
 const success = printSummary();
 process.exit(success ? 0 : 1);

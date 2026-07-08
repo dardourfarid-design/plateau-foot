@@ -13,10 +13,16 @@ import { supabase } from './supabaseClient.js';
 export const CONSENT_PURPOSES = Object.freeze({
   ANALYTICS: 'analytics',
   EMAIL_MARKETING: 'email_marketing',
-  DATA_SHARING: 'data_sharing'
+  DATA_SHARING: 'data_sharing',
+  // Affichage et personnalisation de publicités (bannières, interstitiels,
+  // vidéos récompensées). Finalité séparée, jamais impliquée par une autre.
+  // Le gating effectif du chargement des SDK pub vit dans
+  // advertisingConsentService.js ; ici on ne fait que tracer/prouver le choix
+  // côté serveur pour les utilisateurs connectés (voir migration 0035).
+  ADVERTISING: 'advertising'
 });
 
-export const CURRENT_POLICY_VERSION = '2026-06-28';
+export const CURRENT_POLICY_VERSION = '2026-07-08';
 
 function requireClient() {
   if (!supabase) {

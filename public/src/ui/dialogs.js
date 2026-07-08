@@ -8,7 +8,7 @@ import { t } from './i18n.js';
 // - showAlert(message)        : modale d'information, Promise résolue à la fermeture.
 // - showConfirm(message)      : modale de confirmation, Promise<boolean>.
 // - showConsentDialog(defaults): panneau RGPD à cases à cocher,
-//   Promise<{analytics, emailMarketing, dataSharing} | null> (null = annulé).
+//   Promise<{analytics, emailMarketing, dataSharing, advertising} | null> (null = annulé).
 //
 // Réutilise les classes .overlay / .overlay-card / .btn existantes pour
 // hériter automatiquement du thème du jeu.
@@ -130,7 +130,8 @@ export function showConsentDialog(defaults = {}) {
     <p style="margin-bottom:14px;">Choisis ce que tu autorises. Tu peux tout décocher : le jeu reste entièrement fonctionnel.</p>
     ${cb('consentDlgAnalytics', "Analyse de mon usage du jeu pour améliorer le produit", defaults.analytics)}
     ${cb('consentDlgEmail', "Recevoir des emails sur les nouveautés et offres", defaults.emailMarketing)}
-    ${cb('consentDlgSharing', "Partage de mes données avec des partenaires sélectionnés", defaults.dataSharing)}`;
+    ${cb('consentDlgSharing', "Partage de mes données avec des partenaires sélectionnés", defaults.dataSharing)}
+    ${cb('consentDlgAds', "Affichage de publicités, y compris personnalisées", defaults.advertising)}`;
   return openModal({
     title: t('Mes préférences de données'),
     bodyHtml,
@@ -142,7 +143,8 @@ export function showConsentDialog(defaults = {}) {
     return {
       analytics: d.body.querySelector('#consentDlgAnalytics')?.checked ?? false,
       emailMarketing: d.body.querySelector('#consentDlgEmail')?.checked ?? false,
-      dataSharing: d.body.querySelector('#consentDlgSharing')?.checked ?? false
+      dataSharing: d.body.querySelector('#consentDlgSharing')?.checked ?? false,
+      advertising: d.body.querySelector('#consentDlgAds')?.checked ?? false
     };
   });
 }

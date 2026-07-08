@@ -1269,6 +1269,12 @@ function _refreshAfterCheckout() {
     }
   }, 3000);
 
+  // Perk « sans pub » (PR F, #31) : un pass acheté à l'instant est activé par
+  // le webhook Stripe avec un léger délai. On recalcule le statut plusieurs
+  // fois pour retirer la pub dès activation, sans attendre un rechargement.
+  // Indépendant du solde (un pass peut ne pas créditer de pièces).
+  [1500, 4000, 8000, 15000].forEach(ms => setTimeout(() => refreshAdsForSession(), ms));
+
   [1500, 4000, 8000, 15000].forEach(ms => {
     setTimeout(() => {
       if (settled) return;

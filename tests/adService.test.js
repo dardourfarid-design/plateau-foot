@@ -17,6 +17,22 @@ const { setAdvertisingConsent } = await import('../src/services/advertisingConse
 function enableAds() { globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true } }; }
 function killSwitchOff() { globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: false } }; }
 
+describe('adService — décision pure evaluateAdsAllowed', () => {
+  test('autorisé seulement si activé, non refusé, et non payant', () => {
+    // (enabled, consentDenied, adFree)
+    expect(ads.evaluateAdsAllowed(true, false, false)).toBeTruthy();  // cas nominal
+    expect(ads.evaluateAdsAllowed(false, false, false)).toBeFalsy();  // kill switch
+    expect(ads.evaluateAdsAllowed(true, true, false)).toBeFalsy();    // opt-out dur
+    expect(ads.evaluateAdsAllowed(true, false, true)).toBeFalsy();    // payant (pass)
+  });
+
+  test('le perk payant l\'emporte même sans refus de consentement', () => {
+    // Un détenteur de pass (adFree=true) ne voit JAMAIS de pub, quel que soit
+    // son consentement.
+    expect(ads.evaluateAdsAllowed(true, false, true)).toBeFalsy();
+  });
+});
+
 describe('adService — verrous de diffusion', () => {
   test('kill switch off : aucune pub même avec consentement', async () => {
     killSwitchOff();

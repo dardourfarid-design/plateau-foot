@@ -17,6 +17,7 @@ await import('./advertisingConsent.test.js');
 await import('./adService.test.js');
 await import('./interstitialFrequency.test.js');
 await import('./adAnalytics.test.js');
+await import('./abTest.test.js');
 
 const success = printSummary();
 process.exit(success ? 0 : 1);

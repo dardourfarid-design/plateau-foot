@@ -47,8 +47,10 @@ export async function showInterstitial() {
   return { shown: true };
 }
 
-export async function showRewarded() {
-  // Le mock simule un visionnage mené à son terme → récompense accordable.
+export async function showRewarded(context = {}) {
+  // Le mock simule un visionnage mené à son terme. NB : il ne CRÉDITE rien —
+  // le crédit réel n'arrive que via le SSV serveur (Edge Function rewarded-ssv),
+  // absent en mock. C'est volontaire : aucun chemin de crédit côté client.
   return { completed: true };
 }
 

@@ -191,6 +191,7 @@ function cacheDomRefs() {
   els.endTitle = document.getElementById('endTitle');
   els.endSub = document.getElementById('endSub');
   els.newGameBtn = document.getElementById('newGameBtn');
+  els.watchRewardedBtn = document.getElementById('watchRewardedBtn');
   els.shopBtn = document.getElementById('shopBtn');
   els.purchaseToast = document.getElementById('purchaseToast');
   els.purchaseToastIcon = document.getElementById('purchaseToastIcon');
@@ -676,6 +677,15 @@ function showEndOverlay(winningTeam) {
 
   els.endOverlay.classList.add('show');
 
+  // Récompense vidéo (opt-in) : proposée seulement si autorisée (3 verrous +
+  // flag rewarded) et si un compte est connecté (le crédit SSV cible un
+  // user_id). Masquée sinon.
+  if (els.watchRewardedBtn) {
+    const canReward = !!currentUser && adService.isFormatAllowed('rewarded');
+    els.watchRewardedBtn.classList.toggle('hidden', !canReward);
+    els.watchRewardedBtn.disabled = false;
+  }
+
   // Compte ce match pour le plafond de fréquence des interstitiels (hors
   // tutoriel, qui n'est pas une vraie partie). N'AFFICHE rien ici : la pub
   // n'apparaît qu'à la transition suivante (backToSetup), jamais sur l'écran
@@ -1103,6 +1113,32 @@ function wireGameControls() {
   els.restartBtn.addEventListener('click', backToSetup);
   els.continueBtn.addEventListener('click', hideGoalOverlayAndResume);
   els.newGameBtn.addEventListener('click', backToSetup);
+  els.watchRewardedBtn?.addEventListener('click', handleWatchRewarded);
+}
+
+// Récompense vidéo opt-in. IMPORTANT : le client ne crédite RIEN. Il affiche
+// la vidéo (via adService), en passant son user_id comme custom_data ; c'est
+// Google qui, après vérification, appellera l'Edge Function rewarded-ssv, seule
+// habilitée à créditer (migration 0036). Ici, après la vue, on se contente de
+// re-lire le solde — qui aura été mis à jour côté serveur par le SSV.
+async function handleWatchRewarded() {
+  if (!currentUser) return;
+  const btn = els.watchRewardedBtn;
+  if (btn) { btn.disabled = true; }
+  try {
+    const { completed } = await adService.showRewarded({ userId: currentUser.id });
+    if (completed) {
+      // Laisse le temps au SSV de créditer côté serveur, puis rafraîchit.
+      const balance = await getCurrencyBalance();
+      _updateCoinDisplay(balance);
+      showToast(t('Récompense en cours de validation…'));
+      if (btn) btn.classList.add('hidden'); // une seule récompense par écran de fin
+    } else if (btn) {
+      btn.disabled = false;
+    }
+  } catch {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function handleEndTurnClick() {

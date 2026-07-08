@@ -33,10 +33,12 @@
 //   Affiche une pub plein écran (entre deux parties). `shown:false` si aucune
 //   pub disponible (no-fill) — ne doit jamais bloquer le flux de jeu.
 //
-// showRewarded() -> Promise<{ completed: boolean, reason?: string }>
+// showRewarded(context) -> Promise<{ completed: boolean, reason?: string }>
 //   Affiche une vidéo récompensée. `completed:true` UNIQUEMENT si l'utilisateur
-//   a regardé jusqu'au bout (condition d'octroi de la récompense, qui elle sera
-//   validée côté serveur en PR E). `reason` documente un échec éventuel.
+//   a regardé jusqu'au bout. `context.userId` est transmis au réseau comme
+//   `custom_data` : le SSV le renverra pour identifier le joueur à créditer
+//   côté serveur. Le provider ne crédite JAMAIS lui-même — le crédit passe par
+//   l'Edge Function rewarded-ssv (migration 0036). `reason` documente un échec.
 //
 // destroy() -> void
 //   Libère les ressources (bannières, listeners). Appelé à la déconnexion ou

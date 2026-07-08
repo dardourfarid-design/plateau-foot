@@ -731,6 +731,15 @@
     <div class="end-score-display" id="endSub">Bleu gagne 3 – 1</div>
     <!-- Stats de fin de partie -->
     <div class="end-stats-row" id="endStatsRow" aria-label="Résultats de la partie"></div>
+
+    <!-- Récompense vidéo (opt-in). Masqué par défaut : affiché seulement si la
+         pub récompensée est autorisée (3 verrous + flag). Le crédit des pièces
+         est décidé côté serveur après vérification SSV de Google — jamais par
+         le client. Épic pub, PR E (#30). -->
+    <button class="btn primary hidden" id="watchRewardedBtn" style="margin-top:14px;">
+      🎬 Regarder une pub → +10 pièces
+    </button>
+
     <div class="btn-row" style="justify-content:center; gap:10px; margin-top:18px;">
       <button class="btn" id="backToSetupFromEndBtn">← Accueil</button>
       <button class="btn primary" id="newGameBtn">

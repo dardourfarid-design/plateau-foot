@@ -52,6 +52,16 @@ describe('adService — verrous de diffusion', () => {
     expect(ads.isAdFree()).toBeFalsy();
   });
 
+  test('un format désactivé explicitement est bloqué même si la pub est active', async () => {
+    globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true, rewarded: false } };
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    expect(ads.areAdsAllowed()).toBeTruthy();          // pub globalement OK
+    expect(ads.isFormatAllowed('rewarded')).toBeFalsy(); // mais rewarded coupé
+    expect((await ads.showRewarded()).completed).toBeFalsy();
+    expect(ads.isFormatAllowed('interstitial')).toBeTruthy(); // les autres restent OK
+  });
+
   test('révoquer le consentement en session coupe la pub immédiatement', async () => {
     enableAds();
     await setAdvertisingConsent(true);

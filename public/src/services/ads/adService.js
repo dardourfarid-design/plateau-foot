@@ -124,10 +124,12 @@ export async function showInterstitial() {
  * serveur en PR E (#30) — ce service ne fait que piloter l'affichage.
  * @returns {Promise<{ completed: boolean, reason?: string }>}
  */
-export async function showRewarded() {
+export async function showRewarded(context = {}) {
   if (!isFormatAllowed('rewarded')) return { completed: false, reason: 'ads-not-allowed' };
   if (!(await ensureReady())) return { completed: false, reason: 'init-failed' };
-  return provider.showRewarded();
+  // context.userId sera transmis au réseau comme `custom_data` : c'est ce que
+  // le SSV renverra pour identifier le joueur à créditer côté serveur.
+  return provider.showRewarded(context);
 }
 
 /**

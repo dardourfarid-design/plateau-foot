@@ -21,7 +21,10 @@ window.__PLATEAU_FOOT_CONFIG__ = {
     rewarded: false,      // vidéos récompensées (PR E / #30)
     cmp: {
       enabled: false,     // active le CMP certifié Google (IAB TCF v2.2)
-      publisherId: null   // ex. 'ca-pub-XXXXXXXXXXXXXXXX' (AdSense/Ad Manager)
+      // Compte AdSense réel (ads.txt: pub-2881855045042521). L'ID est en place
+      // mais la diffusion reste coupée (enabled:false) tant que le message CMP
+      // et les blocs pub ne sont pas configurés côté AdSense (#25).
+      publisherId: 'ca-pub-2881855045042521'
     }
   }
 };

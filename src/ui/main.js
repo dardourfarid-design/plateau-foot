@@ -32,6 +32,7 @@ import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
+import { recordMatchEnd, shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
@@ -675,6 +676,12 @@ function showEndOverlay(winningTeam) {
 
   els.endOverlay.classList.add('show');
 
+  // Compte ce match pour le plafond de fréquence des interstitiels (hors
+  // tutoriel, qui n'est pas une vraie partie). N'AFFICHE rien ici : la pub
+  // n'apparaît qu'à la transition suivante (backToSetup), jamais sur l'écran
+  // de victoire.
+  if (!tutorial.isActive()) recordMatchEnd();
+
   if (currentUser && !tutorial.isActive()) {
     const won = winningTeam === myTeam;
     const goalsScored = gameState.score[myTeam];
@@ -712,6 +719,10 @@ function backToSetup() {
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
   els.configScreen.classList.remove('hidden');
+
+  // Transition entre deux matchs : moment autorisé pour un interstitiel
+  // (plafonné). Fire-and-forget : ne bloque pas le retour à la configuration.
+  maybeShowInterstitial();
 }
 
 // Retour a la page d'accueil (landing / hero) — declenche par un clic sur le
@@ -750,6 +761,18 @@ function refreshHomeBanner() {
 // Appelé quand la session change : les droits payants en dépendent.
 function refreshAdsForSession() {
   adService.refreshAdFreeStatus().then(refreshHomeBanner).catch(() => {});
+}
+
+// Interstitiel entre deux matchs : n'affiche que si (1) le format est autorisé
+// (3 verrous), ET (2) le plafond de fréquence le permet. Jamais pendant une
+// partie — appelé uniquement à la transition de fin (backToSetup).
+async function maybeShowInterstitial() {
+  if (!adService.isFormatAllowed('interstitial')) return;
+  if (!shouldShowInterstitial()) return;
+  try {
+    const { shown } = await adService.showInterstitial();
+    if (shown) markInterstitialShown();
+  } catch { /* jamais bloquer le retour au menu à cause de la pub */ }
 }
 
 // ---------- Écran d'accueil et configuration ----------

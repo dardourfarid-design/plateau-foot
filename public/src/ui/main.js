@@ -30,10 +30,11 @@ import { initLang, t, applyTranslations, onLangChange, mountLangToggle, startAut
 import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
-import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
+import { setAdvertisingConsent, hasAdvertisingConsent, getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import { setAnalyticsConsent } from '../services/analyticsConsentService.js';
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted, trackConsentChoice } from '../services/ads/adAnalytics.js';
+import { loadConsentMessaging } from '../services/ads/googleCmp.js';
 import { recordMatchEnd, shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
@@ -756,6 +757,18 @@ function goToLanding() {
 }
 
 // ---------- Publicité (bannière hors-jeu, épic pub PR C) ----------
+
+// Charge le message de consentement Google (CMP) TÔT — indépendamment de
+// l'affichage d'une bannière — pour que la pop-up RGPD apparaisse en EEE dès
+// le chargement. Ne charge rien si la pub est coupée (kill switch), si le CMP
+// n'est pas configuré, ou en cas de refus explicite chez nous. Correctif #26.
+function maybeLoadConsentMessaging() {
+  const ads = window.__PLATEAU_FOOT_CONFIG__?.ads || {};
+  if (ads.enabled !== true) return;
+  if (!ads.cmp?.enabled || !ads.cmp?.publisherId) return;
+  if (getAdvertisingConsent() === 'denied') return; // opt-out dur : pas de pub, pas de CMP
+  loadConsentMessaging(ads.cmp.publisherId);
+}
 
 // Remplit (ou vide) l'emplacement bannière de l'accueil. Tout le gating
 // (kill switch + consentement + non-payant + format activé) est fait dans
@@ -1849,6 +1862,7 @@ function switchProfileTab(tabName, profileModule, mercatoModule) {
 
 function init() {
   cacheDomRefs();
+  maybeLoadConsentMessaging();
 
   // i18n : langue memorisee (fr par defaut), toggle FR|EN en haut a droite,
   // traduction initiale du DOM statique. Le contenu dynamique se re-render via

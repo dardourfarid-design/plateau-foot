@@ -1935,6 +1935,13 @@ function applyPkTheme(id) {
   try { localStorage.setItem(PK_THEME_KEY, id); } catch (e) { /* stockage indisponible : sans effet */ }
   els.pkSwitcher?.querySelectorAll('.pk-theme-btn')
     .forEach(b => b.classList.toggle('active', b.dataset.theme === id));
+  // Avatars recolorisés par thème (Stade = PNG d'origine ; les autres sont des
+  // variantes teintées vers l'accent du thème, voir public/img/shootout/).
+  const suffix = id === 'stade' ? '' : '-' + id;
+  const kImg = els.pkKeeper?.querySelector('img');
+  const sImg = els.pkShooter?.querySelector('img');
+  if (kImg) kImg.setAttribute('src', 'img/shootout/keeper' + suffix + '.png');
+  if (sImg) sImg.setAttribute('src', 'img/shootout/shooter' + suffix + '.png');
 }
 
 let so = null;              // { phase, mode, engine, selectedZone, sweet, powerPct, dir, raf }

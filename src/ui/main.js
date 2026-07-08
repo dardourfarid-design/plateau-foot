@@ -31,7 +31,9 @@ import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
+import { setAnalyticsConsent } from '../services/analyticsConsentService.js';
 import * as adService from '../services/ads/adService.js';
+import { trackRewardedOptIn, trackRewardedCompleted, trackConsentChoice } from '../services/ads/adAnalytics.js';
 import { recordMatchEnd, shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
@@ -1125,8 +1127,10 @@ async function handleWatchRewarded() {
   if (!currentUser) return;
   const btn = els.watchRewardedBtn;
   if (btn) { btn.disabled = true; }
+  trackRewardedOptIn(); // KPI : taux d'opt-in (gated analytics)
   try {
     const { completed } = await adService.showRewarded({ userId: currentUser.id });
+    trackRewardedCompleted(completed); // KPI : taux de complétion
     if (completed) {
       // Laisse le temps au SSV de créditer côté serveur, puis rafraîchit.
       const balance = await getCurrencyBalance();
@@ -1383,6 +1387,9 @@ async function handleAuthSubmit() {
       // coche explicitement pour accepter ; le refus explicite se fait via le
       // panneau « Gérer mes préférences ».
       if (els.consentAdvertising.checked) await setAdvertisingConsent(true);
+      // Analytics : choix explicite à l'inscription (pas de CMP externe pour
+      // cette finalité) → on aligne le signal local sur la case (PR G).
+      setAnalyticsConsent(els.consentAnalytics.checked);
       refreshHomeBanner();
 
       els.authSubmitBtn.disabled = false;
@@ -1567,9 +1574,15 @@ async function openConsentManagementPanel() {
   const choices = await showConsentDialog({ advertising: hasAdvertisingConsent() });
   if (!choices) return; // annulé : aucun changement enregistré
 
-  // Le signal pub local est mis à jour immédiatement (gating), indépendamment
-  // de la synchro serveur ci-dessous.
+  // Les signaux locaux (gating) sont mis à jour immédiatement, indépendamment
+  // de la synchro serveur ci-dessous. L'analytics a son propre signal local
+  // qui conditionne l'émission de nos événements de mesure (PR G).
   setAdvertisingConsent(choices.advertising);
+  setAnalyticsConsent(choices.analytics);
+  // Émis avant tout changement d'état d'analytics n'ayant pas encore pris :
+  // si l'utilisateur vient d'accorder l'analytics, l'événement passera ; s'il
+  // vient de refuser, track() ne l'émettra pas (gating respecté).
+  trackConsentChoice('advertising', choices.advertising);
   refreshHomeBanner(); // reflète tout de suite l'octroi/retrait à l'écran
 
   recordConsents({

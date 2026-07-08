@@ -17,6 +17,7 @@
 import * as provider from './adProvider.js';
 import { getAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
 import { getMyActivePass } from '../passService.js';
+import { trackAdImpression } from './adAnalytics.js';
 
 let _initialized = false;
 let _adFree = false;
@@ -122,7 +123,9 @@ async function ensureReady() {
 export async function showBanner(slot) {
   if (!isFormatAllowed('banner')) return false;
   if (!(await ensureReady())) return false;
-  return provider.showBanner(slot);
+  const ok = await provider.showBanner(slot);
+  if (ok) trackAdImpression('banner', slot); // gated par le consentement analytics
+  return ok;
 }
 
 /** Retire la bannière d'un emplacement. Sûr même si rien n'est affiché. */
@@ -138,7 +141,9 @@ export function hideBanner(slot) {
 export async function showInterstitial() {
   if (!isFormatAllowed('interstitial')) return { shown: false };
   if (!(await ensureReady())) return { shown: false };
-  return provider.showInterstitial();
+  const res = await provider.showInterstitial();
+  if (res?.shown) trackAdImpression('interstitial', null);
+  return res;
 }
 
 /**

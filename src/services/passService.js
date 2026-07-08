@@ -4,6 +4,27 @@
 import { supabase } from './supabaseClient.js';
 
 /**
+ * Indique si l'utilisateur connecté est Fondateur (a acheté le Pack Fondateurs).
+ * Lecture directe de profiles.is_founder, autorisée par la RLS « lecture de son
+ * propre profil » (migration 0001). Sert à afficher le badge doré (#61).
+ */
+export async function getMyFounderStatus() {
+  if (!supabase) return false;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('is_founder')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (error) {
+    console.error('[pass] getMyFounderStatus:', error.message);
+    return false;
+  }
+  return !!data?.is_founder;
+}
+
+/**
  * Retourne le pass actif de l'utilisateur, ou null s'il n'en a pas.
  * Exemple de retour : { pass_type: 'monthly', current_period_end: '2026-08-01T...' }
  */

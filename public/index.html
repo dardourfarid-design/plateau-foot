@@ -58,7 +58,10 @@
 <!-- Analytics (Plausible) : aucun cookie, pas de bannière de consentement
      nécessaire. REMPLACER data-domain par le vrai domaine de production
      une fois le compte Plausible créé — sans ça, le script charge mais ne
-     remonte aucune donnée utile tant que le domaine ne correspond pas. -->
+     remonte aucune donnée utile tant que le domaine ne correspond pas.
+     Le stub ci-dessous (fichier externe, compatible CSP) doit être chargé
+     AVANT script.js pour ne perdre aucun événement custom (voir issue #32). -->
+<script src="/plausible-init.js"></script>
 <script defer data-domain="tactic-master.vercel.app" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>

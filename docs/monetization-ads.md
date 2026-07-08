@@ -32,6 +32,24 @@ eCPM · fill rate · ARPDAU · opt-in rate rewarded · taux de complétion rewar
 - ✅ `public/ads.txt` en place (durable, versionné).
 - ✅ `publisherId` renseigné dans `config.js` — **diffusion coupée** (`ads.enabled:false`).
 
+## Plausible — mesure des KPIs (côté app)
+Nos événements custom (`ad_impression`, `rewarded_opt_in`, `rewarded_result`,
+`consent_choice`) sont envoyés à Plausible **uniquement si l'analytics est
+consenti** (`isAnalyticsAllowed()`).
+
+Côté code (fait) : `public/plausible-init.js` (stub de file d'attente) chargé
+avant `script.js` → aucun événement perdu ; CSP autorise déjà `plausible.io`.
+
+Étapes manuelles (dashboard Plausible) :
+1. Créer le compte Plausible et **ajouter le site avec le VRAI domaine de prod**.
+2. Dans `public/index.html`, mettre `data-domain` = ce domaine exact (placeholder
+   actuel : `tactic-master.vercel.app`).
+3. Créer les **Custom event goals** (sinon ils n'apparaissent pas dans les
+   rapports) : `ad_impression`, `rewarded_opt_in`, `rewarded_result`,
+   `consent_choice`.
+4. (Optionnel) définir `rewarded_result` avec la propriété `completed` pour le
+   taux de complétion.
+
 ## Étapes restantes de #25 (côté Google, manuelles)
 1. **AdSense → Confidentialité et messages** : créer un message **RGPD** (CMP certifié IAB TCF v2.2), le publier sur le domaine. C'est ce qui active `cmp` côté client.
 2. **AdSense → Blocs d'annonces** : créer un bloc « Display » (bannière) → récupérer le slot ID.

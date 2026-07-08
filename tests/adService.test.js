@@ -30,12 +30,21 @@ describe('adService — verrous de diffusion', () => {
     expect(r.reason).toBe('ads-not-allowed');
   });
 
-  test('activé mais sans consentement : aucune pub', async () => {
+  test('refus explicite (opt-out dur) : aucune pub même si activé', async () => {
     enableAds();
-    await setAdvertisingConsent(false);
+    await setAdvertisingConsent(false); // 'denied' = refus explicite chez nous
     ads.resetAds();
     expect(ads.areAdsAllowed()).toBeFalsy();
     expect((await ads.showRewarded()).completed).toBeFalsy();
+  });
+
+  test('indécis (CMP fait autorité) : pub autorisée après un accord', async () => {
+    // Le modèle autorise le chargement sauf refus explicite ; ici on repasse à
+    // « accordé » pour lever le refus posé par le test précédent.
+    enableAds();
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    expect(ads.areAdsAllowed()).toBeTruthy();
   });
 
   test('activé + consentement + non payant : la pub est autorisée', async () => {

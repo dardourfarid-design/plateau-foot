@@ -1371,9 +1371,12 @@ async function handleAuthSubmit() {
         console.error('Consentement non enregistré :', consentErr);
       }
 
-      // Le consentement pub a aussi un signal local (gating des SDK pub, y
-      // compris hors connexion). On l'aligne sur la case cochée.
-      await setAdvertisingConsent(els.consentAdvertising.checked);
+      // Modèle « CMP Google fait autorité » : ne pas transformer une case
+      // laissée décochée à l'inscription en refus dur (le CMP recueille le
+      // consentement RGPD). On ne pose le signal local que si la personne
+      // coche explicitement pour accepter ; le refus explicite se fait via le
+      // panneau « Gérer mes préférences ».
+      if (els.consentAdvertising.checked) await setAdvertisingConsent(true);
       refreshHomeBanner();
 
       els.authSubmitBtn.disabled = false;

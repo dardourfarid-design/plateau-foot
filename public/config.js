@@ -13,18 +13,19 @@ window.__PLATEAU_FOOT_CONFIG__ = {
   // advertisingConsentService.js). Les IDs réels et l'activation seront
   // renseignés en PR 0 (issue #25) une fois les comptes Google validés.
   ads: {
-    enabled: false,       // interrupteur global (kill switch) de toute la pub
+    enabled: true,        // interrupteur global (kill switch) de toute la pub
     // Flags par format (n'ont d'effet que si enabled=true). Absent ou true =
     // format actif ; false = format désactivé (rollout progressif, A/B).
-    banner: false,        // bannières hors-jeu (PR C / #28)
-    interstitial: false,  // interstitiels entre matchs (PR D / #29)
-    rewarded: false,      // vidéos récompensées (PR E / #30)
+    banner: true,         // bannières AdSense hors-jeu (PR C / #28) — ACTIF
+    interstitial: false,  // interstitiels : pas d'unité AdSense encore (PR D)
+    rewarded: false,      // rewarded : nécessite Ad Manager + SSV (PR E / #30)
+    // Identifiants des blocs d'annonces AdSense (data-ad-slot).
+    slots: {
+      banner: '2744363190' // bloc Display « accueil » (à contrôler côté AdSense)
+    },
     cmp: {
-      enabled: false,     // active le CMP certifié Google (IAB TCF v2.2)
-      // Compte AdSense réel (ads.txt: pub-2881855045042521). L'ID est en place
-      // mais la diffusion reste coupée (enabled:false) tant que le message CMP
-      // et les blocs pub ne sont pas configurés côté AdSense (#25).
-      publisherId: 'ca-pub-2881855045042521'
+      enabled: true,      // CMP certifié Google publié (message RGPD AdSense)
+      publisherId: 'ca-pub-2881855045042521' // ads.txt: pub-2881855045042521
     }
   }
 };

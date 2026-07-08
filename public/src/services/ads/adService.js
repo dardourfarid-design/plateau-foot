@@ -15,7 +15,7 @@
 // Aucun SDK pub n'est chargé tant que ces trois conditions ne sont pas réunies.
 
 import * as provider from './adProvider.js';
-import { hasAdvertisingConsent, onAdvertisingConsentChange } from '../advertisingConsentService.js';
+import { getAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
 import { getMyActivePass } from '../passService.js';
 
 let _initialized = false;
@@ -55,9 +55,17 @@ export async function refreshAdFreeStatus() {
 /**
  * Le prédicat central : la pub est-elle autorisée à l'instant T ?
  * Synchrone, sûr, sans effet de bord — appelable avant chaque affichage.
+ *
+ * Modèle « CMP Google fait autorité » : c'est le CMP certifié (message RGPD
+ * publié côté AdSense) qui recueille le consentement TCF et bride le
+ * personnalisé jusqu'à accord. Côté app, on autorise le chargement SAUF si
+ * l'utilisateur a explicitement refusé chez nous (opt-out dur) ou s'il est
+ * payant. `null` (indécis) = autorisé : le CMP prend le relais.
  */
 export function areAdsAllowed() {
-  return adsConfig().enabled === true && hasAdvertisingConsent() && !_adFree;
+  return adsConfig().enabled === true
+    && getAdvertisingConsent() !== AD_CONSENT.DENIED
+    && !_adFree;
 }
 
 /**
@@ -79,7 +87,7 @@ export async function initAds() {
   if (adsConfig().enabled !== true) return false;   // kill switch global
   await refreshAdFreeStatus();
   if (_adFree) return false;                          // payant : on n'initialise rien
-  if (!hasAdvertisingConsent()) return false;         // pas de consentement : aucun SDK
+  if (getAdvertisingConsent() === AD_CONSENT.DENIED) return false; // opt-out dur
   if (_initialized) return true;
   await provider.init({ consent: true });
   _initialized = true;
@@ -143,8 +151,9 @@ export function resetAds() {
   _adFree = false;
 }
 
-// Révocation du consentement en cours de session → on coupe immédiatement.
-// (L'octroi, lui, est piloté explicitement par l'app via initAds/showX.)
+// Refus explicite en cours de session (opt-out dur) → on coupe immédiatement.
+// Passer à « accordé » ou « indécis » n'exige rien de spécial : le prochain
+// showX/refreshHomeBanner ré-initialisera au besoin.
 onAdvertisingConsentChange((value) => {
-  if (value !== 'granted') resetAds();
+  if (value === AD_CONSENT.DENIED) resetAds();
 });

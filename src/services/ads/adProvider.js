@@ -8,8 +8,13 @@
 // passe par adService.js.
 
 import * as mockAdProvider from './mockAdProvider.js';
+import * as googleAdSenseProvider from './googleAdSenseProvider.js';
 
-const activeProvider = mockAdProvider;
+// Provider actif. AdSense (réel) pour le Display/bannières ; le mock reste
+// disponible pour le développement hors-ligne. Le rewarded réel passera par un
+// provider Ad Manager dédié quand l'unité SSV sera créée (#30).
+const activeProvider = googleAdSenseProvider;
+void mockAdProvider; // conservé comme référence de repli
 
 export const isMockAdActive = activeProvider.isMock;
 export const init = activeProvider.init;

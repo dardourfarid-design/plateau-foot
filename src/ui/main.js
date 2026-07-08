@@ -1919,6 +1919,24 @@ const PK_BALL_REST = { x: 50, y: 79 };
 const PK_KEEPER_REST = { x: 50, y: 40 };
 const PK_CROWD_COLORS = ['#4f8cff', '#ff5b5b', '#9fb0cf'];
 
+// Thèmes visuels de la séance. Stade est gratuit/défaut ; Néon/Cartoon/Manga
+// seront verrouillés puis monétisés en PR D (déverrouillage par possession).
+const PK_THEMES = ['stade', 'neon', 'cartoon', 'manga'];
+const PK_THEME_KEY = 'tm-pk-theme';
+
+function getStoredPkTheme() {
+  try { const v = localStorage.getItem(PK_THEME_KEY); return PK_THEMES.includes(v) ? v : 'stade'; }
+  catch (e) { return 'stade'; }
+}
+
+function applyPkTheme(id) {
+  if (!PK_THEMES.includes(id)) id = 'stade';
+  els.shootoutScreen?.setAttribute('data-pk-theme', id);
+  try { localStorage.setItem(PK_THEME_KEY, id); } catch (e) { /* stockage indisponible : sans effet */ }
+  els.pkSwitcher?.querySelectorAll('.pk-theme-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.theme === id));
+}
+
 let so = null;              // { phase, mode, engine, selectedZone, sweet, powerPct, dir, raf }
 let soCrowdBuilt = false;
 
@@ -1983,8 +2001,12 @@ function wireShootout() {
   els.pkPowerSweet  = document.getElementById('pkPowerSweet');
   els.pkPowerMarker = document.getElementById('pkPowerMarker');
   els.pkCta      = document.getElementById('pkCta');
+  els.pkSwitcher = document.getElementById('pkSwitcher');
 
   buildPkZones();
+
+  els.pkSwitcher?.querySelectorAll('.pk-theme-btn')
+    .forEach(b => b.addEventListener('click', () => applyPkTheme(b.dataset.theme)));
 
   document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
   els.pkCta?.addEventListener('click', pkOnCta);
@@ -2017,6 +2039,7 @@ function launchShootout(mode, title) {
   if (els.shootoutTitle) els.shootoutTitle.textContent = t(title);
   hideAllScreensForShootout();
   els.shootoutScreen.classList.remove('hidden');
+  applyPkTheme(getStoredPkTheme());
   buildPkCrowd();
   pkResetScene();
   renderShootout();

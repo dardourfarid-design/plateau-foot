@@ -51,7 +51,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="skins.css">
 
@@ -101,7 +101,16 @@
   </div>
 
   <!-- ECRAN SEANCE DE TIRS AU BUT (partie a part entiere) -->
-  <div class="shootout-screen hidden" id="shootoutScreen">
+  <div class="shootout-screen hidden" id="shootoutScreen" data-pk-theme="stade">
+    <div class="pk-switcher" id="pkSwitcher">
+      <span class="pk-switcher-label">DIRECTION VISUELLE</span>
+      <div class="pk-switcher-row">
+        <button class="pk-theme-btn" data-theme="stade" type="button">Stade</button>
+        <button class="pk-theme-btn" data-theme="neon" type="button">Néon</button>
+        <button class="pk-theme-btn" data-theme="cartoon" type="button">Cartoon</button>
+        <button class="pk-theme-btn" data-theme="manga" type="button">Manga</button>
+      </div>
+    </div>
     <div class="shootout-modal">
       <div class="shootout-title" id="shootoutTitle">Séance de tirs au but</div>
       <div class="shootout-scoreline">

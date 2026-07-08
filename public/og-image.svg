@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14100A"/>
+      <stop offset="0.55" stop-color="#1C160D"/>
+      <stop offset="1" stop-color="#0E0B06"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F6D365"/>
+      <stop offset="0.6" stop-color="#C8841A"/>
+      <stop offset="1" stop-color="#F6D365"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#C8841A" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#C8841A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- cadre style affiche -->
+  <rect x="28" y="28" width="1144" height="574" rx="18" fill="none" stroke="#C8841A" stroke-opacity="0.5" stroke-width="2"/>
+
+  <!-- bandeau saison -->
+  <g transform="translate(84,96)">
+    <circle cx="8" cy="8" r="8" fill="#C8841A"/>
+    <text x="28" y="14" font-family="Arial, sans-serif" font-size="22" letter-spacing="3" fill="#C8841A" font-weight="700">SAISON 01 — ÉDITION TACTIQUE</text>
+  </g>
+
+  <!-- titre -->
+  <text x="80" y="250" font-family="Arial Black, Arial, sans-serif" font-size="128" font-weight="900" fill="#F2E8D5" letter-spacing="2">TACTIC</text>
+  <text x="80" y="372" font-family="Arial Black, Arial, sans-serif" font-size="128" font-weight="900" fill="url(#gold)" letter-spacing="2">MASTER</text>
+  <rect x="84" y="398" width="360" height="8" rx="4" fill="url(#gold)"/>
+
+  <!-- tagline -->
+  <text x="84" y="470" font-family="Arial, sans-serif" font-size="34" fill="#D8C7A6">Le foot se joue aussi assis.</text>
+
+  <!-- stats -->
+  <g font-family="Arial, sans-serif" fill="#F2E8D5">
+    <text x="84" y="548" font-size="40" font-weight="800">7×9</text>
+    <text x="84" y="576" font-size="18" fill="#9C8B6C" letter-spacing="1">PLATEAU</text>
+    <text x="250" y="548" font-size="40" font-weight="800">6</text>
+    <text x="250" y="576" font-size="18" fill="#9C8B6C" letter-spacing="1">PIONS / ÉQUIPE</text>
+    <text x="470" y="548" font-size="40" font-weight="800">5 min</text>
+    <text x="470" y="576" font-size="18" fill="#9C8B6C" letter-spacing="1">PARTIE</text>
+  </g>
+
+  <!-- motif plateau + ballon à droite -->
+  <g transform="translate(760,150)">
+    <rect x="0" y="0" width="360" height="330" rx="12" fill="#0B0805" stroke="#C8841A" stroke-opacity="0.35" stroke-width="2"/>
+    <g>
+      <circle cx="70" cy="70" r="26" fill="#C0392B"/><text x="70" y="79" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">9</text>
+      <circle cx="180" cy="70" r="26" fill="#C0392B"/><text x="180" y="79" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">7</text>
+      <circle cx="290" cy="70" r="26" fill="#C0392B"/><text x="290" y="79" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">11</text>
+      <circle cx="180" cy="165" r="24" fill="#F2E8D5"/>
+      <path d="M180 149 l7 5 -3 8 -8 0 -3 -8 z" fill="#14100A"/>
+      <circle cx="70" cy="260" r="26" fill="#2C6FB0"/><text x="70" y="269" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">10</text>
+      <circle cx="180" cy="260" r="26" fill="#2C6FB0"/><text x="180" y="269" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">8</text>
+      <circle cx="290" cy="260" r="26" fill="#2C6FB0"/><text x="290" y="269" font-family="Arial" font-size="26" font-weight="800" fill="#fff" text-anchor="middle">2</text>
+    </g>
+  </g>
+</svg>

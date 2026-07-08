@@ -2987,3 +2987,17 @@ body{
 @keyframes pkFlash{ 0%{opacity:0} 12%{opacity:.9} 100%{opacity:0} }
 @keyframes pkKick{ 0%{transform:translate(-50%,-50%) rotate(0)} 40%{transform:translate(-44%,-54%) rotate(-7deg)} 100%{transform:translate(-50%,-50%) rotate(0)} }
 @keyframes pkLed{ 0%{transform:translateX(-30%)} 100%{transform:translateX(230%)} }
+
+/* Badge Fondateur (#61) — doré, affiché dans l'entête du profil quand
+   profiles.is_founder = true. Récompense du Pack Fondateurs. */
+.founder-badge{
+  display:inline-flex; align-items:center; gap:4px;
+  margin-left:12px; vertical-align:middle;
+  padding:4px 10px; border-radius:999px;
+  font-size:13px; font-weight:700; letter-spacing:.02em; white-space:nowrap;
+  color:#3d2b06;
+  background:linear-gradient(135deg,#F6D365 0%,#C8841A 60%,#F6D365 100%);
+  border:1px solid rgba(255,240,200,.7);
+  box-shadow:0 2px 10px rgba(200,132,26,.45), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.founder-badge.hidden{ display:none; }

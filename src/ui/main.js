@@ -42,7 +42,7 @@ import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
 import { getCurrencyBalance } from '../services/currencyService.js';
-import { getMyActivePass } from '../services/passService.js';
+import { getMyActivePass, getMyFounderStatus } from '../services/passService.js';
 import {
   sendFriendRequest, respondFriendRequest, cancelFriendRequest, fetchMyFriendships,
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
@@ -204,6 +204,7 @@ function cacheDomRefs() {
   els.profileNotifBadge = document.getElementById('profileNotifBadge');
   els.dailyHint = document.getElementById('dailyHint');
   els.profileScreen = document.getElementById('profileScreen');
+  els.founderBadge = document.getElementById('founderBadge');
   els.profileBackBtn = document.getElementById('profileBackBtn');
   els.profileTabs = document.getElementById('profileTabs');
   els.panelProgress = document.getElementById('panelProgress');
@@ -1705,7 +1706,19 @@ function showTutorialView(view) {
     } else {
       _showProfilePanelStatic(tab);
     }
+    refreshFounderBadge();
   }
+}
+
+// Badge Fondateur (#61) : affiché dans l'entête du profil si l'utilisateur
+// connecté a acheté le Pack Fondateurs (profiles.is_founder). Masqué sinon
+// (non connecté, ou non fondateur).
+function refreshFounderBadge() {
+  if (!els.founderBadge) return;
+  if (!currentUser) { els.founderBadge.classList.add('hidden'); return; }
+  getMyFounderStatus()
+    .then(isFounder => els.founderBadge.classList.toggle('hidden', !isFounder))
+    .catch(() => els.founderBadge.classList.add('hidden'));
 }
 
 /**

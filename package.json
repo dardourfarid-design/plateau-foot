@@ -5,6 +5,12 @@
   "description": "Tactic Master - jeu de stratégie façon dames/foot, moteur de jeu + UI web",
   "scripts": {
     "test": "node tests/run-tests.js",
-    "build": "node build.js"
+    "build": "node build.js",
+    "serve": "node tools/static-server.mjs public 8080",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
   }
 }

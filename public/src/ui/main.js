@@ -758,16 +758,23 @@ function goToLanding() {
 
 // ---------- Publicité (bannière hors-jeu, épic pub PR C) ----------
 
-// Charge le message de consentement Google (CMP) TÔT — indépendamment de
-// l'affichage d'une bannière — pour que la pop-up RGPD apparaisse en EEE dès
-// le chargement. Ne charge rien si la pub est coupée (kill switch), si le CMP
-// n'est pas configuré, ou en cas de refus explicite chez nous. Correctif #26.
-function maybeLoadConsentMessaging() {
+// Initialise la pub TÔT (indépendamment du rendu d'une bannière) pour que le
+// message de consentement Google apparaisse en EEE dès le chargement. Deux
+// canaux, car le message peut être servi par l'un OU l'autre selon la config
+// Google :
+//   1. le script Funding Choices dédié (fundingchoicesmessages.google.com) ;
+//   2. le TAG AdSense lui-même (adsbygoogle.js?client=…), qui sert le message
+//      « Confidentialité et messages » d'AdSense.
+// Le RENDU de la bannière reste différé (perf) ; ici on ne fait que charger les
+// scripts. Rien si pub coupée, CMP non configuré, ou refus explicite. #26.
+function initAdsEarly() {
   const ads = window.__PLATEAU_FOOT_CONFIG__?.ads || {};
   if (ads.enabled !== true) return;
-  if (!ads.cmp?.enabled || !ads.cmp?.publisherId) return;
-  if (getAdvertisingConsent() === 'denied') return; // opt-out dur : pas de pub, pas de CMP
-  loadConsentMessaging(ads.cmp.publisherId);
+  if (getAdvertisingConsent() === 'denied') return; // opt-out dur : rien
+  if (ads.cmp?.enabled && ads.cmp?.publisherId) loadConsentMessaging(ads.cmp.publisherId);
+  // Charge le tag AdSense au plus tôt (respecte le gating payant/consentement
+  // en interne). Le message AdSense a besoin de ce tag présent sur la page.
+  adService.initAds().catch(() => {});
 }
 
 // Remplit (ou vide) l'emplacement bannière de l'accueil. Tout le gating
@@ -1862,7 +1869,7 @@ function switchProfileTab(tabName, profileModule, mercatoModule) {
 
 function init() {
   cacheDomRefs();
-  maybeLoadConsentMessaging();
+  initAdsEarly();
 
   // i18n : langue memorisee (fr par defaut), toggle FR|EN en haut a droite,
   // traduction initiale du DOM statique. Le contenu dynamique se re-render via

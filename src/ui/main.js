@@ -1957,8 +1957,12 @@ function isPkThemeUnlocked(id) {
 }
 
 function renderPkLocks() {
+  const price = (PK_SKIN_PRICE_CENTS / 100).toFixed(2).replace('.', ',') + ' €';
   els.pkSwitcher?.querySelectorAll('.pk-theme-btn').forEach(b => {
-    b.classList.toggle('locked', !isPkThemeUnlocked(b.dataset.theme));
+    const locked = !isPkThemeUnlocked(b.dataset.theme);
+    b.classList.toggle('locked', locked);
+    if (locked) b.dataset.price = price;   // affiché via ::after (cadenas + prix)
+    else delete b.dataset.price;
   });
 }
 

@@ -12,6 +12,8 @@
 // Les seuils sont lus dans la config (rollout / A-B), avec des valeurs par
 // défaut prudentes.
 
+import { pick } from './abTest.js';
+
 const COUNTER_KEY = 'tm_ads_intl_count_v1';
 const LAST_SHOWN_KEY = 'tm_ads_intl_last_v1';
 
@@ -48,8 +50,18 @@ function readInt(key) {
 
 function policy() {
   const ads = (typeof window !== 'undefined' && window.__PLATEAU_FOOT_CONFIG__?.ads) || {};
-  const everyN = Number.isFinite(ads.interstitialEveryNGames) && ads.interstitialEveryNGames > 0
-    ? ads.interstitialEveryNGames : DEFAULT_EVERY_N;
+
+  // A/B : si une expérience liste plusieurs valeurs de fréquence, on en choisit
+  // une de façon stable par client (PR H). Sinon, valeur de config, sinon défaut.
+  let everyN = DEFAULT_EVERY_N;
+  const variants = ads.experiments?.interstitialEveryN;
+  if (Array.isArray(variants) && variants.length > 0) {
+    const chosen = pick('interstitial_everyN', variants);
+    if (Number.isFinite(chosen) && chosen > 0) everyN = chosen;
+  } else if (Number.isFinite(ads.interstitialEveryNGames) && ads.interstitialEveryNGames > 0) {
+    everyN = ads.interstitialEveryNGames;
+  }
+
   const cooldownMs = Number.isFinite(ads.interstitialCooldownMs) && ads.interstitialCooldownMs >= 0
     ? ads.interstitialCooldownMs : DEFAULT_COOLDOWN_MS;
   return { everyN, cooldownMs };

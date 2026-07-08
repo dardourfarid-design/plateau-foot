@@ -17,7 +17,7 @@
 import * as provider from './adProvider.js';
 import { getAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
 import { getMyActivePass } from '../passService.js';
-import { trackAdImpression } from './adAnalytics.js';
+import { trackAdImpression, track } from './adAnalytics.js';
 
 let _initialized = false;
 let _adFree = false;
@@ -105,7 +105,11 @@ export async function initAds() {
   if (_adFree) return false;                          // payant : on n'initialise rien
   if (getAdvertisingConsent() === AD_CONSENT.DENIED) return false; // opt-out dur
   if (_initialized) return true;
-  await provider.init({ consent: true });
+  // Dégradation gracieuse : si le SDK ne charge pas (bloqueur de pub, réseau,
+  // no-fill), on ne se marque PAS initialisé — un prochain appel pourra
+  // retenter — et on trace l'indisponibilité sans jamais casser le jeu.
+  const ok = await provider.init({ consent: true });
+  if (!ok) { track('ads_unavailable'); return false; }
   _initialized = true;
   return true;
 }

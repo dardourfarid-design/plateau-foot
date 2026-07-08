@@ -23,6 +23,11 @@ window.__PLATEAU_FOOT_CONFIG__ = {
     slots: {
       banner: '2744363190' // bloc Display « accueil » (à contrôler côté AdSense)
     },
+    // A/B testing (PR H). Chaque variante est choisie de façon stable par
+    // client. Ex. pour tester la fréquence des interstitiels sur 2 valeurs :
+    //   experiments: { interstitialEveryN: [3, 5] }
+    // Laisser vide = pas d'expérience (valeurs de config/défaut utilisées).
+    experiments: {},
     cmp: {
       enabled: true,      // CMP certifié Google publié (message RGPD AdSense)
       publisherId: 'ca-pub-2881855045042521' // ads.txt: pub-2881855045042521

@@ -1949,7 +1949,15 @@ function init() {
   // Pub : premier affichage de la bannière d'accueil (le gating décide s'il y
   // a réellement quelque chose à montrer). L'état « sans pub » sera affiné dès
   // que la session sera résolue (voir refreshAdsForSession dans wireAccount).
-  refreshHomeBanner();
+  // Perf (PR H) : différé à l'idle pour ne pas peser sur le LCP du premier
+  // rendu — le chargement du SDK pub n'entre jamais dans le chemin critique.
+  whenIdle(refreshHomeBanner);
+}
+
+// Exécute `fn` quand le navigateur est inactif, avec repli setTimeout.
+function whenIdle(fn) {
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(() => fn(), { timeout: 2000 });
+  else setTimeout(fn, 200);
 }
 
 /**

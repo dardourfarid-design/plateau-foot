@@ -23,6 +23,10 @@ Verrous cumulés (tous requis), centralisés dans `adService` :
 ## KPIs à suivre
 eCPM · fill rate · ARPDAU · opt-in rate rewarded · taux de complétion rewarded · impact rétention (interstitiel).
 
+**Où lire quoi :**
+- **Côté app (Plausible, événements gated)** : `ad_impression`, `rewarded_opt_in`, `rewarded_result`, `consent_choice`.
+- **Côté AdSense/Ad Manager (dashboard)** : revenus, **clics / CTR**, eCPM, fill rate. Les clics se produisent dans l'iframe de l'annonce → non traçables côté page (le helper `trackAdClick` reste inactif pour AdSense).
+
 ## État d'avancement (code)
 - ✅ Consentement RGPD, couche AdProvider, bannières, interstitiels : livrés contre un **mock provider** (PR A→D, branche `feat/ads-pr-a-advertising-consent`).
 - ✅ `public/ads.txt` en place (durable, versionné).

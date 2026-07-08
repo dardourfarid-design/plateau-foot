@@ -39,6 +39,10 @@ export function track(name, props) {
 
 // --- Helpers nommés (une seule source de vérité pour les noms d'événements) ---
 export const trackAdImpression = (format, slot) => track('ad_impression', { format, slot });
+// NB : les clics AdSense se produisent DANS l'iframe de l'annonce, non
+// observable côté page — ce helper n'est donc pas câblé pour AdSense. CTR,
+// clics et revenus se lisent dans le dashboard AdSense (voir
+// docs/monetization-ads.md). Conservé pour un futur réseau non-iframe.
 export const trackAdClick = (format, slot) => track('ad_click', { format, slot });
 export const trackRewardedOptIn = () => track('rewarded_opt_in');
 export const trackRewardedCompleted = (completed) =>

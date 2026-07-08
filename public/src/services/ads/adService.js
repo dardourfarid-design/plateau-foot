@@ -7,17 +7,19 @@
 // Les providers (mock, plus tard AdSense/Ad Manager) ne font qu'exécuter ;
 // ils ne décident jamais.
 //
-// Trois verrous cumulatifs, tous requis pour qu'une pub s'affiche :
+// Verrous cumulatifs, tous requis pour qu'une pub s'affiche :
 //   1. kill switch      : config.ads.enabled === true
-//   2. consentement     : hasAdvertisingConsent() (RGPD, PR A / #26)
+//   2. consentement     : pas de refus explicite (CMP Google autoritaire, #26)
 //   3. non payant       : !isAdFree() (pass actif = zéro pub, PR F / #31)
+//   4. rollout           : client dans le pourcentage déployé (PR I / #34)
 //
-// Aucun SDK pub n'est chargé tant que ces trois conditions ne sont pas réunies.
+// Aucun SDK pub n'est chargé tant que ces conditions ne sont pas réunies.
 
 import * as provider from './adProvider.js';
 import { getAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
 import { getMyActivePass } from '../passService.js';
 import { trackAdImpression, track } from './adAnalytics.js';
+import { bucket } from './abTest.js';
 
 let _initialized = false;
 let _adFree = false;
@@ -81,7 +83,22 @@ export function areAdsAllowed() {
     adsConfig().enabled === true,
     getAdvertisingConsent() === AD_CONSENT.DENIED,
     _adFree
-  );
+  ) && isInRollout();
+}
+
+/**
+ * Rollout progressif (PR I, #34) : n'expose la pub qu'à un pourcentage stable
+ * de clients. `config.ads.rolloutPercent` va de 0 (personne) à 100 (tout le
+ * monde, défaut). Permet un déploiement 5 % → 100 % en changeant un seul
+ * nombre, réversible instantanément (repasser à 0 coupe sans redéploiement de
+ * code). Le bucket est stable par client (voir abTest).
+ */
+export function isInRollout() {
+  const pct = adsConfig().rolloutPercent;
+  if (pct === undefined || pct === null) return true; // défaut : 100 %
+  if (pct <= 0) return false;
+  if (pct >= 100) return true;
+  return bucket('ads_rollout') < pct;
 }
 
 /**

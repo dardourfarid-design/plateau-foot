@@ -47,3 +47,27 @@ connect-src … https://pagead2.googlesyndication.com https://fundingchoicesmess
 ## Bascule mock → réel (résumé)
 Un seul point à changer : `src/services/ads/adProvider.js` (`activeProvider`). Le reste du code
 (`adService`, UI, gating) est déjà agnostique du réseau.
+
+---
+
+## Runbook de déploiement progressif (PR I / #34)
+
+Tout se pilote depuis `public/config.js → ads`, sans redéploiement de code (un `git push` du config suffit, ou édition côté hébergeur).
+
+1. **Pré-vol** : `enabled:true`, `banner:true`, `slots.banner` correct, `cmp.publisherId` correct, `ads.txt` en ligne, migrations 0035 + 0036 appliquées.
+2. **Canari 5 %** : `rolloutPercent: 5`. Surveiller les KPIs (impressions, `ads_unavailable`) et l'absence de régression UX pendant 24–48 h.
+3. **Montée** : `25` → `50` → `100`, en vérifiant à chaque palier fill rate et rétention.
+4. **Rollback immédiat** : repasser `rolloutPercent: 0` (ou `enabled:false`) coupe la diffusion instantanément pour tous — aucun déploiement de code requis.
+5. **A/B** (optionnel) : `experiments.interstitialEveryN: [3,5]` pour comparer deux fréquences ; variante stable par client.
+
+Les seuils sont **stables par client** (`abTest`) : un joueur ne bascule pas d'un état à l'autre entre deux visites tant que le pourcentage ne change pas.
+
+## Checklist de conformité (à revalider avant chaque montée en %)
+- [ ] **CMP** : message RGPD Google publié et affiché en EEE avant toute pub personnalisée.
+- [ ] **Consentement** : un refus explicite (opt-out dur) coupe toute pub ; vérifié via « Gérer mes préférences ».
+- [ ] **`ads.txt`** : `https://<domaine>/ads.txt` renvoie la ligne `pub-2881855045042521`.
+- [ ] **Exclusion payants** : un pass actif ⇒ zéro pub (bannière, interstitiel, prompt rewarded).
+- [ ] **Jamais en partie** : la bannière vit dans l'accueil, l'interstitiel seulement en transition, le rewarded est opt-in.
+- [ ] **Rewarded** : crédit décidé côté serveur (SSV + quota, 0036) ; `REWARDED_SSV_ENABLED` seulement quand Ad Manager est prêt.
+- [ ] **Analytics** : aucun événement de mesure émis en cas de refus analytics.
+- [ ] **Perf** : première bannière différée à l'idle ; dégradation gracieuse si bloqueur/no-fill.

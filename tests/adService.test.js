@@ -33,6 +33,23 @@ describe('adService — décision pure evaluateAdsAllowed', () => {
   });
 });
 
+describe('adService — rollout progressif', () => {
+  test('rolloutPercent 0 exclut tout le monde, 100 (ou absent) inclut tout le monde', async () => {
+    await setAdvertisingConsent(true);
+    globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true, rolloutPercent: 0 } };
+    ads.resetAds();
+    expect(ads.isInRollout()).toBeFalsy();
+    expect(ads.areAdsAllowed()).toBeFalsy(); // rollout coupe même consentement OK
+
+    globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true, rolloutPercent: 100 } };
+    expect(ads.isInRollout()).toBeTruthy();
+    expect(ads.areAdsAllowed()).toBeTruthy();
+
+    globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true } }; // absent = 100 %
+    expect(ads.isInRollout()).toBeTruthy();
+  });
+});
+
 describe('adService — verrous de diffusion', () => {
   test('kill switch off : aucune pub même avec consentement', async () => {
     killSwitchOff();

@@ -103,6 +103,21 @@ pas l'objectif actuel.
 
 **Pour revenir au mock à tout moment** : remettre `mockProvider` dans `paymentProvider.js`, aucune autre étape nécessaire — les deux systèmes coexistent sans conflit.
 
+## Publicité (monétisation hors boutique)
+
+Régie **Google AdSense** (bannières hors-jeu), consentement via le **CMP certifié Google**. Toute la logique vit dans `src/services/ads/` et passe par `adService` (point d'entrée unique). Détails, runbook de déploiement progressif et checklist de conformité : **`docs/monetization-ads.md`**.
+
+**Contrôles rapides (dans `public/config.js` → `ads`) :**
+
+- `enabled` — kill switch global (coupe toute la pub instantanément).
+- `rolloutPercent` — déploiement progressif `0 → 5 → 25 → 100` (réversible sans redéploiement de code).
+- `banner` / `interstitial` / `rewarded` — activation par format.
+- `slots.banner` — ID du bloc AdSense.
+
+**Garanties structurelles :** aucune pub pendant une partie ; **jamais** pour un détenteur de pass actif ; rien ne se charge en cas de refus explicite ; le crédit des vidéos récompensées est décidé **côté serveur** (SSV, migration 0036) — jamais par le client.
+
+**Basculer AdSense ↔ mock** : changer `activeProvider` dans `src/services/ads/adProvider.js` (le mock sert au développement hors-ligne).
+
 ## Tester l'installation PWA
 
 Une fois le site déployé (Vercel sert déjà tout en HTTPS, condition

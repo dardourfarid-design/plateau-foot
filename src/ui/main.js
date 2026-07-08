@@ -30,6 +30,9 @@ import { initLang, t, applyTranslations, onLangChange, mountLangToggle, startAut
 import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
+import { setAdvertisingConsent, hasAdvertisingConsent } from '../services/advertisingConsentService.js';
+import * as adService from '../services/ads/adService.js';
+import { recordMatchEnd, shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup } from './playerIdentity.js';
@@ -188,6 +191,7 @@ function cacheDomRefs() {
   els.endTitle = document.getElementById('endTitle');
   els.endSub = document.getElementById('endSub');
   els.newGameBtn = document.getElementById('newGameBtn');
+  els.watchRewardedBtn = document.getElementById('watchRewardedBtn');
   els.shopBtn = document.getElementById('shopBtn');
   els.purchaseToast = document.getElementById('purchaseToast');
   els.purchaseToastIcon = document.getElementById('purchaseToastIcon');
@@ -272,6 +276,7 @@ function cacheDomRefs() {
   els.consentAnalytics = document.getElementById('consentAnalytics');
   els.consentEmailMarketing = document.getElementById('consentEmailMarketing');
   els.consentDataSharing = document.getElementById('consentDataSharing');
+  els.consentAdvertising = document.getElementById('consentAdvertising');
   els.accountRequiredNote = document.getElementById('accountRequiredNote');
   els.manageConsentBtn = document.getElementById('manageConsentBtn');
   els.exportDataBtn = document.getElementById('exportDataBtn');
@@ -672,6 +677,21 @@ function showEndOverlay(winningTeam) {
 
   els.endOverlay.classList.add('show');
 
+  // Récompense vidéo (opt-in) : proposée seulement si autorisée (3 verrous +
+  // flag rewarded) et si un compte est connecté (le crédit SSV cible un
+  // user_id). Masquée sinon.
+  if (els.watchRewardedBtn) {
+    const canReward = !!currentUser && adService.isFormatAllowed('rewarded');
+    els.watchRewardedBtn.classList.toggle('hidden', !canReward);
+    els.watchRewardedBtn.disabled = false;
+  }
+
+  // Compte ce match pour le plafond de fréquence des interstitiels (hors
+  // tutoriel, qui n'est pas une vraie partie). N'AFFICHE rien ici : la pub
+  // n'apparaît qu'à la transition suivante (backToSetup), jamais sur l'écran
+  // de victoire.
+  if (!tutorial.isActive()) recordMatchEnd();
+
   if (currentUser && !tutorial.isActive()) {
     const won = winningTeam === myTeam;
     const goalsScored = gameState.score[myTeam];
@@ -709,6 +729,10 @@ function backToSetup() {
   els.endOverlay.classList.remove('show');
   els.goalOverlay.classList.remove('show');
   els.configScreen.classList.remove('hidden');
+
+  // Transition entre deux matchs : moment autorisé pour un interstitiel
+  // (plafonné). Fire-and-forget : ne bloque pas le retour à la configuration.
+  maybeShowInterstitial();
 }
 
 // Retour a la page d'accueil (landing / hero) — declenche par un clic sur le
@@ -726,6 +750,39 @@ function goToLanding() {
   els.goalOverlay?.classList.remove('show');
   els.accountOverlay?.classList.remove('show');
   els.setupScreen?.classList.remove('hidden');
+  refreshHomeBanner();
+}
+
+// ---------- Publicité (bannière hors-jeu, épic pub PR C) ----------
+
+// Remplit (ou vide) l'emplacement bannière de l'accueil. Tout le gating
+// (kill switch + consentement + non-payant + format activé) est fait dans
+// adService : ici on ne fait qu'appeler, et vider le slot si non autorisé.
+const AD_SLOT_HOME = 'adBannerHome';
+function refreshHomeBanner() {
+  if (adService.isFormatAllowed('banner')) {
+    adService.showBanner(AD_SLOT_HOME).catch(() => {});
+  } else {
+    adService.hideBanner(AD_SLOT_HOME);
+  }
+}
+
+// Recalcule le droit « sans pub » (pass actif) puis rafraîchit la bannière.
+// Appelé quand la session change : les droits payants en dépendent.
+function refreshAdsForSession() {
+  adService.refreshAdFreeStatus().then(refreshHomeBanner).catch(() => {});
+}
+
+// Interstitiel entre deux matchs : n'affiche que si (1) le format est autorisé
+// (3 verrous), ET (2) le plafond de fréquence le permet. Jamais pendant une
+// partie — appelé uniquement à la transition de fin (backToSetup).
+async function maybeShowInterstitial() {
+  if (!adService.isFormatAllowed('interstitial')) return;
+  if (!shouldShowInterstitial()) return;
+  try {
+    const { shown } = await adService.showInterstitial();
+    if (shown) markInterstitialShown();
+  } catch { /* jamais bloquer le retour au menu à cause de la pub */ }
 }
 
 // ---------- Écran d'accueil et configuration ----------
@@ -1056,6 +1113,32 @@ function wireGameControls() {
   els.restartBtn.addEventListener('click', backToSetup);
   els.continueBtn.addEventListener('click', hideGoalOverlayAndResume);
   els.newGameBtn.addEventListener('click', backToSetup);
+  els.watchRewardedBtn?.addEventListener('click', handleWatchRewarded);
+}
+
+// Récompense vidéo opt-in. IMPORTANT : le client ne crédite RIEN. Il affiche
+// la vidéo (via adService), en passant son user_id comme custom_data ; c'est
+// Google qui, après vérification, appellera l'Edge Function rewarded-ssv, seule
+// habilitée à créditer (migration 0036). Ici, après la vue, on se contente de
+// re-lire le solde — qui aura été mis à jour côté serveur par le SSV.
+async function handleWatchRewarded() {
+  if (!currentUser) return;
+  const btn = els.watchRewardedBtn;
+  if (btn) { btn.disabled = true; }
+  try {
+    const { completed } = await adService.showRewarded({ userId: currentUser.id });
+    if (completed) {
+      // Laisse le temps au SSV de créditer côté serveur, puis rafraîchit.
+      const balance = await getCurrencyBalance();
+      _updateCoinDisplay(balance);
+      showToast(t('Récompense en cours de validation…'));
+      if (btn) btn.classList.add('hidden'); // une seule récompense par écran de fin
+    } else if (btn) {
+      btn.disabled = false;
+    }
+  } catch {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function handleEndTurnClick() {
@@ -1281,11 +1364,20 @@ async function handleAuthSubmit() {
         await recordConsents({
           [CONSENT_PURPOSES.ANALYTICS]: els.consentAnalytics.checked,
           [CONSENT_PURPOSES.EMAIL_MARKETING]: els.consentEmailMarketing.checked,
-          [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked
+          [CONSENT_PURPOSES.DATA_SHARING]: els.consentDataSharing.checked,
+          [CONSENT_PURPOSES.ADVERTISING]: els.consentAdvertising.checked
         });
       } catch (consentErr) {
         console.error('Consentement non enregistré :', consentErr);
       }
+
+      // Modèle « CMP Google fait autorité » : ne pas transformer une case
+      // laissée décochée à l'inscription en refus dur (le CMP recueille le
+      // consentement RGPD). On ne pose le signal local que si la personne
+      // coche explicitement pour accepter ; le refus explicite se fait via le
+      // panneau « Gérer mes préférences ».
+      if (els.consentAdvertising.checked) await setAdvertisingConsent(true);
+      refreshHomeBanner();
 
       els.authSubmitBtn.disabled = false;
       els.authSubmitBtn.textContent = originalLabel;
@@ -1354,10 +1446,12 @@ function wireAccount() {
   onAuthStateChange(user => {
     currentUser = user;
     updateAccountUI();
+    refreshAdsForSession(); // le statut « sans pub » dépend du pass de la session
   });
   getCurrentUser().then(user => {
     currentUser = user;
     updateAccountUI();
+    refreshAdsForSession();
   });
 
   els.accountBtn?.addEventListener('click', () => {
@@ -1462,13 +1556,21 @@ function wireAccount() {
 }
 
 async function openConsentManagementPanel() {
-  const choices = await showConsentDialog();
+  // Pré-coche la case pub selon le signal local courant (le retrait doit être
+  // aussi simple que l'octroi — exigence CNIL).
+  const choices = await showConsentDialog({ advertising: hasAdvertisingConsent() });
   if (!choices) return; // annulé : aucun changement enregistré
+
+  // Le signal pub local est mis à jour immédiatement (gating), indépendamment
+  // de la synchro serveur ci-dessous.
+  setAdvertisingConsent(choices.advertising);
+  refreshHomeBanner(); // reflète tout de suite l'octroi/retrait à l'écran
 
   recordConsents({
     [CONSENT_PURPOSES.ANALYTICS]: choices.analytics,
     [CONSENT_PURPOSES.EMAIL_MARKETING]: choices.emailMarketing,
-    [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing
+    [CONSENT_PURPOSES.DATA_SHARING]: choices.dataSharing,
+    [CONSENT_PURPOSES.ADVERTISING]: choices.advertising
   }).then(() => {
     showToast(t('Tes préférences ont été mises à jour.'));
   }).catch(err => {
@@ -1824,6 +1926,11 @@ function init() {
   document.getElementById('profileBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
   registerServiceWorker();
   handlePaymentReturn();
+
+  // Pub : premier affichage de la bannière d'accueil (le gating décide s'il y
+  // a réellement quelque chose à montrer). L'état « sans pub » sera affiné dès
+  // que la session sera résolue (voir refreshAdsForSession dans wireAccount).
+  refreshHomeBanner();
 }
 
 /**

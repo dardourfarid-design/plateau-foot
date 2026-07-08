@@ -28,3 +28,10 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = false
+
+# rewarded-ssv : appelée par Google (SSV), qui ne fournit aucun JWT Supabase.
+# Sa sécurité repose entièrement sur la vérification de la SIGNATURE Google
+# dans le code (même logique que stripe-webhook). Échec fermé tant que
+# REWARDED_SSV_ENABLED n'est pas 'true'.
+[functions.rewarded-ssv]
+verify_jwt = false

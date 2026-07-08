@@ -267,6 +267,14 @@
         <p class="feature-desc">Rares et légendaires : Sprint, Tir Puissant, Mur, Relais, Repli adverse. À collecter et aligner.</p>
       </div>
     </div>
+
+    <!-- Emplacement publicitaire (hors-jeu). Vit dans l'écran d'accueil : il
+         est donc automatiquement masqué dès qu'on entre en configuration ou
+         en partie. Rempli uniquement si la pub est autorisée (kill switch +
+         consentement + non-payant) — sinon reste vide et replié. Épic pub,
+         PR C (#28). -->
+    <div id="adBannerHome" class="ad-banner-slot" aria-hidden="true"
+         style="width:100%;max-width:728px;margin:28px auto 8px;"></div>
   </div>
 
   <!-- ECRAN DE CONFIGURATION DE PARTIE -->
@@ -723,6 +731,15 @@
     <div class="end-score-display" id="endSub">Bleu gagne 3 – 1</div>
     <!-- Stats de fin de partie -->
     <div class="end-stats-row" id="endStatsRow" aria-label="Résultats de la partie"></div>
+
+    <!-- Récompense vidéo (opt-in). Masqué par défaut : affiché seulement si la
+         pub récompensée est autorisée (3 verrous + flag). Le crédit des pièces
+         est décidé côté serveur après vérification SSV de Google — jamais par
+         le client. Épic pub, PR E (#30). -->
+    <button class="btn primary hidden" id="watchRewardedBtn" style="margin-top:14px;">
+      🎬 Regarder une pub → +10 pièces
+    </button>
+
     <div class="btn-row" style="justify-content:center; gap:10px; margin-top:18px;">
       <button class="btn" id="backToSetupFromEndBtn">← Accueil</button>
       <button class="btn primary" id="newGameBtn">
@@ -761,6 +778,10 @@
         <label class="consent-row">
           <input type="checkbox" id="consentDataSharing">
           <span>J'accepte que mes données soient partagées avec des partenaires sélectionnés (optionnel)</span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="consentAdvertising">
+          <span>J'accepte l'affichage de publicités, y compris personnalisées (optionnel)</span>
         </label>
         <p class="consent-legal-link">
           <a href="privacy.html" target="_blank" rel="noopener">Lire la politique de confidentialité</a>

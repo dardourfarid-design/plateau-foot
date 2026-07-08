@@ -22,7 +22,7 @@ import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './th
 import { initShop } from './shopUI.js';
 import { initProfile, toOwnedShape } from './profileUI.js';
 import { initMercato } from './mercatoUI.js';
-import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail, sendPasswordResetEmail } from '../services/supabaseClient.js';
+import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail, sendPasswordResetEmail, fetchMyPurchases } from '../services/supabaseClient.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession, cancelGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
@@ -1944,6 +1944,66 @@ function applyPkTheme(id) {
   if (sImg) sImg.setAttribute('src', 'img/shootout/shooter' + suffix + '.png');
 }
 
+// ---------- Monétisation des thèmes (Néon/Cartoon/Manga payants) ----------
+// Chaque thème payant correspond au produit `themes` d'id 'shootout-<thème>'
+// (migration 0034). La POSSESSION vient d'une ligne purchases 'completed',
+// exactement comme un thème de plateau. Stade est toujours débloqué.
+const PK_PAID_THEMES = ['neon', 'cartoon', 'manga'];
+const PK_SKIN_PRICE_CENTS = 199;
+let ownedPkSkins = new Set();
+
+function isPkThemeUnlocked(id) {
+  return id === 'stade' || ownedPkSkins.has(id);
+}
+
+function renderPkLocks() {
+  els.pkSwitcher?.querySelectorAll('.pk-theme-btn').forEach(b => {
+    b.classList.toggle('locked', !isPkThemeUnlocked(b.dataset.theme));
+  });
+}
+
+// Recharge la liste des skins possédés (à l'ouverture de la séance). Si le
+// thème mémorisé n'est plus débloqué (autre appareil, déconnexion), on retombe
+// proprement sur Stade.
+async function refreshPkOwnership() {
+  try {
+    const purchases = await fetchMyPurchases();
+    ownedPkSkins = new Set(
+      (purchases || [])
+        .map(p => p.theme_id)
+        .filter(id => typeof id === 'string' && id.startsWith('shootout-'))
+        .map(id => id.slice('shootout-'.length))
+    );
+  } catch (e) {
+    ownedPkSkins = new Set();
+  }
+  renderPkLocks();
+  if (!isPkThemeUnlocked(getStoredPkTheme())) applyPkTheme('stade');
+}
+
+// Clic sur un bouton de thème : applique si débloqué, sinon lance l'achat.
+function selectPkTheme(id) {
+  if (isPkThemeUnlocked(id)) applyPkTheme(id);
+  else purchasePkTheme(id);
+}
+
+async function purchasePkTheme(id) {
+  if (!currentUser) {
+    showToast(t('Connecte-toi pour débloquer ce thème.'));
+    authMode = 'signin';
+    renderAccountOverlayContent();
+    els.accountOverlay.classList.add('show');
+    return;
+  }
+  try {
+    const result = await checkoutTheme({ id: 'shootout-' + id }, currentUser);
+    if (result.redirectUrl) { window.location.href = result.redirectUrl; return; }
+    if (result.immediate) { ownedPkSkins.add(id); applyPkTheme(id); renderPkLocks(); }
+  } catch (err) {
+    showAlert(err.message || t('Achat impossible pour le moment.'));
+  }
+}
+
 let so = null;              // { phase, mode, engine, selectedZone, sweet, powerPct, dir, raf }
 let soCrowdBuilt = false;
 
@@ -2013,7 +2073,7 @@ function wireShootout() {
   buildPkZones();
 
   els.pkSwitcher?.querySelectorAll('.pk-theme-btn')
-    .forEach(b => b.addEventListener('click', () => applyPkTheme(b.dataset.theme)));
+    .forEach(b => b.addEventListener('click', () => selectPkTheme(b.dataset.theme)));
 
   document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
   els.pkCta?.addEventListener('click', pkOnCta);
@@ -2047,6 +2107,7 @@ function launchShootout(mode, title) {
   hideAllScreensForShootout();
   els.shootoutScreen.classList.remove('hidden');
   applyPkTheme(getStoredPkTheme());
+  refreshPkOwnership();   // met à jour les verrous (et retombe sur Stade si le thème mémorisé n'est pas possédé)
   buildPkCrowd();
   pkResetScene();
   renderShootout();

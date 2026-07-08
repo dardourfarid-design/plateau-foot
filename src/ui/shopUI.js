@@ -29,6 +29,7 @@ function _isRealKit(theme) {
   return !theme.id.startsWith('player-')
       && !theme.id.startsWith('pack-')
       && !theme.id.startsWith('coins-')
+      && !theme.id.startsWith('shootout-')   // skins de la séance de tirs au but : achetés dans l'écran dédié
       && theme.id !== 'custom-player-slot';
 }
 

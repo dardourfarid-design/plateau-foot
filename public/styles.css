@@ -2852,6 +2852,8 @@ body{
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
   transition:all .15s; }
 .pk-theme-btn.active{ background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent); }
+.pk-theme-btn.locked{ opacity:.7; }
+.pk-theme-btn.locked::after{ content:'🔒'; margin-left:6px; font-size:10px; opacity:.9; }
 
 /* ---- Carte ---- */
 .shootout-modal{

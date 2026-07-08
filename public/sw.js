@@ -14,7 +14,7 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v8'; // v8 : refonte tirs au but (moteur v2 6 zones + jauge, PNG gardien/tireur)
+const CACHE_NAME = 'tactic-master-v9'; // v9 : thèmes tirs au but + avatars recolorisés par thème
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -26,6 +26,12 @@ const STATIC_ASSETS = [
   './icons/icon-maskable-512.png',
   './img/shootout/keeper.png',
   './img/shootout/shooter.png',
+  './img/shootout/keeper-neon.png',
+  './img/shootout/shooter-neon.png',
+  './img/shootout/keeper-cartoon.png',
+  './img/shootout/shooter-cartoon.png',
+  './img/shootout/keeper-manga.png',
+  './img/shootout/shooter-manga.png',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
   './src/engine/ai.js',

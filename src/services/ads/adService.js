@@ -37,11 +37,13 @@ export function isAdFree() {
 }
 
 /**
- * Rafraîchit le statut « sans pub » depuis le backend (pass actif). À appeler
- * après connexion/déconnexion ou après un achat de pass. Best-effort : en cas
- * d'erreur on retombe sur false (on préfère montrer la pub que priver le
- * modèle éco d'un revenu par erreur — le vrai payant sera re-résolu au refresh
- * suivant).
+ * Rafraîchit le statut « sans pub » depuis le backend. Règle du perk (PR F,
+ * #31) : TOUT pass actif rend l'expérience sans publicité. À appeler après
+ * connexion/déconnexion ou après un achat de pass (l'activation passe par le
+ * webhook Stripe, avec un léger délai — d'où des rappels répétés côté UI).
+ * Best-effort : en cas d'erreur on retombe sur false (on préfère montrer la
+ * pub que priver le modèle éco d'un revenu par erreur — le vrai payant sera
+ * re-résolu au refresh suivant).
  */
 export async function refreshAdFreeStatus() {
   try {
@@ -50,6 +52,17 @@ export async function refreshAdFreeStatus() {
     _adFree = false;
   }
   return _adFree;
+}
+
+/**
+ * Décision pure « la pub est-elle autorisée ? » à partir des trois entrées
+ * booléennes. Extraite pour être testable sans backend ni DOM.
+ * @param {boolean} enabled       kill switch global (config.ads.enabled)
+ * @param {boolean} consentDenied refus explicite chez nous (opt-out dur)
+ * @param {boolean} adFree        droit payant actif (pass) => aucune pub
+ */
+export function evaluateAdsAllowed(enabled, consentDenied, adFree) {
+  return enabled === true && !consentDenied && !adFree;
 }
 
 /**
@@ -63,9 +76,11 @@ export async function refreshAdFreeStatus() {
  * payant. `null` (indécis) = autorisé : le CMP prend le relais.
  */
 export function areAdsAllowed() {
-  return adsConfig().enabled === true
-    && getAdvertisingConsent() !== AD_CONSENT.DENIED
-    && !_adFree;
+  return evaluateAdsAllowed(
+    adsConfig().enabled === true,
+    getAdvertisingConsent() === AD_CONSENT.DENIED,
+    _adFree
+  );
 }
 
 /**

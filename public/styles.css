@@ -7,7 +7,7 @@
   --or:            #E8A030;
   --or-pale:       #FFD87A;
   --craie:         #F0E6D3;
-  --craie-att:     rgba(240,230,211,0.5);
+  --craie-att:     rgba(240,230,211,0.62); /* opacité relevée : contraste WCAG AA (#131) */
   --craie-dim:     rgba(240,230,211,0.25);
   --ombre:         rgba(0,0,0,0.55);
 

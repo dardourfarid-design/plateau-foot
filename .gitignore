@@ -10,3 +10,6 @@ node_modules/
 # Divers
 .DS_Store
 *.log
+
+# Rapports de couverture (c8) — générés en CI
+/coverage/

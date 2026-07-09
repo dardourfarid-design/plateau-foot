@@ -58,3 +58,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  coverage:
+    name: Couverture de code (c8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer les dépendances
+        run: npm install
+      # Échoue si la couverture (src/) passe sous les seuils définis dans
+      # package.json (#133). Seuils à relever au fil des tests ajoutés.
+      - name: Mesurer la couverture
+        run: npm run coverage
+      - name: Publier le rapport lcov
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          retention-days: 7

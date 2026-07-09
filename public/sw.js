@@ -14,12 +14,14 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v9'; // v9 : thèmes tirs au but + avatars recolorisés par thème
+const CACHE_NAME = 'tactic-master-v10'; // v10 : SDK Supabase self-hébergé (#16)
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
   './skins.css',
   './config.js',
+  './vendor/supabase-js-2.110.1.js',
+  './plausible-init.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

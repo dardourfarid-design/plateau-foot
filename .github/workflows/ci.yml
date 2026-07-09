@@ -17,6 +17,26 @@ jobs:
       - name: Lancer la suite de tests
         run: node tests/run-tests.js
 
+  sync-check:
+    name: Parité src/ ↔ public/src/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Régénère public/src/ depuis src/ et échoue si ça produit une différence :
+      # garantit qu'on ne peut jamais déployer un public/src/ désynchronisé (#20).
+      - name: Régénérer public/src depuis src
+        run: node build.js
+      - name: Vérifier l'absence de dérive
+        run: |
+          if ! git diff --quiet -- public/src; then
+            echo "::error::public/src/ n'est pas synchronisé avec src/. Lance 'node build.js' puis committe public/src/."
+            git --no-pager diff --stat -- public/src
+            exit 1
+          fi
+
   e2e:
     name: Tests E2E (Playwright)
     runs-on: ubuntu-latest

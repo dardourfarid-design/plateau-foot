@@ -6,11 +6,6 @@
 import { describe, test, expect } from './test-utils.js';
 
 if (typeof globalThis.window === 'undefined') globalThis.window = {};
-// Politique déterministe pour les tests : 1 interstitiel tous les 3 matchs,
-// cooldown 10 s.
-globalThis.window.__PLATEAU_FOOT_CONFIG__ = {
-  ads: { interstitialEveryNGames: 3, interstitialCooldownMs: 10000 }
-};
 
 const {
   recordMatchEnd,
@@ -19,8 +14,18 @@ const {
   resetInterstitialFrequency
 } = await import('../src/services/ads/interstitialFrequency.js');
 
+// Politique déterministe : 1 interstitiel tous les 3 matchs, cooldown 10 s.
+// Fixée À CHAQUE TEST (pas au chargement) car window.__PLATEAU_FOOT_CONFIG__
+// est un état partagé que d'autres fichiers de test mutent aussi.
+function setPolicy() {
+  globalThis.window.__PLATEAU_FOOT_CONFIG__ = {
+    ads: { interstitialEveryNGames: 3, interstitialCooldownMs: 10000 }
+  };
+}
+
 describe('interstitialFrequency', () => {
   test('pas d\'interstitiel avant d\'avoir atteint le seuil de N matchs', () => {
+    setPolicy();
     resetInterstitialFrequency();
     recordMatchEnd();
     recordMatchEnd();
@@ -28,12 +33,14 @@ describe('interstitialFrequency', () => {
   });
 
   test('éligible une fois N matchs atteints', () => {
+    setPolicy();
     resetInterstitialFrequency();
     recordMatchEnd(); recordMatchEnd(); recordMatchEnd();
     expect(shouldShowInterstitial()).toBeTruthy(); // 3 >= 3
   });
 
   test('après affichage, le compteur est réarmé (plus éligible immédiatement)', () => {
+    setPolicy();
     resetInterstitialFrequency();
     recordMatchEnd(); recordMatchEnd(); recordMatchEnd();
     markInterstitialShown(1000);
@@ -41,6 +48,7 @@ describe('interstitialFrequency', () => {
   });
 
   test('le cooldown bloque même si N matchs rejoués trop vite', () => {
+    setPolicy();
     resetInterstitialFrequency();
     recordMatchEnd(); recordMatchEnd(); recordMatchEnd();
     markInterstitialShown(1000);              // dernier affiché à t=1000

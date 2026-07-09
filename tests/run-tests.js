@@ -1,4 +1,4 @@
-import { printSummary } from './test-utils.js';
+import { printSummary, runAll } from './test-utils.js';
 
 console.log('Tactic Master — suite de tests du moteur de jeu\n');
 
@@ -18,6 +18,11 @@ await import('./adService.test.js');
 await import('./interstitialFrequency.test.js');
 await import('./adAnalytics.test.js');
 await import('./abTest.test.js');
+
+// Les imports ci-dessus ne font qu'ENREGISTRER les tests ; on les exécute
+// ici séquentiellement (avec await), pour que les tests async ne s'entrelacent
+// pas sur l'état partagé.
+await runAll();
 
 const success = printSummary();
 process.exit(success ? 0 : 1);

@@ -7,6 +7,13 @@
 const results = { pass: 0, fail: 0, failures: [] };
 let currentSuite = '';
 
+// File d'attente : les tests sont ENREGISTRÉS au chargement (describe/test sont
+// synchrones) puis exécutés séquentiellement par runAll(). Indispensable pour
+// les tests `async` : sans attente, leurs corps s'entrelacent et se marchent
+// dessus sur tout état partagé (ex. le store de consentement) — bug masqué en
+// local par le timing, révélé en CI.
+const queue = [];
+
 export function describe(name, fn) {
   currentSuite = name;
   fn();
@@ -15,15 +22,23 @@ export function describe(name, fn) {
 
 export function test(name, fn) {
   const fullName = currentSuite ? `${currentSuite} > ${name}` : name;
-  try {
-    fn();
-    results.pass++;
-    console.log(`  ✓ ${fullName}`);
-  } catch (err) {
-    results.fail++;
-    results.failures.push({ name: fullName, error: err });
-    console.log(`  ✗ ${fullName}`);
-    console.log(`    ${err.message}`);
+  queue.push({ fullName, fn });
+}
+
+// Exécute tous les tests enregistrés, un par un, en attendant chaque fonction
+// (qu'elle soit sync ou async) et en capturant les rejets asynchrones.
+export async function runAll() {
+  for (const { fullName, fn } of queue) {
+    try {
+      await fn();
+      results.pass++;
+      console.log(`  ✓ ${fullName}`);
+    } catch (err) {
+      results.fail++;
+      results.failures.push({ name: fullName, error: err });
+      console.log(`  ✗ ${fullName}`);
+      console.log(`    ${err.message}`);
+    }
   }
 }
 

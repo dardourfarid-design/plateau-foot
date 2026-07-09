@@ -2,8 +2,8 @@
 -- Refonte complète du catalogue produits :
 --   • 5 nouveaux kits Saison 1 (visuel inédit, prix 2,49 €)
 --   • Table user_passes pour les abonnements Stripe récurrents
---   • Table founders_counter pour le compteur Fondateurs (fictif côté affichage,
---     réel côté DB pour la cohérence des achats)
+--   • Table founders_counter : édition limitée RÉELLE à 200 exemplaires
+--     (décrémentée à chaque achat, vente refusée à 0 — voir #19)
 --   • Migration des anciens thèmes vers le nouveau prix 2,49 €
 
 -- ---------- Mise à jour prix anciens kits ----------
@@ -74,9 +74,13 @@ create index if not exists idx_user_passes_stripe_id
 
 -- ---------- Table founders_counter : compteur Fondateurs ----------
 -- Stocké en base pour être cohérent entre sessions et utilisateurs.
--- La valeur initiale est fictive (200) — décrémentée réellement à chaque
--- achat Pack Fondateurs pour que le compteur affiché reste crédible dans
--- le temps. La table ne contient qu'une ligne (id = 1).
+-- 200 = PLAFOND RÉEL d'une édition limitée effectivement appliquée : le
+-- nombre affiché en boutique reflète le vrai stock restant. Il est décrémenté
+-- à chaque achat de Pack Fondateurs (decrement_founders_counter, dans
+-- complete_stripe_purchase — idempotent, migration 0031), la vente est refusée
+-- quand il atteint 0 (create-checkout-session), et la contrainte remaining >= 0
+-- empêche tout dépassement. Aucune rareté artificielle. Pour changer la limite,
+-- modifier la valeur initiale ci-dessous. La table ne contient qu'une ligne.
 create table if not exists public.founders_counter (
   id        int  primary key default 1 check (id = 1), -- singleton
   remaining int  not null default 200 check (remaining >= 0),

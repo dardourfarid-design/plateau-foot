@@ -8,9 +8,22 @@
     "build": "node build.js",
     "serve": "node tools/static-server.mjs public 8080",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e:install": "playwright install --with-deps chromium",
+    "coverage": "c8 node tests/run-tests.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.0"
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.48.0",
+    "c8": "^10.1.3"
+  },
+  "c8": {
+    "include": ["src/**/*.js"],
+    "exclude": ["**/*.test.js", "tests/**", "public/**", "tools/**", "build.js"],
+    "reporter": ["text-summary", "lcov"],
+    "check-coverage": true,
+    "lines": 60,
+    "statements": 60,
+    "functions": 55,
+    "branches": 80
   }
 }

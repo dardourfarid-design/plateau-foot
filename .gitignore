@@ -1,0 +1,12 @@
+# Dépendances (Playwright et co. — installées en CI, pas committées)
+node_modules/
+
+# Artefacts de test E2E Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+
+# Divers
+.DS_Store
+*.log

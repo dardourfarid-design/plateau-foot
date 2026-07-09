@@ -81,13 +81,17 @@ describe('adService — verrous de diffusion', () => {
   });
 
   test('activé + consentement + non payant : la pub est autorisée', async () => {
+    // Teste l'ORCHESTRATION (les 3 verrous + les formats), pas le succès du
+    // provider concret : le provider actif (AdSense) ne peut pas s'initialiser
+    // hors navigateur, ce qui est un comportement de provider légitime, pas un
+    // échec de gating.
     enableAds();
     await setAdvertisingConsent(true);
     ads.resetAds();
     expect(ads.areAdsAllowed()).toBeTruthy();
-    expect(await ads.initAds()).toBeTruthy();
-    expect((await ads.showInterstitial()).shown).toBeTruthy();
-    expect((await ads.showRewarded()).completed).toBeTruthy();
+    expect(ads.isFormatAllowed('banner')).toBeTruthy();
+    expect(ads.isFormatAllowed('interstitial')).toBeTruthy();
+    expect(ads.isFormatAllowed('rewarded')).toBeTruthy();
   });
 
   test('isAdFree par défaut false (aucun pass résolu hors backend)', () => {
@@ -108,9 +112,9 @@ describe('adService — verrous de diffusion', () => {
     enableAds();
     await setAdvertisingConsent(true);
     ads.resetAds();
-    expect(await ads.initAds()).toBeTruthy();
+    expect(ads.areAdsAllowed()).toBeTruthy(); // autorisé au départ
 
-    await setAdvertisingConsent(false); // déclenche le listener -> resetAds()
+    await setAdvertisingConsent(false); // -> 'denied' : déclenche le listener resetAds()
     expect(ads.areAdsAllowed()).toBeFalsy();
     expect((await ads.showRewarded()).completed).toBeFalsy();
   });

@@ -109,7 +109,7 @@
 | Ajouter un ami | `#friendPseudoInput` + `#sendFriendRequestBtn` | pseudo inexistant → `#friendRequestError` | 🔒 ✅ | `e2e/auth/profile-actions.spec.js` |
 | Copier lien d'invitation | `#shareProfileBtn` | copie + `#shareProfileFeedback` | ⚠️ | — |
 | Demandes / amis | `#pendingFriendRequests`, `#friendsList` | listes dynamiques | ⚠️ | — |
-| Proposer un échange | `#mercatoOfferOverlay` / `#confirmMercatoOfferBtn` | sélection joueurs → offre | ⚠️ | — |
+| Proposer un échange | `#mercatoOfferOverlay` / `#confirmMercatoOfferBtn` / `#closeMercatoOfferBtn` | ouverture (via seam) + validation client (confirm sans sélection → erreur) + fermeture | ✅ | `e2e/mercato-offer.spec.js` |
 
 ## Compte / Auth (`#accountOverlay`)
 
@@ -164,4 +164,5 @@
 - **Ajouté par #147 — lot 3** : overlays but/fin de partie + `#endTurnBtn` via un seam de test gated (`game-overlays`), pages légales (`legal`), manifest + service worker + hors-ligne (`pwa`).
 - **Ajouté par #147 — lot 4** : retour de paiement `#purchaseToast` (`payment-return`), création de joueur (overlay/options/fermeture) + mercato pseudo inexistant (`auth/profile-actions`), achat Stripe sandbox de bout en bout **opt-in** (`auth/shop-purchase`, `E2E_STRIPE=1`).
 - **Ajouté par #147 — lot 5** : pouvoir en jeu (`#activatePowerBtn` + `#powerTargetOverlay` + `#cancelPowerTargetBtn`) via le seam (Repli adverse). ⚠️ Ce test a révélé et fait corriger un **bug réel** : `displayNameForToken` n'était pas importé dans `main.js` → Repli adverse plantait (ReferenceError) en production.
-- **Trous restants (assumés)** : proposition d'échange mercato (`#mercatoOfferOverlay` — nécessite un 2ᵉ compte ami + collection), envoi réel du lien reset (email), **actions RGPD export/suppression (volontairement non automatisées — destructif)**, installation A2HS (non automatisable), pub récompensée (couverte en unit + edge).
+- **Ajouté par #147 — lot 6** : overlay de proposition d'échange mercato (`#mercatoOfferOverlay` + validation client de `#confirmMercatoOfferBtn` + `#closeMercatoOfferBtn`) via un seam gated (`window.__tmMercatoTest`), sans 2ᵉ compte ni création d'offre (`e2e/mercato-offer.spec.js`).
+- **Trous restants (assumés)** : envoi réel du lien reset (email), **actions RGPD export/suppression (volontairement non automatisées — destructif)**, installation A2HS (non automatisable), pub récompensée (couverte en unit + edge). L'achat Stripe complet reste en opt-in (`E2E_STRIPE=1`).

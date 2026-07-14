@@ -12,6 +12,13 @@ Le projet a deux niveaux de tests :
 | **Non-régression complète** (`full-regression.yml`) | **à la demande** (bouton) | tous les jobs, rapports 14 j |
 | **Smoke de production** (`prod-smoke.yml`) | **à la demande** (bouton) | prod live |
 
+## 0. Notes ponctuelles avant un run
+
+Avant de lancer une non-régression, écris tes consignes du moment (périmètre,
+exclusions, contexte) dans [`regression-notes.md`](./regression-notes.md) — un seul
+fichier en texte libre. Claude le lit en premier à chaque demande de « lancer les
+tests de non-régression » et en tient compte.
+
 ## 1. Rejouer à la demande sur GitHub (recommandé)
 
 Onglet **Actions** du repo → choisir le workflow → **Run workflow** :

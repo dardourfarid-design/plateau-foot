@@ -12,7 +12,7 @@
 
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
-| Logo / retour accueil | `#homeLogoBtn` | clic → écran d'accueil | ⚠️ | — |
+| Logo / retour accueil | `#homeLogoBtn` | clic → écran d'accueil (depuis config, partie, shootout) | ✅ | `e2e/navigation.spec.js`, `shootout-nav` |
 | Compte | `#accountBtn` | clic → `#accountOverlay` | ✅ | `e2e/smoke.spec.js`, `a11y`, `visual` |
 | Mon profil | `#profileBtn` | clic → `#profileScreen` (ou compte si anonyme) | 🔒 partiel | `e2e/auth/authenticated.spec.js` |
 | Boutique | `#shopBtn` | clic → `#shopScreen` | 🔒 partiel | `e2e/auth/authenticated.spec.js` |
@@ -33,19 +33,19 @@
 
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
-| Retour | `#configBackBtn` | clic → accueil | ⚠️ | — |
-| Mode de jeu | `#modeOptions` (local/ai/online) | bascule → affiche IA / bloc online | ⚠️ | — |
-| Niveau IA | `#aiDifficultyOptions` (facile/moyen/difficile) | visible en mode IA | ⚠️ | — |
-| Style de jeu | `#variantOptions` (standard/tactique) | sélection | ⚠️ | — |
-| Pouvoirs bonus | `#powersOptions` (on/off) | sélection | ⚠️ | — |
-| Format | `#formatOptions` (score/manche) | sélection | ⚠️ | — |
-| Buts pour gagner | `#goalOptions` (1/3/5/∞) | sélection | ⚠️ | — |
+| Retour | `#configBackBtn` | clic → accueil | ✅ | `e2e/navigation.spec.js` |
+| Mode de jeu | `#modeOptions` (local/ai/online) | bascule → affiche IA / bloc online | ✅ | `e2e/config.spec.js` |
+| Niveau IA | `#aiDifficultyOptions` (facile/moyen/difficile) | visible en mode IA | ✅ | `e2e/config.spec.js` |
+| Style de jeu | `#variantOptions` (standard/tactique) | sélection | ✅ | `e2e/config.spec.js` |
+| Pouvoirs bonus | `#powersOptions` (on/off) | sélection | ✅ | `e2e/config.spec.js` |
+| Format | `#formatOptions` (score/manche) | sélection | ✅ | `e2e/config.spec.js` |
+| Buts pour gagner | `#goalOptions` (1/3/5/∞) | sélection | ✅ | `e2e/config.spec.js` |
 | Lancer la partie | `#startBtn` | clic → `#gameScreen` | ✅ | `smoke`, `gameplay`, `a11y`, `visual` |
 | Séance de tirs au but | `#launchShootoutBtn` | clic → `#shootoutScreen` | ✅ | `e2e/shootout.spec.js` |
 | Créer une partie (online) | `#createOnlineBtn` | clic → `#waitingScreen` | ⚠️ | — |
 | Code d'invitation | `#inviteCodeDisplay` | affiché en salle d'attente | ⚠️ | — |
 | Annuler l'attente | `#cancelWaitingBtn` | clic → retour config | ⚠️ | — |
-| Rejoindre via code | `#joinCodeInput` + `#joinOnlineBtn` | code invalide → `#onlineError` | ⚠️ | — |
+| Rejoindre via code | `#joinCodeInput` + `#joinOnlineBtn` | code invalide → `#onlineError` | ✅ | `e2e/config.spec.js` |
 
 ## Écran de jeu (`#gameScreen`)
 
@@ -54,11 +54,11 @@
 | Plateau | `#boardGrid .cell` (63) | rendu du plateau | ✅ | `gameplay`, `visual` |
 | Sélection pion + coup | `.token.bleu:not(.gardien)` → `.dest-move` | jouer un coup | ✅ | `e2e/gameplay.spec.js` |
 | Bandeau de tour | `#turnBanner` | change de tour | ✅ (assert) | `e2e/gameplay.spec.js` |
-| Annuler le coup | `#cancelBtn` | annule la sélection | ⚠️ | — |
+| Annuler le coup | `#cancelBtn` | annule la sélection | ✅ | `e2e/game-controls.spec.js` |
 | Utiliser le pouvoir | `#activatePowerBtn` | active un pouvoir | ⚠️ | — |
 | Ciblage pouvoir | `#powerTargetOverlay` / `#cancelPowerTargetBtn` | choisir un pion adverse | ⚠️ | — |
 | Terminer le tour | `#endTurnBtn` | passe la main | ⚠️ | — |
-| Nouvelle partie | `#restartBtn` | relance une partie | ⚠️ | — |
+| Nouvelle partie | `#restartBtn` | retour config | ✅ | `e2e/game-controls.spec.js` |
 | Overlay but | `#goalOverlay` / `#continueBtn` | but marqué → continuer | ⚠️ | — |
 | Overlay fin — Accueil | `#backToSetupFromEndBtn` | clic → accueil | ⚠️ | — |
 | Overlay fin — Rejouer | `#newGameBtn` | clic → nouvelle partie | ⚠️ | — |
@@ -68,7 +68,7 @@
 
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
-| Thèmes visuels | `#pkSwitcher .pk-theme-btn` (stade/néon/cartoon/manga) | change le thème | ⚠️ | — |
+| Thèmes visuels | `#pkSwitcher .pk-theme-btn` (stade/néon/cartoon/manga) | défaut stade ; thème verrouillé → modale compte | ✅ | `e2e/shootout-nav.spec.js` |
 | Tirer / arrêter | `#pkCta` | déclenche le tir | ✅ | `e2e/shootout.spec.js` |
 | Choix de zone | `#pkZones .pk-zone` (6) | sélection de zone | ✅ | `e2e/shootout.spec.js` |
 | Jauge de puissance | `#pkPowerWrap` / `#pkPowerMarker` | timing de puissance | ✅ | `e2e/shootout.spec.js` |
@@ -157,4 +157,5 @@
 
 - **Cœur de jeu, tutoriel, i18n, shootout, a11y, visuel** : couverts.
 - **Parcours authentifiés** (login, profil, boutique) : couverts via `e2e/auth/` (backend de test).
-- **Trous principaux** (issue #147) : options de configuration, contrôles de partie (annuler/pouvoir/fin), navigation topbar, achat boutique, onglets profil, création de joueur, mercato, inscription/reset/RGPD, pages légales, PWA/offline.
+- **Ajouté par #147** (specs publiques, sans backend) : navigation topbar (logo TM), retour config, bascules de mode + tous les groupes d'options de config, validation du code en ligne, annuler le coup, nouvelle partie, thèmes shootout + gating. Voir `navigation`, `config`, `game-controls`, `shootout-nav`.
+- **Trous restants** : contrôles de partie avancés (pouvoir/fin de partie/overlay but — parcours long/non déterministe), achat boutique, onglets profil (défis/équipe/mercato/classement), création de joueur, mercato, inscription/reset/RGPD, pages légales, PWA/offline. La plupart nécessitent soit le backend de test (suite `e2e/auth/`), soit de jouer une partie jusqu'au but.

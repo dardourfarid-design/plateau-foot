@@ -69,6 +69,29 @@ test('« Terminer le tour » apparaît en phase de passe et passe la main', asyn
   await expect(page.locator('#endTurnBtn')).toBeHidden();
 });
 
+test('pouvoir « Repli adverse » : bouton, overlay de ciblage et annulation', async ({ page }) => {
+  // Donne le pouvoir Repli adverse à un pion bleu de champ et le sélectionne :
+  // c'est la condition d'apparition du bouton « Utiliser le pouvoir ».
+  await page.evaluate(() => {
+    const t = window.__tmTest;
+    const s = t.getState();
+    const bleu = s.tokens.find((tok) => tok.team === 'bleu' && !tok.isGK);
+    bleu.power = 'repli_adverse';
+    bleu.powerUsed = false;
+    t.setState({ tokens: s.tokens, selectedTokenId: bleu.id, phase: t.PHASES.SELECT, turn: 'bleu' });
+    t.applyPostEffects(t.getState());
+  });
+  await expect(page.locator('#activatePowerBtn')).toBeVisible();
+  await expect(page.locator('#activatePowerBtn')).toContainText(/repli/i);
+
+  // Repli adverse demande une cible → ouvre l'overlay de sélection.
+  await page.locator('#activatePowerBtn').click();
+  await expect(page.locator('#powerTargetOverlay')).toHaveClass(/show/);
+
+  await page.locator('#cancelPowerTargetBtn').click();
+  await expect(page.locator('#powerTargetOverlay')).not.toHaveClass(/show/);
+});
+
 test('overlay FIN de partie (victoire rouge) puis « ← Accueil » → configuration', async ({ page }) => {
   await forceState(page, {
     score: { bleu: 1, rouge: 3 }, lastGoalBy: 'rouge',

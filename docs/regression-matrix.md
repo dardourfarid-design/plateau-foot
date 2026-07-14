@@ -55,8 +55,8 @@
 | Sélection pion + coup | `.token.bleu:not(.gardien)` → `.dest-move` | jouer un coup | ✅ | `e2e/gameplay.spec.js` |
 | Bandeau de tour | `#turnBanner` | change de tour | ✅ (assert) | `e2e/gameplay.spec.js` |
 | Annuler le coup | `#cancelBtn` | annule la sélection | ✅ | `e2e/game-controls.spec.js` |
-| Utiliser le pouvoir | `#activatePowerBtn` | active un pouvoir | ⚠️ | — |
-| Ciblage pouvoir | `#powerTargetOverlay` / `#cancelPowerTargetBtn` | choisir un pion adverse | ⚠️ | — |
+| Utiliser le pouvoir | `#activatePowerBtn` | pion à pouvoir sélectionné → bouton actif | ✅ | `e2e/game-overlays.spec.js` |
+| Ciblage pouvoir | `#powerTargetOverlay` / `#cancelPowerTargetBtn` | Repli adverse → overlay de cible + annulation | ✅ | `e2e/game-overlays.spec.js` |
 | Terminer le tour | `#endTurnBtn` | phase de passe → passe la main | ✅ | `e2e/game-overlays.spec.js` |
 | Nouvelle partie | `#restartBtn` | retour config | ✅ | `e2e/game-controls.spec.js` |
 | Overlay but | `#goalOverlay` / `#continueBtn` | but marqué → continuer (reprend la partie) | ✅ | `e2e/game-overlays.spec.js` |
@@ -163,4 +163,5 @@
 - **Ajouté par #147 — lot 2** : compte côté UI — bascule inscription (consentements + pseudo), mot de passe oublié, validations client (identifiants/email vides), fermeture, gating `#profileBtn` anonyme (`account-ui`) ; navigation boutique open/back (`shop-nav`) ; navigation des 5 onglets du profil, backend de test (`auth/profile-tabs`).
 - **Ajouté par #147 — lot 3** : overlays but/fin de partie + `#endTurnBtn` via un seam de test gated (`game-overlays`), pages légales (`legal`), manifest + service worker + hors-ligne (`pwa`).
 - **Ajouté par #147 — lot 4** : retour de paiement `#purchaseToast` (`payment-return`), création de joueur (overlay/options/fermeture) + mercato pseudo inexistant (`auth/profile-actions`), achat Stripe sandbox de bout en bout **opt-in** (`auth/shop-purchase`, `E2E_STRIPE=1`).
-- **Trous restants** : pouvoir en jeu (`#activatePowerBtn` / `#powerTargetOverlay` — nécessite un pion à pouvoir en main), proposition d'échange mercato (`#mercatoOfferOverlay` — nécessite un ami + collection), envoi réel du lien reset, **actions RGPD export/suppression (volontairement non automatisées — destructif)**, installation A2HS (non automatisable), pub récompensée (couverte en unit + edge).
+- **Ajouté par #147 — lot 5** : pouvoir en jeu (`#activatePowerBtn` + `#powerTargetOverlay` + `#cancelPowerTargetBtn`) via le seam (Repli adverse). ⚠️ Ce test a révélé et fait corriger un **bug réel** : `displayNameForToken` n'était pas importé dans `main.js` → Repli adverse plantait (ReferenceError) en production.
+- **Trous restants (assumés)** : proposition d'échange mercato (`#mercatoOfferOverlay` — nécessite un 2ᵉ compte ami + collection), envoi réel du lien reset (email), **actions RGPD export/suppression (volontairement non automatisées — destructif)**, installation A2HS (non automatisable), pub récompensée (couverte en unit + edge).

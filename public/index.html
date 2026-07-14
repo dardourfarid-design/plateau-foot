@@ -58,6 +58,49 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="skins.css">
 
+<!-- Préchargement du graphe de modules ES (perf, issue #157) : sans ces
+     balises, le navigateur découvre les imports en cascade (main.js doit
+     être téléchargé et parsé avant de voir gameEngine.js, etc.). La liste
+     couvre tous les imports statiques de src/ui/main.js — à maintenir si
+     un nouveau module est ajouté au graphe de boot. i18n-en.js est exclu
+     volontairement (chargé à la demande, issue #158). -->
+<link rel="modulepreload" href="src/engine/ai.js">
+<link rel="modulepreload" href="src/engine/constants.js">
+<link rel="modulepreload" href="src/engine/gameEngine.js">
+<link rel="modulepreload" href="src/engine/penaltyShootoutV2.js">
+<link rel="modulepreload" href="src/engine/powers.js">
+<link rel="modulepreload" href="src/services/ads/abTest.js">
+<link rel="modulepreload" href="src/services/ads/adAnalytics.js">
+<link rel="modulepreload" href="src/services/ads/adProvider.js">
+<link rel="modulepreload" href="src/services/ads/adService.js">
+<link rel="modulepreload" href="src/services/ads/googleAdSenseProvider.js">
+<link rel="modulepreload" href="src/services/ads/googleCmp.js">
+<link rel="modulepreload" href="src/services/ads/interstitialFrequency.js">
+<link rel="modulepreload" href="src/services/ads/mockAdProvider.js">
+<link rel="modulepreload" href="src/services/advertisingConsentService.js">
+<link rel="modulepreload" href="src/services/analyticsConsentService.js">
+<link rel="modulepreload" href="src/services/consentService.js">
+<link rel="modulepreload" href="src/services/currencyService.js">
+<link rel="modulepreload" href="src/services/customPlayerService.js">
+<link rel="modulepreload" href="src/services/mercatoService.js">
+<link rel="modulepreload" href="src/services/multiplayerService.js">
+<link rel="modulepreload" href="src/services/passService.js">
+<link rel="modulepreload" href="src/services/payment/paymentProvider.js">
+<link rel="modulepreload" href="src/services/payment/stripePaymentProvider.js">
+<link rel="modulepreload" href="src/services/playerCollectionService.js">
+<link rel="modulepreload" href="src/services/progressService.js">
+<link rel="modulepreload" href="src/services/supabaseClient.js">
+<link rel="modulepreload" href="src/ui/boardRenderer.js">
+<link rel="modulepreload" href="src/ui/dialogs.js">
+<link rel="modulepreload" href="src/ui/i18n.js">
+<link rel="modulepreload" href="src/ui/mercatoUI.js">
+<link rel="modulepreload" href="src/ui/playerAvatar.js">
+<link rel="modulepreload" href="src/ui/playerIdentity.js">
+<link rel="modulepreload" href="src/ui/profileUI.js">
+<link rel="modulepreload" href="src/ui/shopUI.js">
+<link rel="modulepreload" href="src/ui/themeManager.js">
+<link rel="modulepreload" href="src/ui/tutorial.js">
+
 <!-- Analytics (Plausible) : aucun cookie, pas de bannière de consentement
      nécessaire. REMPLACER data-domain par le vrai domaine de production
      une fois le compte Plausible créé — sans ça, le script charge mais ne
@@ -839,8 +882,13 @@
      de jsdelivr/du package pourrait injecter du JS avec accès aux tokens
      d'auth). Le CSP n'autorise donc plus cdn.jsdelivr.net. Pour mettre à jour :
      télécharger la version voulue dans public/vendor/ et changer ce chemin. #16 -->
-<script src="/vendor/supabase-js-2.110.1.js"></script>
-<script src="config.js"></script>
+<!-- defer (issue #157) : ces deux scripts classiques bloquaient la fin du
+     parsing (201 Ko pour le SDK). Les scripts defer et les modules s'exécutent
+     dans l'ordre du document après le parsing, donc l'ordre vendor → config →
+     main.js (module) reste garanti ; supabaseClient.js lit window.supabase à
+     l'évaluation du module, donc toujours après le SDK. -->
+<script defer src="/vendor/supabase-js-2.110.1.js"></script>
+<script defer src="config.js"></script>
 <script type="module" src="src/ui/main.js"></script>
 </body>
 </html>

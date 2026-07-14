@@ -8,7 +8,7 @@ import {
   BOARD_COLS, BOARD_ROWS, GOAL_COLS, GOAL_ROW_TOP, GOAL_ROW_BOTTOM
 } from '../engine/constants.js';
 import {
-  getMoveDestinations, getPassDestinations, tokenAt, isBallAt,
+  getMoveDestinations, getPassDestinations, isBallAt,
   isAdjacent, canSelectToken, PHASES
 } from '../engine/gameEngine.js';
 import { displayNameForToken } from './playerIdentity.js';
@@ -47,16 +47,19 @@ export function buildBoardGrid(container, onCellClick) {
 export function renderBoard(container, state, lineupsByTeam = null) {
   const cells = container.querySelectorAll('.cell');
 
+  // Index case -> pion construit une fois par render : évite un
+  // state.tokens.find() linéaire pour chacune des 63 cellules.
+  const tokensByCell = new Map();
+  state.tokens.forEach(tok => tokensByCell.set(tok.row + ',' + tok.col, tok));
+
   cells.forEach(cell => {
     cell.classList.remove('dest-move', 'dest-pass');
     cell.innerHTML = '';
-  });
 
-  cells.forEach(cell => {
     const r = parseInt(cell.dataset.row, 10);
     const c = parseInt(cell.dataset.col, 10);
 
-    const tok = tokenAt(state, r, c);
+    const tok = tokensByCell.get(r + ',' + c);
     if (tok) {
       cell.appendChild(renderToken(state, tok, lineupsByTeam));
     }

@@ -1979,6 +1979,7 @@ function init() {
   document.getElementById('profileBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
   registerServiceWorker();
   handlePaymentReturn();
+  installE2ETestSeam();
 
   // Pub : premier affichage de la bannière d'accueil (le gating décide s'il y
   // a réellement quelque chose à montrer). L'état « sans pub » sera affiné dès
@@ -1986,6 +1987,24 @@ function init() {
   // Perf (PR H) : différé à l'idle pour ne pas peser sur le LCP du premier
   // rendu — le chargement du SDK pub n'entre jamais dans le chemin critique.
   whenIdle(refreshHomeBanner);
+}
+
+// Seam de test E2E — JAMAIS actif en production. Gated par window.__TM_E2E__,
+// positionné par le test Playwright AVANT le chargement (page.addInitScript) ;
+// config.js ne touche pas ce drapeau, donc il survit à l'init. Permet d'exercer
+// les vrais overlays but/fin de partie sans avoir à jouer une partie complète
+// (non déterministe via l'UI) : le test force un état de jeu puis rejoue le même
+// point d'entrée que le moteur (handlePostActionEffects). Aucune autorité serveur
+// n'est en jeu — l'état local d'une partie hors-ligne n'a aucune valeur.
+function installE2ETestSeam() {
+  if (!window.__TM_E2E__) return;
+  window.__tmTest = {
+    getState: () => gameState,
+    setState: (patch) => { gameState = { ...gameState, ...patch }; return gameState; },
+    applyPostEffects: (previous) => handlePostActionEffects(previous),
+    TEAMS,
+    PHASES,
+  };
 }
 
 // Exécute `fn` quand le navigateur est inactif, avec repli setTimeout.

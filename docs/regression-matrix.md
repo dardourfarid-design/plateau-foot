@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | Logo / retour accueil | `#homeLogoBtn` | clic → écran d'accueil (depuis config, partie, shootout) | ✅ | `e2e/navigation.spec.js`, `shootout-nav` |
 | Compte | `#accountBtn` | clic → `#accountOverlay` | ✅ | `e2e/smoke.spec.js`, `a11y`, `visual` |
-| Mon profil | `#profileBtn` | clic → `#profileScreen` (ou compte si anonyme) | 🔒 partiel | `e2e/auth/authenticated.spec.js` |
+| Mon profil | `#profileBtn` | clic → `#profileScreen` (authentifié) ou modale compte (anonyme) | ✅ | `e2e/auth/authenticated.spec.js`, `account-ui` (gating anon) |
 | Boutique | `#shopBtn` | clic → `#shopScreen` | 🔒 partiel | `e2e/auth/authenticated.spec.js` |
 | Solde pièces | `#coinDisplay` / `#coinAmount` | affichage conditionnel | ⚠️ | — |
 | Badge notif profil | `#profileNotifBadge` | affichage conditionnel | ⚠️ | — |
@@ -81,8 +81,9 @@
 
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
-| Ouverture + liste produits | `#shopBtn` → `#shopGrid` | affiche les thèmes | 🔒 | `e2e/auth/authenticated.spec.js` |
-| Retour | `#shopBackBtn` | clic → accueil | ⚠️ | — |
+| Ouverture (nav) | `#shopBtn` → `#shopScreen` | ouvre la boutique (anon inclus) | ✅ | `e2e/shop-nav.spec.js` |
+| Liste produits | `#shopGrid` | affiche les thèmes (données backend) | 🔒 | `e2e/auth/authenticated.spec.js` |
+| Retour | `#shopBackBtn` | clic → écran précédent (accueil/config) | ✅ | `e2e/shop-nav.spec.js` |
 | Achat d'un thème | `#shopGrid` (carte) | flux monnaie/paiement (mock) | ⚠️ | — |
 | Toast retour Stripe | `#purchaseToast` | confirmation/annulation | ⚠️ | — |
 
@@ -91,11 +92,11 @@
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
 | Retour | `#profileBackBtn` | clic → accueil | ⚠️ | — |
-| Onglet Progression | `.profile-tab[data-tab=progress]` → `#panelProgress` | niveau/XP/streak/victoires | 🔒 | `e2e/auth/authenticated.spec.js` |
-| Onglet Défis | `.profile-tab[data-tab=challenges]` → `#panelChallenges` | liste des défis | ⚠️ | — |
-| Onglet Mon équipe | `.profile-tab[data-tab=team]` → `#panelTeam` | collection + composition | ⚠️ | — |
-| Onglet Mercato | `.profile-tab[data-tab=mercato]` → `#panelMercato` | amis & échanges | ⚠️ | — |
-| Onglet Classement | `.profile-tab[data-tab=leaderboard]` → `#panelLeaderboard` | table classement | ⚠️ | — |
+| Onglet Progression | `.profile-tab[data-tab=progress]` → `#panelProgress` | niveau/XP/streak/victoires | 🔒 ✅ | `authenticated`, `auth/profile-tabs` |
+| Onglet Défis | `.profile-tab[data-tab=challenges]` → `#panelChallenges` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
+| Onglet Mon équipe | `.profile-tab[data-tab=team]` → `#panelTeam` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
+| Onglet Mercato | `.profile-tab[data-tab=mercato]` → `#panelMercato` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
+| Onglet Classement | `.profile-tab[data-tab=leaderboard]` → `#panelLeaderboard` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
 | Enregistrer composition | `#saveLineupBtn` | sauve l'équipe | ⚠️ | — |
 | Créer un joueur | `#openCreatePlayerBtn` → `#createPlayerOverlay` | nom/style/couleur/motif/accessoire → `#confirmCreatePlayerBtn` | ⚠️ | — |
 | Collection | `#collectionGrid` / `#powerShopGrid` | affichage joueurs | ⚠️ | — |
@@ -116,14 +117,15 @@
 |---|---|---|---|---|
 | Connexion | `#authEmail` + `#authPassword` + `#authSubmitBtn` | login | 🔒 ✅ | `e2e/auth/authenticated.spec.js` |
 | Déconnexion | `#signOutBtn` | logout → « Non connecté » | 🔒 ✅ | `e2e/auth/authenticated.spec.js` |
-| Bascule inscription | `#authSwitchBtn` → `#consentBlock` | affiche pseudo + consentements | ⚠️ | — |
-| Cases de consentement | `#consentAnalytics`, `#consentEmailMarketing`, `#consentDataSharing`, `#consentAdvertising` | opt-in granulaire | ⚠️ (unit) | `tests/advertisingConsent.test.js` |
-| Mot de passe oublié | `#forgotPasswordBtn` → `#sendResetLinkBtn` | envoi lien reset | ⚠️ | — |
-| Retour connexion | `#backToLoginBtn` | revient au login | ⚠️ | — |
+| Bascule inscription | `#authSwitchBtn` → `#consentBlock` | affiche pseudo + consentements | ✅ | `e2e/account-ui.spec.js` |
+| Cases de consentement | `#consentAnalytics`, `#consentEmailMarketing`, `#consentDataSharing`, `#consentAdvertising` | opt-in granulaire (4 cases, décochées) | ✅ | `e2e/account-ui.spec.js`, `tests/advertisingConsent.test.js` |
+| Mot de passe oublié | `#forgotPasswordBtn` → `#sendResetLinkBtn` | affiche la vue reset ; email vide → erreur | ✅ | `e2e/account-ui.spec.js` |
+| Retour connexion | `#backToLoginBtn` | revient au login | ✅ | `e2e/account-ui.spec.js` |
 | Gérer mes données | `#manageConsentBtn` | ouvre la gestion RGPD | ⚠️ | — |
 | Exporter mes données | `#exportDataBtn` | export RGPD | ⚠️ | — |
 | Supprimer mon compte | `#deleteDataBtn` | suppression (Edge Function) | ⚠️ (edge) | `supabase/functions` |
-| Fermer | `#accountCloseBtn` | ferme l'overlay | ⚠️ | — |
+| Connexion sans identifiants | `#authSubmitBtn` | champs vides → `#authError` (validation client) | ✅ | `e2e/account-ui.spec.js` |
+| Fermer | `#accountCloseBtn` | ferme l'overlay (classe `show`) | ✅ | `e2e/account-ui.spec.js` |
 
 ## Tutoriel (`#tutorialBubble`)
 
@@ -157,5 +159,6 @@
 
 - **Cœur de jeu, tutoriel, i18n, shootout, a11y, visuel** : couverts.
 - **Parcours authentifiés** (login, profil, boutique) : couverts via `e2e/auth/` (backend de test).
-- **Ajouté par #147** (specs publiques, sans backend) : navigation topbar (logo TM), retour config, bascules de mode + tous les groupes d'options de config, validation du code en ligne, annuler le coup, nouvelle partie, thèmes shootout + gating. Voir `navigation`, `config`, `game-controls`, `shootout-nav`.
-- **Trous restants** : contrôles de partie avancés (pouvoir/fin de partie/overlay but — parcours long/non déterministe), achat boutique, onglets profil (défis/équipe/mercato/classement), création de joueur, mercato, inscription/reset/RGPD, pages légales, PWA/offline. La plupart nécessitent soit le backend de test (suite `e2e/auth/`), soit de jouer une partie jusqu'au but.
+- **Ajouté par #147 — lot 1** (specs publiques) : navigation topbar (logo TM), retour config, bascules de mode + tous les groupes d'options, validation du code en ligne, annuler le coup, nouvelle partie, thèmes shootout + gating. Voir `navigation`, `config`, `game-controls`, `shootout-nav`.
+- **Ajouté par #147 — lot 2** : compte côté UI — bascule inscription (consentements + pseudo), mot de passe oublié, validations client (identifiants/email vides), fermeture, gating `#profileBtn` anonyme (`account-ui`) ; navigation boutique open/back (`shop-nav`) ; navigation des 5 onglets du profil, backend de test (`auth/profile-tabs`).
+- **Trous restants** : contrôles de partie avancés (pouvoir/fin de partie/overlay but — parcours long/non déterministe), achat de thème en boutique (paiement), création de joueur (quota backend), mercato (demandes/échanges), envoi réel du lien reset & actions RGPD (export/suppression), pages légales, PWA/offline. La plupart nécessitent soit un flux backend mutant, soit de jouer une partie jusqu'au but.

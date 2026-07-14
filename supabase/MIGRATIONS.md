@@ -75,21 +75,27 @@ changer la limite, modifier la valeur initiale dans `0022_new_shop.sql`.
 
 ## Scripts de rattrapage hors-arbre (historiques)
 
-À la racine du **workspace** (hors dépôt) traînent des scripts de rattrapage
+À la racine du **workspace** (hors dépôt) traînaient des scripts de rattrapage
 d'anciens environnements : `FIX-rattrapage-migrations-0014-a-0027.sql`,
 `FIX-amis-mercato.sql`, `ETAT-base-inventaire.sql`. **Ils ne font PAS partie de
 la chaîne canonique** et ne sont **pas nécessaires à un rejeu de zéro** (leur
-contenu est couvert par les migrations numérotées). À archiver/supprimer côté
-workspace ; ne pas les rejouer sur une base neuve.
+contenu est couvert par les migrations numérotées). Archivés côté workspace le
+2026-07-15 dans `_archive-sql-rattrapage/` ; ne pas les rejouer sur une base
+neuve.
 
-## À vérifier en prod (nécessite l'accès Supabase — action éditeur)
+## Vérifications prod (état au 2026-07-15 — #17 clos)
 
-- [ ] **0030–0034 appliquées** : linter Supabase (Database → Advisors) sans
-      avertissement « Function Search Path Mutable » (confirme 0033), policies
-      de `game_sessions` en place (0030).
-- [ ] Prix des skins en prod (`stadium-night`, `arcade-turf`) = **2,49 €**
-      (249). S'ils sont à 1,99 € (199), un ancien `0022_ui_skins` a été appliqué
-      avant `0024` : `update public.themes set price_cents = 249 where id in
-      ('stadium-night','arcade-turf');`.
-- [ ] Adopter `supabase db push` (ou un job CI) pour supprimer toute étape
-      d'application « à la main ».
+- [x] **0030–0034 appliquées en prod** — confirmé par l'éditeur le 2026-07-08
+      (voir #17). Le durcissement `search_path` (0033), l'autorisation des
+      sessions de jeu (0030), le décrément Fondateurs idempotent (0031), la
+      contrainte hex avatar (0032) et les thèmes tirs au but (0034) sont actifs.
+- [x] **Prix des skins en prod = 249** — vérifié le 2026-07-15 via l'API REST
+      publique (`/rest/v1/themes`) : `stadium-night` et `arcade-turf` à
+      `price_cents = 249`. Le rejeu canonique (0024 seul) est cohérent avec la
+      prod.
+- [x] **Plus d'application manuelle** — l'intégration GitHub ↔ Supabase est en
+      place (#139, tuto `docs/supabase-branching.md`) : une PR touchant
+      `supabase/migrations/` rejoue la chaîne de zéro sur une base de
+      préversion (check « Supabase Preview »), et un merge sur `main` applique
+      automatiquement les migrations en prod. `supabase db push` manuel n'est
+      plus la procédure nominale.

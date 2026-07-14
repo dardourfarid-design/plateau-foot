@@ -1,0 +1,35 @@
+name: Smoke de production (à la demande)
+
+# Joue quelques parcours critiques ANONYMES contre le site de PRODUCTION réel
+# pour détecter une panne (déploiement cassé, config absente, backend HS) sans
+# attendre un commit. Aucune écriture backend. Épic #143, issue #146.
+# Onglet Actions → « Smoke de production » → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      prod_url:
+        description: "URL à tester (défaut: prod)"
+        type: string
+        default: 'https://tactic-master.vercel.app'
+
+jobs:
+  smoke:
+    name: Parcours critiques (prod live)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Smoke contre la prod
+        env:
+          PROD_URL: ${{ inputs.prod_url }}
+        run: npx playwright test --config playwright.prod.config.js
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-prod
+          path: playwright-report/
+          retention-days: 14

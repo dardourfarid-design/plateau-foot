@@ -70,6 +70,18 @@ export function initMercato(deps) {
   });
   els.confirmMercatoOfferBtn?.addEventListener('click', () => handleConfirmMercatoOffer(deps));
 
+  // Seam de test E2E — JAMAIS actif en prod (gated par window.__TM_E2E__, posé
+  // par le test via page.addInitScript). Ouvrir l'overlay de proposition
+  // d'échange nécessite normalement un ami réel dans le panneau ; ce hook permet
+  // de l'ouvrir directement pour exercer l'overlay (rendu, validation client de
+  // #confirmMercatoOfferBtn, fermeture) sans dépendre d'un second compte. Aucune
+  // offre n'est créée (le hook n'appelle jamais createMercatoOffer).
+  if (typeof window !== 'undefined' && window.__TM_E2E__) {
+    window.__tmMercatoTest = {
+      openOffer: (friendUserId, friendName) => openMercatoOfferModal(deps, friendUserId, friendName)
+    };
+  }
+
   return {
     /** Appelé par switchProfileTab dans main.js quand l'onglet mercato est sélectionné. */
     loadMercatoPanel: () => loadMercatoPanel(deps)

@@ -1,0 +1,46 @@
+name: Visual baselines
+
+# Workflow MANUEL (#132) : régénère les screenshots de référence (linux) et
+# ouvre une PR avec les nouvelles baselines — jamais de commit direct, pour
+# qu'un humain valide visuellement chaque changement de référence.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: Régénérer les baselines linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer les dépendances
+        run: npm install
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Régénérer les screenshots de référence
+        run: UPDATE_SNAPSHOTS=1 npx playwright test e2e/visual.spec.js --update-snapshots
+      - name: Ouvrir une PR avec les baselines
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add -A e2e
+          if git diff --cached --quiet; then
+            echo "Baselines inchangées — rien à faire."
+            exit 0
+          fi
+          BR="chore/visual-baselines-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BR"
+          git commit -m "chore(visual): baselines linux de régression visuelle (#132)"
+          git push origin "$BR"
+          gh pr create --base main --head "$BR" \
+            --title "chore(visual): baselines de régression visuelle (linux)" \
+            --body "Baselines générées par le workflow visual-baselines (run ${GITHUB_RUN_ID}). À valider visuellement avant merge. Refs #132." \
+            || echo "::warning::PR non créée automatiquement — ouvrir manuellement depuis la branche $BR"

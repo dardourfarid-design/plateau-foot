@@ -5,6 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
 // Le serveur statique sert public/ à la racine, comme Vercel en prod.
 export default defineConfig({
   testDir: './e2e',
+  // Les E2E authentifiés (e2e/auth/) tournent séparément (playwright.auth.config.js)
+  // car ils exigent un backend de TEST et une réécriture de config.js.
+  testIgnore: '**/auth/**',
   timeout: 30_000,
   expect: { timeout: 5_000 },
   fullyParallel: true,

@@ -96,3 +96,59 @@ jobs:
           name: coverage-lcov
           path: coverage/lcov.info
           retention-days: 7
+
+  integration:
+    name: Intégration Supabase (#128)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer les dépendances
+        run: npm install
+      # Le runner se saute proprement (exit 0) si les secrets sont absents
+      # (forks) — il ne teste réellement que sur le repo qui a la branche de test.
+      - name: Tests d'intégration
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          E2E_USER: ${{ secrets.E2E_USER }}
+          E2E_PASS: ${{ secrets.E2E_PASS }}
+        run: npm run integration
+
+  e2e-auth:
+    name: E2E authentifiés (#129)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer les dépendances
+        run: npm install
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+      # Réécrit config.js pour viser le backend de TEST (jamais la prod). Vide
+      # sur les forks (secrets absents) → les specs se sautent via test.skip.
+      - name: Config de test
+        run: |
+          cat > public/config.js <<EOF
+          window.__PLATEAU_FOOT_CONFIG__ = {
+            supabaseUrl: '${{ secrets.TEST_SUPABASE_URL }}',
+            supabaseAnonKey: '${{ secrets.TEST_SUPABASE_ANON_KEY }}',
+            ads: { enabled: false, banner: false, interstitial: false, rewarded: false, cmp: { enabled: false, publisherId: null } }
+          };
+          EOF
+      - name: Tests E2E authentifiés
+        env:
+          E2E_USER: ${{ secrets.E2E_USER }}
+          E2E_PASS: ${{ secrets.E2E_PASS }}
+        run: npx playwright test --config playwright.auth.config.js
+      - name: Publier le rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 7

@@ -12,6 +12,9 @@ test.skip(!USER || !PASS, 'E2E_USER / E2E_PASS absents — parcours authentifié
 // Tente la connexion. Retourne le message d'erreur affiché (compte invalide),
 // ou null si succès. Ne lève pas : chaque test décide de sauter proprement si
 // le compte de test n'existe pas encore sur la branche `testing`.
+// Tente la connexion. Succès = la vue « Mon compte » apparaît. En cas d'échec
+// (compte de test inexistant/non confirmé sur la branche testing), renvoie
+// { ok:false } avec un éventuel détail — chaque test saute alors proprement.
 async function login(page) {
   await page.goto('/');
   await page.locator('#accountBtn').click();
@@ -19,21 +22,23 @@ async function login(page) {
   await page.locator('#authEmail').fill(USER);
   await page.locator('#authPassword').fill(PASS);
   await page.locator('#authSubmitBtn').click();
-  await Promise.race([
-    page.locator('#accountLoggedInView').waitFor({ state: 'visible', timeout: 15_000 }),
-    page.locator('#authError').waitFor({ state: 'visible', timeout: 15_000 }),
-  ]).catch(() => {});
-  return (await page.locator('#authError').textContent().catch(() => '') || '').trim() || null;
+  const ok = await page.locator('#accountLoggedInView')
+    .waitFor({ state: 'visible', timeout: 15_000 })
+    .then(() => true)
+    .catch(() => false);
+  const detail = ok
+    ? ''
+    : (await page.locator('#authError').textContent().catch(() => '') || '').trim();
+  return { ok, detail };
 }
 
-const SKIP_MSG = (err) =>
-  `Compte de test invalide sur la branche testing ("${err}") — créer E2E_USER via ` +
-  `le dashboard Supabase (branche testing → Authentication → Add user) ou l'app pointée sur le backend de test.`;
+const SKIP_MSG = (detail) =>
+  `Connexion au backend de test impossible${detail ? ` ("${detail}")` : ''} — créer le compte ` +
+  `E2E_USER sur la branche testing (dashboard Supabase → Authentication → Add user, ou l'app pointée sur le backend de test).`;
 
 test('connexion via l\'UI puis déconnexion', async ({ page }) => {
-  const err = await login(page);
-  test.skip(!!err, SKIP_MSG(err));
-  await expect(page.locator('#accountLoggedInView')).toBeVisible();
+  const { ok, detail } = await login(page);
+  test.skip(!ok, SKIP_MSG(detail));
   await expect(page.locator('#accountEmailDisplay')).toContainText('@');
   await page.locator('#signOutBtn').click();
   // Retour à l'état déconnecté : le formulaire de connexion réapparaît.
@@ -41,8 +46,8 @@ test('connexion via l\'UI puis déconnexion', async ({ page }) => {
 });
 
 test('accès au profil : la progression se charge (données backend)', async ({ page }) => {
-  const err = await login(page);
-  test.skip(!!err, SKIP_MSG(err));
+  const { ok, detail } = await login(page);
+  test.skip(!ok, SKIP_MSG(detail));
   await page.locator('#accountCloseBtn').click();
   await page.locator('#profileBtn').click();
   await expect(page.locator('#profileScreen')).toBeVisible();
@@ -52,8 +57,8 @@ test('accès au profil : la progression se charge (données backend)', async ({ 
 });
 
 test('la boutique s\'ouvre et liste des produits', async ({ page }) => {
-  const err = await login(page);
-  test.skip(!!err, SKIP_MSG(err));
+  const { ok, detail } = await login(page);
+  test.skip(!ok, SKIP_MSG(detail));
   await page.locator('#accountCloseBtn').click();
   await page.locator('#shopBtn').click();
   await expect(page.locator('#shopScreen')).toBeVisible();

@@ -84,8 +84,8 @@
 | Ouverture (nav) | `#shopBtn` → `#shopScreen` | ouvre la boutique (anon inclus) | ✅ | `e2e/shop-nav.spec.js` |
 | Liste produits | `#shopGrid` | affiche les thèmes (données backend) | 🔒 | `e2e/auth/authenticated.spec.js` |
 | Retour | `#shopBackBtn` | clic → écran précédent (accueil/config) | ✅ | `e2e/shop-nav.spec.js` |
-| Achat d'un thème | `#shopGrid` (carte) | flux monnaie/paiement (mock) | ⚠️ | — |
-| Toast retour Stripe | `#purchaseToast` | confirmation/annulation | ⚠️ | — |
+| Achat d'un thème (Stripe) | `.shop-kit-buy-btn` | Checkout sandbox → thème débloqué | ✅ opt-in | `e2e/auth/shop-purchase.spec.js` (E2E_STRIPE=1) |
+| Retour de paiement | `#purchaseToast` | `?checkout=success/cancelled` → toast + nettoyage URL | ✅ | `e2e/payment-return.spec.js` |
 
 ## Profil (`#profileScreen`) — 5 onglets
 
@@ -98,7 +98,7 @@
 | Onglet Mercato | `.profile-tab[data-tab=mercato]` → `#panelMercato` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
 | Onglet Classement | `.profile-tab[data-tab=leaderboard]` → `#panelLeaderboard` | bascule panneau (contenu async) | 🔒 ✅ | `e2e/auth/profile-tabs.spec.js` |
 | Enregistrer composition | `#saveLineupBtn` | sauve l'équipe | ⚠️ | — |
-| Créer un joueur | `#openCreatePlayerBtn` → `#createPlayerOverlay` | nom/style/couleur/motif/accessoire → `#confirmCreatePlayerBtn` | ⚠️ | — |
+| Créer un joueur | `#openCreatePlayerBtn` → `#createPlayerOverlay` | ouverture + options (style/motif/accessoire) + fermeture (sans sauvegarde) | 🔒 ✅ | `e2e/auth/profile-actions.spec.js` |
 | Collection | `#collectionGrid` / `#powerShopGrid` | affichage joueurs | ⚠️ | — |
 | Badge Fondateur | `#founderBadge` | affichage conditionnel | ✅ (service) | `passService` |
 
@@ -106,7 +106,7 @@
 
 | Élément | Sélecteur | Parcours | Statut | Test |
 |---|---|---|---|---|
-| Ajouter un ami | `#friendPseudoInput` + `#sendFriendRequestBtn` | pseudo invalide → `#friendRequestError` | ⚠️ | — |
+| Ajouter un ami | `#friendPseudoInput` + `#sendFriendRequestBtn` | pseudo inexistant → `#friendRequestError` | 🔒 ✅ | `e2e/auth/profile-actions.spec.js` |
 | Copier lien d'invitation | `#shareProfileBtn` | copie + `#shareProfileFeedback` | ⚠️ | — |
 | Demandes / amis | `#pendingFriendRequests`, `#friendsList` | listes dynamiques | ⚠️ | — |
 | Proposer un échange | `#mercatoOfferOverlay` / `#confirmMercatoOfferBtn` | sélection joueurs → offre | ⚠️ | — |
@@ -161,4 +161,6 @@
 - **Parcours authentifiés** (login, profil, boutique) : couverts via `e2e/auth/` (backend de test).
 - **Ajouté par #147 — lot 1** (specs publiques) : navigation topbar (logo TM), retour config, bascules de mode + tous les groupes d'options, validation du code en ligne, annuler le coup, nouvelle partie, thèmes shootout + gating. Voir `navigation`, `config`, `game-controls`, `shootout-nav`.
 - **Ajouté par #147 — lot 2** : compte côté UI — bascule inscription (consentements + pseudo), mot de passe oublié, validations client (identifiants/email vides), fermeture, gating `#profileBtn` anonyme (`account-ui`) ; navigation boutique open/back (`shop-nav`) ; navigation des 5 onglets du profil, backend de test (`auth/profile-tabs`).
-- **Trous restants** : contrôles de partie avancés (pouvoir/fin de partie/overlay but — parcours long/non déterministe), achat de thème en boutique (paiement), création de joueur (quota backend), mercato (demandes/échanges), envoi réel du lien reset & actions RGPD (export/suppression), pages légales, PWA/offline. La plupart nécessitent soit un flux backend mutant, soit de jouer une partie jusqu'au but.
+- **Ajouté par #147 — lot 3** : overlays but/fin de partie + `#endTurnBtn` via un seam de test gated (`game-overlays`), pages légales (`legal`), manifest + service worker + hors-ligne (`pwa`).
+- **Ajouté par #147 — lot 4** : retour de paiement `#purchaseToast` (`payment-return`), création de joueur (overlay/options/fermeture) + mercato pseudo inexistant (`auth/profile-actions`), achat Stripe sandbox de bout en bout **opt-in** (`auth/shop-purchase`, `E2E_STRIPE=1`).
+- **Trous restants** : pouvoir en jeu (`#activatePowerBtn` / `#powerTargetOverlay` — nécessite un pion à pouvoir en main), proposition d'échange mercato (`#mercatoOfferOverlay` — nécessite un ami + collection), envoi réel du lien reset, **actions RGPD export/suppression (volontairement non automatisées — destructif)**, installation A2HS (non automatisable), pub récompensée (couverte en unit + edge).

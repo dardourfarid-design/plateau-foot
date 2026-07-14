@@ -1,5 +1,12 @@
 # Tactic Master — Projet
 
+[![CI](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/ci.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/ci.yml)
+[![Non-régression complète](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/full-regression.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/full-regression.yml)
+[![Smoke de production](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/prod-smoke.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/prod-smoke.yml)
+[![Couverture](https://img.shields.io/badge/couverture-63%25%20lignes%20%C2%B7%2086%25%20branches-brightgreen)](docs/regression-runbook.md)
+
+> Santé du projet en un coup d'œil. Détails et rejeu : **[Santé & non-régression](#santé--non-régression)**.
+
 ## Lancer l'app en local
 
 Les modules JavaScript (ES modules) ne fonctionnent pas en ouvrant le fichier
@@ -26,6 +33,34 @@ npm test
 
 Aucune installation préalable nécessaire (le runner de test est écrit en JS pur,
 sans dépendance externe — voir `tests/test-utils.js` pour le détail).
+
+## Santé & non-régression
+
+Le projet dispose d'une **suite de non-régression pérenne** (épic #143) pour
+surveiller la santé du projet dans la durée. Trois niveaux :
+
+| Niveau | Déclenchement | Contenu |
+|---|---|---|
+| **CI** (`ci.yml`) | auto (PR / push `main`) | 7 jobs : unit, parité `src/↔public/src`, e2e, e2e-auth, edge Deno, coverage c8, intégration Supabase |
+| **Non-régression complète** (`full-regression.yml`) | **à la demande** (Actions → Run workflow) | rejoue toute la suite lourde d'un coup, entrée `suite` = all/unit/e2e/quality |
+| **Smoke de production** (`prod-smoke.yml`) | **à la demande** | parcours critiques anonymes contre https://tactic-master.vercel.app |
+
+**Couverture actuelle** : moteur + services testés unitairement (16 fichiers de
+tests) ; **22 fichiers de spec E2E** (parcours publics + authentifiés + smoke
+prod) ; couverture c8 **63 % lignes / 86 % branches** (planchers CI : lignes 60,
+fonctions 55, branches 80).
+
+- 📋 **Inventaire exhaustif** (chaque bouton / feature / parcours + statut) : [`docs/regression-matrix.md`](docs/regression-matrix.md)
+- 📖 **Mode d'emploi** (rejouer en local / à la demande, lire les rapports, régénérer les baselines, réagir à un échec) : [`docs/regression-runbook.md`](docs/regression-runbook.md)
+- 📝 **Consignes ponctuelles avant un run** : [`docs/regression-notes.md`](docs/regression-notes.md)
+
+Rejeu local rapide :
+
+```bash
+node tests/run-tests.js   # tests unitaires du moteur
+npm run e2e               # E2E Playwright (parcours publics)
+npm run coverage          # couverture c8 (échoue sous les planchers)
+```
 
 ## Configurer Supabase
 

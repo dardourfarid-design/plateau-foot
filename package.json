@@ -9,11 +9,13 @@
     "serve": "node tools/static-server.mjs public 8080",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
-    "coverage": "c8 node tests/run-tests.js"
+    "coverage": "c8 node tests/run-tests.js",
+    "integration": "node tests/integration/run-integration.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.48.0",
+    "@supabase/supabase-js": "^2.110.1",
     "c8": "^10.1.3"
   },
   "c8": {

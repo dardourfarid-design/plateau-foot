@@ -16,7 +16,14 @@ async function login(page) {
   await page.locator('#authEmail').fill(USER);
   await page.locator('#authPassword').fill(PASS);
   await page.locator('#authSubmitBtn').click();
-  // La vue « Mon compte » (connecté) apparaît, avec l'email.
+  // Diagnostic : la connexion aboutit à la vue « Mon compte », OU un message
+  // d'erreur s'affiche — dans ce cas on le remonte pour comprendre en CI.
+  await Promise.race([
+    page.locator('#accountLoggedInView').waitFor({ state: 'visible', timeout: 15_000 }),
+    page.locator('#authError').waitFor({ state: 'visible', timeout: 15_000 }),
+  ]).catch(() => {});
+  const errText = (await page.locator('#authError').textContent().catch(() => '') || '').trim();
+  if (errText) throw new Error(`Connexion refusée par le backend de test : "${errText}"`);
   await expect(page.locator('#accountLoggedInView')).toBeVisible();
   await expect(page.locator('#accountEmailDisplay')).toContainText('@');
 }

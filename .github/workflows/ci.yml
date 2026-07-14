@@ -104,7 +104,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Node 22 : WebSocket natif requis par @supabase/supabase-js (realtime).
+          node-version: '22'
       - name: Installer les dépendances
         run: npm install
       # Le runner se saute proprement (exit 0) si les secrets sont absents
@@ -129,17 +130,15 @@ jobs:
         run: npm install
       - name: Installer Chromium
         run: npx playwright install --with-deps chromium
-      # Réécrit config.js pour viser le backend de TEST (jamais la prod). Vide
-      # sur les forks (secrets absents) → les specs se sautent via test.skip.
+      # Réécrit config.js pour viser le backend de TEST (jamais la prod), via
+      # Node (robuste, pas de piège de heredoc). Vide sur les forks (secrets
+      # absents) → les specs se sautent via test.skip.
       - name: Config de test
+        env:
+          URL: ${{ secrets.TEST_SUPABASE_URL }}
+          KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
         run: |
-          cat > public/config.js <<EOF
-          window.__PLATEAU_FOOT_CONFIG__ = {
-            supabaseUrl: '${{ secrets.TEST_SUPABASE_URL }}',
-            supabaseAnonKey: '${{ secrets.TEST_SUPABASE_ANON_KEY }}',
-            ads: { enabled: false, banner: false, interstitial: false, rewarded: false, cmp: { enabled: false, publisherId: null } }
-          };
-          EOF
+          node -e "const fs=require('fs');const cfg={supabaseUrl:process.env.URL||'',supabaseAnonKey:process.env.KEY||'',ads:{enabled:false,banner:false,interstitial:false,rewarded:false,cmp:{enabled:false,publisherId:null}}};fs.writeFileSync('public/config.js','window.__PLATEAU_FOOT_CONFIG__ = '+JSON.stringify(cfg)+';');console.log('config.js -> '+(process.env.URL?'backend de test':'VIDE (secrets absents)'));"
       - name: Tests E2E authentifiés
         env:
           E2E_USER: ${{ secrets.E2E_USER }}

@@ -26,8 +26,26 @@ import { getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWith
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession, cancelGameSession } from '../services/multiplayerService.js';
 import { createTutorialController } from './tutorial.js';
-import { initLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
-import './i18n-en.js'; // effet de bord : peuple le dictionnaire anglais
+import { initLang, getLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
+
+// Dictionnaire anglais chargé à la demande (#158) : les joueurs FR (langue par
+// défaut) ne téléchargent plus les 24 Ko de i18n-en.js. L'import dynamique est
+// déclenché au boot si la langue mémorisée est l'anglais, ou au premier
+// basculement FR→EN. Une fois le dictionnaire chargé, onLanguageChanged()
+// ré-applique les traductions — couvre le cas d'un clic sur EN avant la fin
+// du téléchargement.
+let _enDictPromise = null;
+function ensureEnglishDict() {
+  if (!_enDictPromise) {
+    _enDictPromise = import('./i18n-en.js')
+      .then(() => { if (getLang() === 'en') onLanguageChanged(); })
+      .catch(err => {
+        _enDictPromise = null; // permet de retenter au prochain basculement
+        console.error('Dictionnaire anglais non chargé :', err);
+      });
+  }
+  return _enDictPromise;
+}
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import { recordConsents, exportMyData, deleteMyData, CONSENT_PURPOSES } from '../services/consentService.js';
 import { setAdvertisingConsent, hasAdvertisingConsent, getAdvertisingConsent } from '../services/advertisingConsentService.js';
@@ -1888,12 +1906,16 @@ function init() {
   // traduction initiale du DOM statique. Le contenu dynamique se re-render via
   // onLanguageChanged() a chaque changement.
   initLang();
+  if (getLang() === 'en') ensureEnglishDict();
   const langHost = document.querySelector('.topbar-right');
   if (langHost) {
     const toggle = mountLangToggle(langHost, null);
     if (toggle) langHost.insertBefore(toggle, langHost.firstChild);
   }
-  onLangChange(onLanguageChanged);
+  onLangChange(lang => {
+    if (lang === 'en') ensureEnglishDict();
+    onLanguageChanged();
+  });
   applyTranslations(document);
   startAutoTranslate();
 

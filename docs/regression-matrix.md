@@ -57,11 +57,11 @@
 | Annuler le coup | `#cancelBtn` | annule la sélection | ✅ | `e2e/game-controls.spec.js` |
 | Utiliser le pouvoir | `#activatePowerBtn` | active un pouvoir | ⚠️ | — |
 | Ciblage pouvoir | `#powerTargetOverlay` / `#cancelPowerTargetBtn` | choisir un pion adverse | ⚠️ | — |
-| Terminer le tour | `#endTurnBtn` | passe la main | ⚠️ | — |
+| Terminer le tour | `#endTurnBtn` | phase de passe → passe la main | ✅ | `e2e/game-overlays.spec.js` |
 | Nouvelle partie | `#restartBtn` | retour config | ✅ | `e2e/game-controls.spec.js` |
-| Overlay but | `#goalOverlay` / `#continueBtn` | but marqué → continuer | ⚠️ | — |
-| Overlay fin — Accueil | `#backToSetupFromEndBtn` | clic → accueil | ⚠️ | — |
-| Overlay fin — Rejouer | `#newGameBtn` | clic → nouvelle partie | ⚠️ | — |
+| Overlay but | `#goalOverlay` / `#continueBtn` | but marqué → continuer (reprend la partie) | ✅ | `e2e/game-overlays.spec.js` |
+| Overlay fin — Accueil | `#backToSetupFromEndBtn` | clic → configuration | ✅ | `e2e/game-overlays.spec.js` |
+| Overlay fin — Rejouer | `#newGameBtn` | clic → configuration | ✅ | `e2e/game-overlays.spec.js` |
 | Overlay fin — Pub récompensée | `#watchRewardedBtn` | opt-in vidéo → pièces | ⚠️ (unit + edge) | `adService`, `rewarded-ssv` |
 
 ## Séance de tirs au but (`#shootoutScreen`)
@@ -139,12 +139,12 @@
 
 | Élément | Cible | Statut | Test |
 |---|---|---|---|
-| Conditions d'utilisation | `terms.html` | ⚠️ | — |
-| Confidentialité | `privacy.html` | ⚠️ | — |
+| Conditions d'utilisation | `terms.html` | ✅ | `e2e/legal.spec.js` |
+| Confidentialité | `privacy.html` | ✅ | `e2e/legal.spec.js` |
 | Réinitialisation mot de passe | `reset-password.html` | ⚠️ | — |
-| Manifest PWA | `manifest.json` | ⚠️ | — |
-| Service worker / offline | (à vérifier) | ⚠️ | — |
-| Installation A2HS | manifest + meta iOS | ⚠️ | — |
+| Manifest PWA | `manifest.json` | ✅ | `e2e/pwa.spec.js` |
+| Service worker / offline | `sw.js` (network-first, filet cache) | ✅ | `e2e/pwa.spec.js` |
+| Installation A2HS | manifest + meta iOS | ⚠️ (non automatisable) | — |
 
 ## Accessibilité & visuel (transverse)
 

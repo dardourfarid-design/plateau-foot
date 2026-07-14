@@ -59,6 +59,22 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  edge:
+    name: Tests Edge Functions (Deno)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      # Verrouille la sécurité du crédit rewarded : primitives de signature
+      # (round-trip ECDSA réel) + échec fermé du handler (#134).
+      # --node-modules-dir=auto : le package.json racine (Playwright/c8) fait
+      # sinon exiger un node_modules pré-installé pour les deps npm de
+      # jsr:@supabase/supabase-js.
+      - name: Tester rewarded-ssv
+        run: deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/
+
   coverage:
     name: Couverture de code (c8)
     runs-on: ubuntu-latest

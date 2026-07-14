@@ -69,8 +69,11 @@ jobs:
           deno-version: v2.x
       # Verrouille la sécurité du crédit rewarded : primitives de signature
       # (round-trip ECDSA réel) + échec fermé du handler (#134).
+      # --node-modules-dir=auto : le package.json racine (Playwright/c8) fait
+      # sinon exiger un node_modules pré-installé pour les deps npm de
+      # jsr:@supabase/supabase-js.
       - name: Tester rewarded-ssv
-        run: deno test --allow-env supabase/functions/rewarded-ssv/
+        run: deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/
 
   coverage:
     name: Couverture de code (c8)

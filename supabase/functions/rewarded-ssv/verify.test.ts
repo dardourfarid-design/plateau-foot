@@ -62,7 +62,7 @@ async function signContent(privateKey: CryptoKey, content: string): Promise<stri
     await crypto.subtle.sign(
       { name: 'ECDSA', hash: 'SHA-256' },
       privateKey,
-      new TextEncoder().encode(content),
+      new TextEncoder().encode(content) as BufferSource,
     ),
   );
   return b64ToB64url(bytesToB64(rawToDer(raw)));

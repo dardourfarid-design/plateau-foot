@@ -44,7 +44,9 @@ export function importEcKey(base64Der: string): Promise<CryptoKey> {
   const der = Uint8Array.from(atob(base64Der), (c) => c.charCodeAt(0));
   return crypto.subtle.importKey(
     'spki',
-    der,
+    // Cast : TS 5.7/Deno 2 paramètre Uint8Array<ArrayBufferLike>, que WebCrypto
+    // (BufferSource) n'accepte plus sans assertion — inoffensif à l'exécution.
+    der as BufferSource,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['verify'],
@@ -69,7 +71,12 @@ export async function verifyWithKey(
   const pubKey = await importEcKey(keyBase64);
   const signature = derToRaw(b64urlToBytes(signatureB64url));
   const data = new TextEncoder().encode(signedContent);
-  return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pubKey, signature, data);
+  return crypto.subtle.verify(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    pubKey,
+    signature as BufferSource,
+    data as BufferSource,
+  );
 }
 
 /** Mappe l'item de récompense Google vers un reward_type connu (migration 0036). */

@@ -1,0 +1,142 @@
+name: Non-régression complète (à la demande)
+
+# Suite de non-régression LOURDE et EXHAUSTIVE, déclenchée MANUELLEMENT.
+# Pendant du CI rapide (ci.yml, sur PR) : ici on rejoue tout d'un coup pour un
+# bilan de santé du projet, quand on veut (aucun cron). Épic #143, issue #145.
+# Onglet Actions → « Non-régression complète » → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Périmètre à rejouer'
+        type: choice
+        default: all
+        options: [all, unit, e2e, quality]
+
+jobs:
+  unit:
+    name: Tests unitaires (moteur)
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'unit' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tests/run-tests.js
+
+  sync-check:
+    name: Parité src/ ↔ public/src/
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'unit' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node build.js
+      - name: Vérifier l'absence de dérive
+        run: |
+          if ! git diff --quiet -- public/src; then
+            echo "::error::public/src/ n'est pas synchronisé avec src/. Lance 'node build.js' puis committe public/src/."
+            git --no-pager diff --stat -- public/src
+            exit 1
+          fi
+
+  e2e:
+    name: Tests E2E (Playwright)
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'e2e' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  e2e-auth:
+    name: E2E authentifiés
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'e2e' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      # Réécrit config.js vers le backend de TEST (jamais la prod). Vide sur les
+      # forks / sans secrets → les specs auth se sautent proprement (test.skip).
+      - name: Config de test
+        env:
+          URL: ${{ secrets.TEST_SUPABASE_URL }}
+          KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+        run: |
+          node -e "const fs=require('fs');const cfg={supabaseUrl:process.env.URL||'',supabaseAnonKey:process.env.KEY||'',ads:{enabled:false,banner:false,interstitial:false,rewarded:false,cmp:{enabled:false,publisherId:null}}};fs.writeFileSync('public/config.js','window.__PLATEAU_FOOT_CONFIG__ = '+JSON.stringify(cfg)+';');console.log('config.js -> '+(process.env.URL?'backend de test':'VIDE (secrets absents)'));"
+      - name: Tests E2E authentifiés
+        env:
+          E2E_USER: ${{ secrets.E2E_USER }}
+          E2E_PASS: ${{ secrets.E2E_PASS }}
+        run: npx playwright test --config playwright.auth.config.js
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 14
+
+  edge:
+    name: Tests Edge Functions (Deno)
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'quality' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/
+
+  coverage:
+    name: Couverture de code (c8)
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'quality' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run coverage
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          retention-days: 14
+
+  integration:
+    name: Intégration Supabase
+    if: ${{ inputs.suite == 'all' || inputs.suite == 'quality' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Node 22 : WebSocket natif requis par @supabase/supabase-js (realtime).
+          node-version: '22'
+      - run: npm install
+      - name: Tests d'intégration
+        env:
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          E2E_USER: ${{ secrets.E2E_USER }}
+          E2E_PASS: ${{ secrets.E2E_PASS }}
+        run: npm run integration

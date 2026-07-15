@@ -10,7 +10,7 @@ import {
   applyMove, PHASES
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
-import { TEAMS } from '../engine/constants.js';
+import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
 import {
   POWER_LABELS, canActivatePower, confirmRelaisAfterPass, expireWallIfNeeded
@@ -116,6 +116,7 @@ let purchasedThemeIds = [];
 let activeThemeId = loadSavedThemeId();
 let gameMode = 'local'; // 'local' | 'ai' | 'online'
 let aiLevel = AI_LEVELS.MOYEN;
+let selectedRuleset = 'classique'; // palier de regles (#206) : decouverte | classique | expert
 let selectedVariant = 'standard'; // 'standard' (6 pions) | 'tactique' (8 pions)
 let freePowersOn = true;          // pouvoir bonus tire au sort par equipe/match
 let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limite de tours, departage TAB)
@@ -181,6 +182,8 @@ function cacheDomRefs() {
   els.modeOptions = document.getElementById('modeOptions');
   els.aiDifficultyField = document.getElementById('aiDifficultyField');
   els.aiDifficultyOptions = document.getElementById('aiDifficultyOptions');
+  els.rulesetOptions = document.getElementById('rulesetOptions');
+  els.rulesetHint = document.getElementById('rulesetHint');
   els.variantOptions = document.getElementById('variantOptions');
   els.powersOptions = document.getElementById('powersOptions');
   els.formatOptions = document.getElementById('formatOptions');
@@ -351,7 +354,7 @@ function applyPowersToGameState() {
 }
 
 function startGame(goalsToWin) {
-  gameState = createGame({ goalsToWin, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
+  gameState = createGame({ goalsToWin, ruleset: selectedRuleset, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
   els.shootoutScreen?.classList.add('hidden');
   // En local ou vs IA, l'humain principal joue toujours Bleu. Sans cette
@@ -750,6 +753,35 @@ function wireSetupScreen() {
       powersOpts.forEach(o => o.classList.remove('active'));
       opt.classList.add('active');
       freePowersOn = opt.dataset.val === 'on';
+    });
+  });
+
+  // #206 — palier de regles (Decouverte / Classique / Expert). Choisir un palier
+  // applique aussi la variante et les pouvoirs RECOMMANDES (l'utilisateur peut
+  // ensuite les ajuster librement dans les Options avancees).
+  const setActive = (opts, val) => opts.forEach(o =>
+    o.classList.toggle('active', o.dataset.val === val));
+  const RULESET_HINTS = {
+    decouverte: 'Découverte : règles minimales — déplacer, pousser le ballon, marquer. Idéal pour une première partie.',
+    classique: 'Classique : couverture défensive et une‑deux. L’équilibre recommandé.',
+    expert: 'Expert : ajoute les ailes, le point de penalty, les pouvoirs et la formation Tactique à 8 pions.'
+  };
+  const rulesetOpts = els.rulesetOptions ? els.rulesetOptions.querySelectorAll('.setup-option') : [];
+  rulesetOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      rulesetOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedRuleset = opt.dataset.val;
+      if (els.rulesetHint && RULESET_HINTS[selectedRuleset]) {
+        els.rulesetHint.textContent = RULESET_HINTS[selectedRuleset];
+      }
+      const reco = RULESET_DEFAULTS[selectedRuleset];
+      if (reco) {
+        selectedVariant = reco.variant;
+        freePowersOn = reco.powers;
+        setActive(variantOpts, reco.variant);
+        setActive(powersOpts, reco.powers ? 'on' : 'off');
+      }
     });
   });
 

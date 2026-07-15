@@ -661,6 +661,10 @@ body{
   font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
   color: var(--craie-att); margin-bottom:8px; display:block;
 }
+.setup-hint{
+  font-size:12px; line-height:1.4; color: var(--craie-att);
+  opacity:0.75; margin:8px 0 0;
+}
 .setup-options{ display:flex; gap:8px; }
 .setup-option{
   flex:1; padding: 12px 8px;

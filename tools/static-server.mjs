@@ -9,7 +9,7 @@
 // Utilisé par playwright.config.js (webServer) et lançable à la main.
 
 import { createServer } from 'http';
-import { readFile } from 'fs';
+import { existsSync, readFile } from 'fs';
 import { extname, join, normalize, resolve } from 'path';
 
 const ROOT = resolve(process.argv[2] || 'public');
@@ -34,7 +34,9 @@ createServer((req, res) => {
   let pathname = decodeURIComponent((req.url || '/').split('?')[0]);
   if (pathname === '/' || pathname.endsWith('/')) pathname += 'index.html';
   // Empêche la traversée de répertoire.
-  const filePath = join(ROOT, normalize(pathname));
+  let filePath = join(ROOT, normalize(pathname));
+  // Émule cleanUrls:true de vercel.json : /terms résout vers terms.html.
+  if (!extname(filePath) && existsSync(filePath + '.html')) filePath += '.html';
   if (!filePath.startsWith(ROOT)) {
     res.writeHead(403);
     res.end('forbidden');

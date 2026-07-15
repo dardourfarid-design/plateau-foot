@@ -19,6 +19,23 @@ test('la section éditoriale est présente et visible (pas de display:none)', as
   await expect(about.locator('h2')).toContainText(/jeu de plateau de foot/i);
 });
 
+test('la landing /en/ se charge : h1, hreflang réciproques, CTA vers /?lang=en', async ({ page }) => {
+  await page.goto('/en/');
+  await expect(page).toHaveTitle(/football board game/i);
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(3);
+  await expect(page.locator('a.cta-main')).toHaveAttribute('href', '/?lang=en');
+  // La FR doit porter les mêmes hreflang (annotations réciproques obligatoires).
+  await page.goto('/');
+  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(3);
+});
+
+test("l'app démarre en anglais via /?lang=en (#183)", async ({ page }) => {
+  await page.goto('/?lang=en');
+  await expect(page.locator('#goToSetupBtn')).toContainText('Play now');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
 test('la FAQ visible se déplie et correspond au JSON-LD FAQPage', async ({ page }) => {
   await page.goto('/');
   const faq = page.locator('.seo-about details');

@@ -27,13 +27,22 @@ export function registerMessages(enMap = {}) {
 
 export function getLang() { return current; }
 
-/** Initialise la langue depuis localStorage (defaut fr). A appeler au boot. */
+/** Initialise la langue depuis l'URL (?lang=) puis localStorage (defaut fr).
+ *  A appeler au boot. Le parametre URL gagne et persiste : la landing /en/
+ *  (#183) renvoie vers /?lang=en pour demarrer l'app en anglais. */
 export function initLang() {
   let lang = 'fr';
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (SUPPORTED_LANGS.includes(saved)) lang = saved;
   } catch (_) { /* stockage indisponible : on reste en fr */ }
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('lang');
+    if (SUPPORTED_LANGS.includes(fromUrl) && fromUrl !== lang) {
+      lang = fromUrl;
+      try { window.localStorage.setItem(STORAGE_KEY, lang); } catch (_) { /* ignore */ }
+    }
+  } catch (_) { /* pas d'URL exploitable (tests noeud) : on garde lang */ }
   current = lang;
   if (typeof document !== 'undefined' && document.documentElement) {
     document.documentElement.lang = lang;

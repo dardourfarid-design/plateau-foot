@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tactic Master — Football board game online</title>
+<meta name="description" content="A board as simple as checkers, a ball that moves like in football. Play solo, against the computer or online — 5-minute matches, free in your browser.">
+
+<!-- Landing EN statique (#183) : version indexable pour le marché anglophone.
+     L'app elle-même reste servie sur / — le CTA renvoie vers /?lang=en, qui
+     démarre l'interface en anglais (src/ui/i18n.js). Le contenu éditorial
+     ci-dessous est le miroir EN de la section .seo-about de l'accueil. -->
+<link rel="canonical" href="https://tactic-master.vercel.app/en/">
+<link rel="alternate" hreflang="fr" href="https://tactic-master.vercel.app/">
+<link rel="alternate" hreflang="en" href="https://tactic-master.vercel.app/en/">
+<link rel="alternate" hreflang="x-default" href="https://tactic-master.vercel.app/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tactic Master">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:title" content="Tactic Master — Football board game online">
+<meta property="og:description" content="A board as simple as checkers, a ball that moves like in football. 5-minute matches, free in your browser.">
+<meta property="og:url" content="https://tactic-master.vercel.app/en/">
+<meta property="og:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tactic Master — Football board game online">
+<meta name="twitter:description" content="A board as simple as checkers, a ball that moves like in football.">
+<meta name="twitter:image" content="https://tactic-master.vercel.app/og-image.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "VideoGame",
+      "@id": "https://tactic-master.vercel.app/en/#game",
+      "name": "Tactic Master",
+      "url": "https://tactic-master.vercel.app/en/",
+      "image": "https://tactic-master.vercel.app/og-image.jpg",
+      "description": "Tactical board game blending checkers and football: push the ball into the opponent's goal. Solo, vs AI or online. 5-minute matches.",
+      "inLanguage": "en",
+      "genre": ["Board game", "Strategy", "Sports"],
+      "gamePlatform": ["Web", "PWA"],
+      "operatingSystem": "Web",
+      "applicationCategory": "GameApplication",
+      "playMode": ["SinglePlayer", "MultiPlayer"],
+      "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
+      "author": { "@type": "Organization", "name": "Tactic Master" },
+      "publisher": { "@type": "Organization", "name": "Tactic Master" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://tactic-master.vercel.app/en/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Tactic Master free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. The game is free to play in your browser, nothing to install. An optional shop offers pitch themes and collectible player packs." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you play with two players?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes: face to face on the same device, or online by sharing a game code. A mode against the computer with three difficulty levels is also available." }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you score a goal?",
+          "acceptedAnswer": { "@type": "Answer", "text": "By pushing the ball into the opponent's goal — the three central squares of the back line. The ball is pushed in a straight line by an adjacent piece and stops at the first obstacle." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you install Tactic Master on mobile?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is a web app (PWA): open the site in your browser then choose “Add to Home Screen” on iOS or Android. Local modes even work offline." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<meta name="theme-color" content="#1F3D2B">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+.en-landing{ max-width:720px; margin:0 auto; padding:48px 20px 0; text-align:center; }
+.en-landing .logo-title{ font-size:52px; }
+.en-landing .cta-main{ margin:22px auto 6px; }
+.en-landing .en-sub{ color:var(--craie-att); font-size:15px; margin:10px 0 0; }
+/* La section éditoriale réutilise .seo-about (styles.css) mais alignée à gauche. */
+.en-landing + .seo-about{ text-align:left; }
+</style>
+</head>
+<body>
+
+<div class="en-landing">
+  <h1 class="logo-title">
+    TACTIC<br>
+    <span>MASTER</span>
+    <span class="logo-title-underline" aria-hidden="true" style="margin:6px auto 12px"></span>
+  </h1>
+  <p class="en-sub">Football, sitting down too — a free tactical board game, as easy to learn as checkers.</p>
+  <a class="btn primary cta-main" href="/?lang=en" style="display:inline-block;text-decoration:none">
+    Play now — free, in English
+  </a>
+  <p class="en-sub" style="font-size:13px;opacity:.8">Runs in your browser, no download. 5-minute matches.</p>
+</div>
+
+<section class="seo-about" aria-label="About Tactic Master">
+  <h2>What is Tactic Master?</h2>
+  <p>Tactic Master is a free <strong>football board game</strong> you play right in
+  the browser. It is as easy to pick up as checkers: each turn you move one piece
+  one square, push the ball in a straight line, and score by sending it into the
+  opponent's goal. No dice, no luck — like chess or checkers, everything comes
+  down to positioning and anticipation. A match takes about five minutes.</p>
+
+  <h3>The rules in short</h3>
+  <ul>
+    <li>A 7×9 board; 6 pieces per team (1 goalkeeper, 2 defenders, 3 forwards).</li>
+    <li>On your turn: move one piece one square, in any direction.</li>
+    <li>A piece adjacent to the ball can push it in a straight line, up to the first obstacle.</li>
+    <li>The goalkeeper only moves sideways, along the goal line.</li>
+    <li>No captures: you win by scoring goals — and defence matters, as each piece
+    covers its neighbouring squares and cuts opposing passing lanes.</li>
+  </ul>
+
+  <h3>Frequently asked questions</h3>
+  <details>
+    <summary>Is Tactic Master free?</summary>
+    <p>Yes. The game is free to play in your browser, nothing to install. An
+    optional shop offers pitch themes and collectible player packs.</p>
+  </details>
+  <details>
+    <summary>Can you play with two players?</summary>
+    <p>Yes: face to face on the same device, or online by sharing a game code. A
+    mode against the computer with three difficulty levels is also available.</p>
+  </details>
+  <details>
+    <summary>How do you score a goal?</summary>
+    <p>By pushing the ball into the opponent's goal — the three central squares of
+    the back line. The ball is pushed in a straight line by an adjacent piece and
+    stops at the first obstacle.</p>
+  </details>
+  <details>
+    <summary>Can you install Tactic Master on mobile?</summary>
+    <p>Yes. It is a web app (PWA): open the site in your browser then choose
+    “Add to Home Screen” on iOS or Android. Local modes even work offline.</p>
+  </details>
+</section>
+
+<footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">
+  <a href="/terms" style="color:inherit">Terms of use &amp; sale (French)</a>
+  &nbsp;·&nbsp;
+  <a href="/privacy" style="color:inherit">Privacy (French)</a>
+  &nbsp;·&nbsp;
+  <span>© 2026 Tactic Master</span>
+</footer>
+
+</body>
+</html>

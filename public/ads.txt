@@ -1,5 +1,5 @@
-# Authorized Digital Sellers (IAB) — Tactic Master
-# Déclare les régies autorisées à vendre l'inventaire pub de ce domaine.
-# Doit rester accessible à la racine : https://<domaine>/ads.txt
-# Épic monétisation publicitaire, PR 0 (#25).
 google.com, pub-2881855045042521, DIRECT, f08c47fec0942fa0
+# Authorized Digital Sellers (IAB) - Tactic Master
+# Regies autorisees a vendre l'inventaire pub de ce domaine.
+# Doit rester accessible a la racine : https://<domaine>/ads.txt
+# Epic monetisation publicitaire, PR 0 (#25).

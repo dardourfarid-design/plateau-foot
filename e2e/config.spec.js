@@ -35,6 +35,9 @@ for (const { group, val } of [
   { group: '#goalOptions', val: '5' },
 ]) {
   test(`sélection d'une option dans ${group}`, async ({ page }) => {
+    // Ces réglages vivent désormais dans « Options avancées » (#205), replié par
+    // défaut : on le déplie avant d'interagir.
+    await page.locator('#advancedOptions .advanced-summary').click();
     const opt = page.locator(`${group} .setup-option[data-val="${val}"]`);
     await opt.click();
     await expect(opt).toHaveClass(/active/);

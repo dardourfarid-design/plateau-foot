@@ -17,7 +17,7 @@ test('l\'accueil se charge sans erreur JS', async ({ page }) => {
   expect(errors, `erreurs page: ${errors.join(' | ')}`).toHaveLength(0);
 });
 
-test('« Jouer » mène à l\'écran de configuration', async ({ page }) => {
+test('« Personnaliser la partie » mène à l\'écran de configuration', async ({ page }) => {
   await page.goto('/');
   await page.locator('#goToSetupBtn').click();
 
@@ -25,6 +25,14 @@ test('« Jouer » mène à l\'écran de configuration', async ({ page }) => {
   await expect(page.locator('#setupScreen')).toBeHidden();
   // Le bouton de lancement de partie est présent sur la config.
   await expect(page.locator('#startBtn')).toBeVisible();
+});
+
+test('« Jouer » lance une partie en 1 clic depuis l\'accueil (#204)', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#quickPlayBtn').click();
+
+  await expect(page.locator('#gameScreen')).toBeVisible();
+  await expect(page.locator('#boardGrid .cell')).toHaveCount(63);
 });
 
 test('lancer une partie affiche le plateau', async ({ page }) => {

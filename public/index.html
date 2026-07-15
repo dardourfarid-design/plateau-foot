@@ -303,10 +303,11 @@
           </div>
         </div>
 
-        <button class="btn primary cta-main" id="goToSetupBtn">
+        <button class="btn primary cta-main" id="quickPlayBtn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3l7 5-7 5V3z" fill="currentColor"/></svg>
-          Jouer maintenant
+          Jouer
         </button>
+        <button class="btn cta-secondary" id="goToSetupBtn">Personnaliser la partie</button>
         <button class="tutorial-link" id="startTutorialBtn">Comment jouer ? Lancer le tutoriel guidé →</button>
         <div id="dailyHint" class="hidden" style="margin-top:12px;font-size:14px;color:#C8841A;letter-spacing:.02em;"></div>
       </div>
@@ -438,39 +439,54 @@
           <p class="setup-hint" id="rulesetHint">Classique : couverture défensive et une‑deux. Découverte = règles minimales ; Expert = ailes, penalty, pouvoirs.</p>
         </div>
 
-        <div class="setup-field">
-          <span class="setup-label">Style de jeu</span>
-          <div class="setup-options" id="variantOptions">
-            <div class="setup-option active" data-val="standard">Classique · 6</div>
-            <div class="setup-option" data-val="tactique">Tactique · 8</div>
-          </div>
-        </div>
+        <!-- #205 — divulgation progressive : l'essentiel (mode, niveau, palier)
+             reste visible ; le réglage fin est replié ici. -->
+        <details class="advanced-options" id="advancedOptions">
+          <summary class="advanced-summary">Options avancées</summary>
 
-        <div class="setup-field">
-          <span class="setup-label">Pouvoirs bonus</span>
-          <div class="setup-options" id="powersOptions">
-            <div class="setup-option active" data-val="on">Activés</div>
-            <div class="setup-option" data-val="off">Désactivés</div>
+          <div class="setup-field">
+            <span class="setup-label">Style de jeu</span>
+            <div class="setup-options" id="variantOptions">
+              <div class="setup-option active" data-val="standard">Classique · 6</div>
+              <div class="setup-option" data-val="tactique">Tactique · 8</div>
+            </div>
           </div>
-        </div>
 
-        <div class="setup-field">
-          <span class="setup-label">Format</span>
-          <div class="setup-options" id="formatOptions">
-            <div class="setup-option active" data-val="score">Au score</div>
-            <div class="setup-option" data-val="manche">Manche courte</div>
+          <div class="setup-field">
+            <span class="setup-label">Pouvoirs bonus</span>
+            <div class="setup-options" id="powersOptions">
+              <div class="setup-option active" data-val="on">Activés</div>
+              <div class="setup-option" data-val="off">Désactivés</div>
+            </div>
           </div>
-        </div>
 
-        <div class="setup-field">
-          <span class="setup-label">Buts pour gagner</span>
-          <div class="setup-options setup-options-goals" id="goalOptions">
-            <div class="setup-option" data-val="1"><span class="goal-val">1</span></div>
-            <div class="setup-option active" data-val="3"><span class="goal-val">3</span></div>
-            <div class="setup-option" data-val="5"><span class="goal-val">5</span></div>
-            <div class="setup-option" data-val="99"><span class="goal-val">∞</span></div>
+          <div class="setup-field">
+            <span class="setup-label">Format</span>
+            <div class="setup-options" id="formatOptions">
+              <div class="setup-option active" data-val="score">Au score</div>
+              <div class="setup-option" data-val="manche">Manche courte</div>
+            </div>
           </div>
-        </div>
+
+          <div class="setup-field">
+            <span class="setup-label">Buts pour gagner</span>
+            <div class="setup-options setup-options-goals" id="goalOptions">
+              <div class="setup-option" data-val="1"><span class="goal-val">1</span></div>
+              <div class="setup-option active" data-val="3"><span class="goal-val">3</span></div>
+              <div class="setup-option" data-val="5"><span class="goal-val">5</span></div>
+              <div class="setup-option" data-val="99"><span class="goal-val">∞</span></div>
+            </div>
+          </div>
+
+          <!-- #207 — conseils contextuels en jeu, désactivables pour les habitués. -->
+          <div class="setup-field">
+            <span class="setup-label">Conseils en jeu</span>
+            <div class="setup-options" id="hintsOptions">
+              <div class="setup-option active" data-val="on">Activés</div>
+              <div class="setup-option" data-val="off">Désactivés</div>
+            </div>
+          </div>
+        </details>
 
         <button class="btn primary config-start-btn" id="startBtn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="currentColor"/></svg>

@@ -7,6 +7,17 @@ import { defineConfig, devices } from '@playwright/test';
 // via .github/workflows/prod-smoke.yml. Voir docs/regression-runbook.md.
 const PROD_URL = process.env.PROD_URL || 'https://tactic-master.vercel.app';
 
+// Garde-fou politique IT (2026-07-15) : le smoke prod pilote le site live,
+// dont le navigateur appelle le backend Supabase — trafic interdit depuis les
+// postes de travail. Exécution réservée aux runners GitHub Actions (CI=true) :
+// workflow prod-smoke.yml (workflow_dispatch).
+if (!process.env.CI) {
+  throw new Error(
+    'Smoke prod : exécution locale interdite (politique IT — trafic vers le backend Supabase). '
+    + 'Utiliser GitHub Actions : workflow « prod-smoke » (déclenchement manuel).'
+  );
+}
+
 export default defineConfig({
   testDir: './e2e-prod',
   timeout: 30_000,

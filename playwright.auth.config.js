@@ -7,6 +7,18 @@ import { defineConfig, devices } from '@playwright/test';
 //     de lancer ;
 //   - exigent un compte de test (E2E_USER / E2E_PASS).
 // En l'absence de ces variables, les specs se sautent proprement.
+
+// Garde-fou politique IT (2026-07-15) : ces tests génèrent du trafic réseau
+// vers *.supabase.co depuis la machine qui les lance — interdit depuis les
+// postes de travail. Exécution réservée aux runners GitHub Actions (CI=true) :
+// jobs « E2E authentifiés » de ci.yml et full-regression.yml.
+if (!process.env.CI) {
+  throw new Error(
+    'E2E authentifiés : exécution locale interdite (politique IT — trafic vers le backend Supabase). '
+    + 'Utiliser GitHub Actions : job « E2E authentifiés » (ci.yml, à chaque PR) ou full-regression.yml (à la demande).'
+  );
+}
+
 export default defineConfig({
   testDir: './e2e/auth',
   timeout: 45_000,

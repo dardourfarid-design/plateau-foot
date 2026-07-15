@@ -1,8 +1,12 @@
 {
+  "id": "/",
   "name": "Tactic Master",
   "short_name": "Tactic Master",
   "description": "Le foot se joue aussi assis — jeu de stratégie façon dames, en solo, contre l'ordinateur ou en ligne.",
-  "start_url": "/index.html",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["games", "sports"],
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -26,6 +30,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "img/screenshots/home-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Écran d'accueil de Tactic Master"
+    },
+    {
+      "src": "img/screenshots/board-wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Une partie en cours sur le plateau 7×9"
     }
   ]
 }

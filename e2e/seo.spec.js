@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Contenu indexable & données structurées (#181/#182) : le seul texte que les
 // moteurs lisent sur cette SPA. Vérifie qu'il reste visible et que le JSON-LD

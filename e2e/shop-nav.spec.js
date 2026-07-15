@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Navigation vers/depuis la boutique — trou de docs/regression-matrix.md (#147).
 // L'ouverture ne demande pas de compte (catalogue de secours hors ligne).

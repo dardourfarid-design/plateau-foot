@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Tutoriel guidé : jouable sans compte. Vérifie l'ouverture, l'affichage de la
 // progression, l'avancement et la fermeture (« Passer »).

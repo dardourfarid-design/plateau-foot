@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Overlay de proposition d'échange mercato (#147) — exercé via le seam de test
 // gated (window.__TM_E2E__ → window.__tmMercatoTest.openOffer), car ouvrir cet

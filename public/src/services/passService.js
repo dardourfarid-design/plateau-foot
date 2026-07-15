@@ -1,7 +1,7 @@
 // ===================== SERVICE PASSES & FONDATEURS =====================
 // Vérifie si l'utilisateur a un pass actif et lit le compteur Fondateurs.
 
-import { supabase } from './supabaseClient.js';
+import { hasLocalSession, supabase } from './supabaseClient.js';
 
 /**
  * Indique si l'utilisateur connecté est Fondateur (a acheté le Pack Fondateurs).
@@ -30,6 +30,10 @@ export async function getMyFounderStatus() {
  */
 export async function getMyActivePass() {
   if (!supabase) return null;
+  // Sans session locale, le RPC ne peut que répondre « aucun pass » — on
+  // évite l'aller-retour backend pour chaque visiteur anonyme (et tout
+  // trafic Supabase dans les E2E publics).
+  if (!(await hasLocalSession())) return null;
   const { data, error } = await supabase.rpc('get_my_active_pass');
   if (error) {
     console.error('[pass] getMyActivePass:', error.message);

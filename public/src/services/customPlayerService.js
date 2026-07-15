@@ -4,7 +4,7 @@
 // (create_custom_player(), voir 0012_custom_players.sql) — ce module ne
 // fait que transporter la demande, jamais de logique de quota en local.
 
-import { supabase } from './supabaseClient.js';
+import { hasLocalSession, supabase } from './supabaseClient.js';
 
 export const FREE_CUSTOM_PLAYER_SLOTS = 1;
 export const CUSTOM_PLAYER_SLOT_THEME_ID = 'custom-player-slot';
@@ -18,6 +18,7 @@ function requireClient() {
 
 export async function fetchMyCustomPlayers() {
   const client = requireClient();
+  if (!(await hasLocalSession())) return []; // anonyme : pas d'aller-retour backend
   const { data, error } = await client
     .from('custom_players')
     .select('*')

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Overlays but / fin de partie (#147) — exercés via le seam de test gated
 // (window.__TM_E2E__ → window.__tmTest), qui force un état de jeu puis rejoue le

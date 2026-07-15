@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // PWA / hors-ligne (#147) : manifest installable + service worker qui sert
 // l'app en cache quand le réseau tombe (stratégie network-first, filet

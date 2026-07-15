@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Bascule de langue FR ⇄ EN via le toggle en haut à droite. Vérifie qu'un
 // texte connu est bien retraduit et que l'état actif du toggle suit.

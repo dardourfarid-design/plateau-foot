@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Couverture des raccourcis de navigation globaux (topbar + retours) — trous
 // identifiés par docs/regression-matrix.md (issue #147). Parcours anonymes,

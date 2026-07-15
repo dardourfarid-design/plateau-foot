@@ -4,7 +4,7 @@
 // Aucune logique de jeu ici : ce module ne fait que transporter des
 // données entre Supabase et l'UI.
 
-import { supabase } from './supabaseClient.js';
+import { hasLocalSession, supabase } from './supabaseClient.js';
 
 function requireClient() {
   if (!supabase) {
@@ -40,6 +40,7 @@ export async function ensureStarterPack() {
  */
 export async function fetchMyCollection() {
   const client = requireClient();
+  if (!(await hasLocalSession())) return []; // anonyme : pas d'aller-retour backend
   const { data, error } = await client
     .from('player_ownership')
     .select('*, fictional_players(*)');

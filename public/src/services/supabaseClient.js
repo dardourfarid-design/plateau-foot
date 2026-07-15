@@ -85,6 +85,21 @@ export function onAuthStateChange(callback) {
   });
 }
 
+// ---------- Session ----------
+
+/**
+ * Vrai si une session est présente en LOCAL (localStorage) — aucun appel
+ * réseau. Sert à court-circuiter les lectures « mes données » pour les
+ * visiteurs anonymes : sans session, elles ne peuvent que répondre vide,
+ * autant éviter l'aller-retour backend (politique IT : zéro trafic Supabase
+ * dans les parcours anonymes, E2E publics compris).
+ */
+export async function hasLocalSession() {
+  if (!supabase) return false;
+  const { data: { session } = {} } = await supabase.auth.getSession();
+  return !!session;
+}
+
 // ---------- Thèmes ----------
 
 export async function fetchActiveThemes() {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Couverture de la modale de compte côté UI (bascules, validations client) —
 // trous de docs/regression-matrix.md (#147). Tous ces parcours sont

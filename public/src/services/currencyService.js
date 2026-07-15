@@ -4,7 +4,7 @@
 // definer — le client ne peut jamais écrire directement dans user_currency
 // ni dans currency_transactions.
 
-import { supabase } from './supabaseClient.js';
+import { hasLocalSession, supabase } from './supabaseClient.js';
 
 function requireClient() {
   if (!supabase) throw new Error('Supabase non configuré.');
@@ -17,6 +17,7 @@ function requireClient() {
  */
 export async function getCurrencyBalance() {
   if (!supabase) return 0;
+  if (!(await hasLocalSession())) return 0; // anonyme : pas d'aller-retour backend
   const { data, error } = await supabase.rpc('get_currency_balance');
   if (error) {
     console.error('[currency] getCurrencyBalance:', error.message);
@@ -46,6 +47,7 @@ export async function unlockThemeWithCoins(themeId) {
  */
 export async function getKitCredits() {
   if (!supabase) return 0;
+  if (!(await hasLocalSession())) return 0; // anonyme : pas d'aller-retour backend
   const { data, error } = await supabase.rpc('get_my_kit_credits');
   if (error) {
     console.error('[currency] getKitCredits:', error.message);

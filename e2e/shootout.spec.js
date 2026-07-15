@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Séance de tirs au but (#130) — jouable sans compte via le bouton dédié de
 // l'écran de configuration (mode standalone). Exerce la boucle complète d'un

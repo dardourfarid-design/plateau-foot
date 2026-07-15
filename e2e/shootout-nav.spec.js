@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Couverture de la navigation/thèmes de la séance de tirs (le tir lui-même est
 // couvert par shootout.spec.js) — trous de docs/regression-matrix.md (#147).

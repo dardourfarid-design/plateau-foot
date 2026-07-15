@@ -12,6 +12,8 @@
 | `public/robots.txt` | ligne `Sitemap:` |
 | `public/terms.html` | `<link rel="canonical">` |
 | `public/privacy.html` | `<link rel="canonical">` |
+| `public/en/index.html` | canonical, hreflang ×3, `og:url`/`og:image` ×2, JSON-LD (#183) |
+| `public/index.html` (bis) | les 3 `<link rel="alternate" hreflang>` (#183) |
 | `tools/seo-check.mjs` | constante `DOMAIN` (garde-fou CI, #185) |
 
 Vérification rapide qu'aucune occurrence n'a été oubliée :
@@ -36,7 +38,8 @@ grep -rn "tactic-master.vercel.app" public/
 
 | Page | Politique | Mécanisme |
 |---|---|---|
-| `/` | indexée | canonical + sitemap |
+| `/` | indexée | canonical + sitemap + hreflang (fr, x-default) |
+| `/en/` | indexée (landing EN statique, CTA → `/?lang=en`) | canonical + sitemap + hreflang (en) |
 | `/terms`, `/privacy` | indexées (signal de confiance, requis AdSense) | canonical + sitemap, URLs propres (`cleanUrls`) |
 | `/reset-password`, `/skins-preview` | non indexées | `<meta name="robots" content="noindex">` + `X-Robots-Tag` (vercel.json) |
 | `/src/**` | crawlable (nécessaire au rendu Googlebot, #177) mais non listé | absent du sitemap |

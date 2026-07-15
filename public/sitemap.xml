@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- URLs "propres" (sans .html) : vercel.json a cleanUrls:true, les URLs .html
+     répondent en 308 — un sitemap ne doit lister que des URLs finales. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://tactic-master.vercel.app/</loc>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tactic-master.vercel.app/terms.html</loc>
+    <loc>https://tactic-master.vercel.app/terms</loc>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://tactic-master.vercel.app/privacy.html</loc>
+    <loc>https://tactic-master.vercel.app/privacy</loc>
+    <lastmod>2026-07-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>

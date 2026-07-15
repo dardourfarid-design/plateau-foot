@@ -24,7 +24,7 @@ import { initProfile, toOwnedShape } from './profileUI.js';
 import { initMercato } from './mercatoUI.js';
 import { initAccount } from './accountUI.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
-import { createGameSession, joinGameSession, pushGameState, subscribeToGameSession, cancelGameSession } from '../services/multiplayerService.js';
+import { initOnline } from './onlineUI.js';
 import { initTutorial } from './tutorialUI.js';
 import { initLang, getLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
 
@@ -124,7 +124,8 @@ const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujour
 
 // État multijoueur : myTeam est l'équipe contrôlée par CE navigateur ;
 // l'autre équipe n'est jouable qu'en recevant les mises à jour de l'adversaire.
-let onlineSessionId = null;
+// La session en ligne (id + abonnement Realtime) vit dans onlineUI.js.
+let onlineModule = null;     // { syncOnlineStateIfNeeded, leaveOnlineSession } — voir onlineUI.js
 
 // Identité des joueurs fictifs alignés (résolue une fois par partie, pas
 // par coup). null si pas de compte ou pas encore de composition choisie —
@@ -136,7 +137,6 @@ let myResolvedLineup = null;
 // d'activation (Tir Puissant, Sprint), plutôt qu'un déplacement normal.
 let pendingPowerActivation = null; // { tokenId, power } | null
 let myTeam = TEAMS.BLEU;
-let unsubscribeFromSession = null;
 
 // État tutoriel
 let tutorialModule = null;   // { isActive, checkTutorialProgress } — voir tutorialUI.js
@@ -517,7 +517,7 @@ function handleCellClick(row, col) {
 function handlePostActionEffects(previousState) {
   if (gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy) {
     render();
-    syncOnlineStateIfNeeded();
+    onlineModule?.syncOnlineStateIfNeeded();
 
     if (tutorialModule?.isActive()) {
       // Pendant le tutoriel, on ne montre pas l'overlay "BUT !" standard :
@@ -536,7 +536,7 @@ function handlePostActionEffects(previousState) {
   }
 
   render();
-  syncOnlineStateIfNeeded();
+  onlineModule?.syncOnlineStateIfNeeded();
 
   if (tutorialModule?.isActive()) {
     // Détecte si ce coup correspondait à l'étape "déplacement vers le ballon"
@@ -656,7 +656,7 @@ function hideGoalOverlayAndResume() {
   gameState = resetBallAfterGoal(gameState);
   undoSnapshot = null;
   render();
-  syncOnlineStateIfNeeded();
+  onlineModule?.syncOnlineStateIfNeeded();
   maybeTriggerAiTurn();
 }
 
@@ -732,11 +732,7 @@ function showEndOverlay(winningTeam) {
 }
 
 function backToSetup() {
-  if (unsubscribeFromSession) {
-    unsubscribeFromSession();
-    unsubscribeFromSession = null;
-  }
-  onlineSessionId = null;
+  onlineModule?.leaveOnlineSession();
   // gameMode n'est plus réinitialisé ici : le sélecteur visuel ("2 joueurs"
   // / "Ordinateur" / "En ligne") reste affiché tel que l'utilisateur l'a
   // choisi, donc la variable réelle doit rester cohérente avec lui. La
@@ -757,8 +753,7 @@ function backToSetup() {
 // Retour a la page d'accueil (landing / hero) — declenche par un clic sur le
 // logo TM en haut a gauche. Ferme tous les ecrans/overlays et reaffiche l'accueil.
 function goToLanding() {
-  if (unsubscribeFromSession) { unsubscribeFromSession(); unsubscribeFromSession = null; }
-  onlineSessionId = null;
+  onlineModule?.leaveOnlineSession();
   els.gameScreen?.classList.add('hidden');
   els.configScreen?.classList.add('hidden');
   els.waitingScreen?.classList.add('hidden');
@@ -916,113 +911,6 @@ function wireSetupScreen() {
     els.configScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');
   });
-}
-
-// ---------- Multijoueur en ligne ----------
-
-function wireOnlineMode() {
-  els.createOnlineBtn.addEventListener('click', handleCreateOnlineGame);
-  els.joinOnlineBtn.addEventListener('click', handleJoinOnlineGame);
-  els.joinCodeInput.addEventListener('input', () => {
-    els.joinCodeInput.value = els.joinCodeInput.value.toUpperCase();
-  });
-  els.joinCodeInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleJoinOnlineGame();
-  });
-  els.cancelWaitingBtn.addEventListener('click', cancelOnlineWaiting);
-}
-
-async function handleCreateOnlineGame() {
-  els.onlineError.textContent = '';
-  try {
-    const initialState = createGame({ goalsToWin: 3 });
-    const { id, inviteCode } = await createGameSession(initialState);
-
-    onlineSessionId = id;
-    myTeam = TEAMS.BLEU; // l'hôte est toujours Bleu
-    gameState = initialState;
-
-    els.configScreen.classList.add('hidden');
-    els.waitingScreen.classList.remove('hidden');
-    els.inviteCodeDisplay.textContent = inviteCode;
-
-    unsubscribeFromSession = subscribeToGameSession(id, (newState, status) => {
-      const stillWaiting = !els.waitingScreen.classList.contains('hidden');
-      if (status === 'active' && stillWaiting) {
-        // L'adversaire vient de rejoindre : on quitte la salle d'attente
-        // et on démarre vraiment l'écran de jeu avec l'état reçu.
-        gameState = newState;
-        els.waitingScreen.classList.add('hidden');
-        els.gameScreen.classList.remove('hidden');
-        buildBoardGrid(els.boardGrid, handleCellClick);
-        render();
-        return;
-      }
-      // Mise à jour normale en cours de partie (coup de l'adversaire).
-      gameState = newState;
-      render();
-    });
-  } catch (err) {
-    els.onlineError.textContent = err.message || 'Impossible de créer la partie.';
-  }
-}
-
-async function handleJoinOnlineGame() {
-  els.onlineError.textContent = '';
-  const code = els.joinCodeInput.value.trim();
-  if (code.length < 4) {
-    els.onlineError.textContent = t('Entre le code complet de la partie.');
-    return;
-  }
-
-  try {
-    const { id, gameState: remoteState } = await joinGameSession(code);
-
-    onlineSessionId = id;
-    myTeam = TEAMS.ROUGE; // celui qui rejoint est toujours Rouge
-    gameState = remoteState;
-
-    els.configScreen.classList.add('hidden');
-    els.gameScreen.classList.remove('hidden');
-    buildBoardGrid(els.boardGrid, handleCellClick);
-    render();
-
-    unsubscribeFromSession = subscribeToGameSession(id, (newState) => {
-      gameState = newState;
-      render();
-    });
-  } catch (err) {
-    els.onlineError.textContent = err.message || 'Code invalide ou partie déjà commencée.';
-  }
-}
-
-function cancelOnlineWaiting() {
-  if (unsubscribeFromSession) {
-    unsubscribeFromSession();
-    unsubscribeFromSession = null;
-  }
-  // Clôture la session côté serveur : sans ça, elle restait « waiting »
-  // pour toujours et son code d'invitation restait joignable.
-  if (onlineSessionId) {
-    cancelGameSession(onlineSessionId).catch(() => {/* best effort */});
-  }
-  onlineSessionId = null;
-  els.waitingScreen.classList.add('hidden');
-  els.configScreen.classList.remove('hidden');
-}
-
-/**
- * Pousse l'état courant vers Supabase si une partie en ligne est active.
- * Appelé après chaque coup local validé par le moteur, pour que l'adversaire
- * le reçoive via son abonnement Realtime.
- */
-async function syncOnlineStateIfNeeded() {
-  if (gameMode !== 'online' || !onlineSessionId) return;
-  try {
-    await pushGameState(onlineSessionId, gameState);
-  } catch (err) {
-    console.error('Échec de synchronisation multijoueur :', err);
-  }
 }
 
 // ---------- Pouvoirs de pion ----------
@@ -1279,7 +1167,17 @@ function init() {
   }
 
   wireSetupScreen();
-  wireOnlineMode();
+  // Multijoueur en ligne : module extrait (#21, lot 4). La session Realtime
+  // est la propriété du module ; gameState et myTeam restent dans main.js.
+  onlineModule = initOnline({
+    els,
+    getGameMode: () => gameMode,
+    getGameState: () => gameState,
+    setGameState: s => { gameState = s; },
+    setMyTeam: team => { myTeam = team; },
+    handleCellClick,
+    render
+  });
   wireGameControls();
   wireShop();
   // Initialisation des modules profil et mercato — même pattern que initShop() :

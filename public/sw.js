@@ -21,8 +21,12 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v16'; // v16 : index.html + styles.css (contenu indexable + JSON-LD, #181/#182)
+const CACHE_NAME = 'tactic-master-v17'; // v17 : manifest (id, start_url, screenshots — #184) + précache de './'
 const STATIC_ASSETS = [
+  // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
+  // l'entrée './', une navigation hors-ligne vers / raterait le cache
+  // (match exact sur l'URL de requête, pas de fallback navigation).
+  './',
   './index.html',
   './styles.css',
   './skins.css',

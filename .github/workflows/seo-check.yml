@@ -1,0 +1,52 @@
+# Garde-fou SEO (#185) : validations statiques + audit Lighthouse.
+# Déclenché sur les PR touchant le site servi (public/, vercel.json) ou
+# l'outillage SEO lui-même, et à la demande (workflow_dispatch) — même
+# philosophie que les workflows de non-régression (#143) : rapide,
+# actionnable, non bloquant sur main.
+name: SEO
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'public/**'
+      - 'vercel.json'
+      - 'tools/seo-check.mjs'
+      - 'tools/static-server.mjs'
+      - '.lighthouserc.json'
+      - '.github/workflows/seo-check.yml'
+
+jobs:
+  static-checks:
+    name: Validations SEO statiques
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Vérifier robots / sitemap / métas / JSON-LD
+        run: node tools/seo-check.mjs
+
+  lighthouse:
+    name: Audit Lighthouse (SEO, perf)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Chrome stable est préinstallé sur ubuntu-latest ; @lhci/cli lance le
+      # serveur statique du repo (émulation cleanUrls comprise) puis audite
+      # l'accueil. Seuils dans .lighthouserc.json : SEO bloquant à 0.95,
+      # perf/a11y/best-practices en avertissement (runners CI trop variables
+      # pour un seuil de perf bloquant).
+      - name: Lancer Lighthouse CI
+        run: npx --yes @lhci/cli@0.14.0 autorun
+      - name: Publier le rapport Lighthouse
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-lighthouse
+          path: .lighthouseci-report
+          retention-days: 14

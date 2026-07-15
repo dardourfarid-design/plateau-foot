@@ -58,12 +58,16 @@ export function initTutorial({
     els.gameControls.classList.add('hidden'); // pas de sens pendant un script guidé
     els.shootoutScreen?.classList.add('hidden');
     setGameMode('local');
+    // #200 : le tutoriel enseigne le palier CLASSIQUE (l'expérience par défaut
+    // recommandée) — couverture + une-deux, sans les exceptions Expert (ailes /
+    // penalty). Les étapes de règle avancée sont filtrées en conséquence par le
+    // contrôleur (voir tutorial.js/stepApplies).
     // Formation scriptee simplifiee : couloir central degage pour que la regle de
     // couverture (v0.5) ne bloque pas la demonstration "pousse le ballon vers la
     // cage". Un seul defenseur rouge, sur une aile, hors du couloir de tir ; le
     // gardien rouge reste a contourner (c'est le sens de l'etape "but").
-    setGameState({
-      ...createGame({ goalsToWin: 1 }),
+    const tutoGame = {
+      ...createGame({ goalsToWin: 1, ruleset: 'classique' }),
       tokens: [
         { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
         { id: 'b-att0', team: TEAMS.BLEU, row: 6, col: 2, isGK: false },
@@ -72,11 +76,15 @@ export function initTutorial({
         { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true },
         { id: 'r-def0', team: TEAMS.ROUGE, row: 1, col: 1, isGK: false }
       ]
-    });
+    };
+    setGameState(tutoGame);
     clearUndoSnapshot();
     buildBoardGrid(els.boardGrid, handleCellClick);
 
-    const firstStep = tutorial.start();
+    // Règles effectives montrées au joueur : les flags du palier + un flag
+    // `powers` reflétant la présence réelle de pouvoirs sur le plateau de tuto.
+    const tutoRules = { ...tutoGame.rules, powers: tutoGame.tokens.some(tok => tok.power) };
+    const firstStep = tutorial.start(tutoRules);
     els.tutorialVeil.classList.remove('hidden');
     els.tutorialBubble.classList.remove('hidden');
     render();

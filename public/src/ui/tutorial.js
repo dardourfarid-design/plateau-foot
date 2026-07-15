@@ -44,25 +44,30 @@ export const TUTORIAL_STEPS = [
     advanceOn: 'goal-scored'
   },
   {
+    // #200 : étape n'apparaissant que si le palier active la couverture.
     id: 'rule-coverage',
-    text: 'Astuce de pro : un pion adverse « couvre » les cases juste à côté de lui (haut, bas, gauche, droite). Une passe ne peut ni s\'y arrêter, ni les traverser. Pour percer, cherche les diagonales ou déplace tes pions pour ouvrir un couloir.',
+    requires: 'coverage',
+    text: 'Astuce de pro : un pion adverse « couvre » les cases juste à côté de lui (haut, bas, gauche, droite). Une passe ne peut ni s\'y arrêter, ni les traverser (elles apparaissent hachurées en rouge). Pour percer, cherche les diagonales ou déplace tes pions pour ouvrir un couloir.',
     target: '.board-wrap',
     advanceOn: 'next'
   },
   {
     id: 'rule-unedeux',
+    requires: 'oneTwo',
     text: 'Le une-deux : si ta passe arrive juste à côté d\'un de tes pions (un appui), tu rejoues aussitôt un déplacement bonus ! Enchaîne les passes vers tes coéquipiers pour avancer plus vite.',
     target: '.board-wrap',
     advanceOn: 'next'
   },
   {
     id: 'rule-special',
+    requires: 'special', // ailes / point de penalty — palier Expert uniquement
     text: 'Deux zones spéciales : les ailes (colonnes de bord) permettent un « centre » que la couverture n\'arrête pas, et le point lumineux devant chaque cage est le point de penalty — de là, ton tir transperce un défenseur. Le gardien, lui, reste à battre.',
     target: '.board-wrap',
     advanceOn: 'next'
   },
   {
     id: 'rule-powers',
+    requires: 'powers', // uniquement si des pouvoirs sont en jeu
     text: 'Enfin, chaque partie te donne un pouvoir bonus tiré au sort sur un de tes pions (éclair, sprint, mur…), utilisable une fois. Les joueurs Rares et Légendaires du mercato en portent d\'encore plus forts. Repère le badge doré !',
     target: '.board-wrap',
     advanceOn: 'next'
@@ -120,15 +125,35 @@ export const TUTORIAL_STEPS = [
   }
 ];
 
+// #200 : décide si une étape de règle s'applique au palier/aux règles de la
+// partie de tuto en cours. Les étapes sans `requires` sont toujours montrées
+// (gestes de base, visite profil/boutique). Les étapes de règle avancée ne
+// s'affichent que si la mécanique correspondante est réellement active.
+export function stepApplies(step, rules = {}) {
+  switch (step.requires) {
+    case undefined: return true;
+    case 'coverage': return !!rules.coverage;
+    case 'oneTwo': return !!rules.oneTwo;
+    case 'special': return !!(rules.wings || rules.penaltySpot);
+    case 'powers': return !!rules.powers;
+    default: return true;
+  }
+}
+
 export function createTutorialController() {
   let currentStepIndex = 0;
   let active = false;
+  let steps = TUTORIAL_STEPS;
 
   return {
-    start() {
+    // `rules` (optionnel) = flags de règles effectifs de la partie de tuto
+    // (coverage/oneTwo/wings/penaltySpot + powers). Filtre les étapes pour ne
+    // jamais enseigner une règle inactive dans le palier courant.
+    start(rules) {
       active = true;
       currentStepIndex = 0;
-      return TUTORIAL_STEPS[0];
+      steps = rules ? TUTORIAL_STEPS.filter(s => stepApplies(s, rules)) : TUTORIAL_STEPS;
+      return steps[0];
     },
     stop() {
       active = false;
@@ -137,19 +162,19 @@ export function createTutorialController() {
       return active;
     },
     currentStep() {
-      return TUTORIAL_STEPS[currentStepIndex];
+      return steps[currentStepIndex];
     },
     isLastStep() {
-      return currentStepIndex === TUTORIAL_STEPS.length - 1;
+      return currentStepIndex === steps.length - 1;
     },
     advance() {
-      if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
+      if (currentStepIndex < steps.length - 1) {
         currentStepIndex += 1;
       }
-      return TUTORIAL_STEPS[currentStepIndex];
+      return steps[currentStepIndex];
     },
     progressLabel() {
-      return `Étape ${currentStepIndex + 1}/${TUTORIAL_STEPS.length}`;
+      return `Étape ${currentStepIndex + 1}/${steps.length}`;
     }
   };
 }

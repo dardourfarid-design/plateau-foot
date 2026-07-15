@@ -254,6 +254,26 @@ par design, pas un risque de sécurité). Aucune variable d'environnement
 supplémentaire n'est nécessaire pour cette étape — uniquement quand Stripe
 sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 
+### Checklist Edge Functions — réglage `verify_jwt` (#22)
+
+Les fonctions `delete-account` et `create-checkout-session` tournent **par
+conception** avec `verify_jwt = false` : l'authentification est vérifiée
+**dans** la fonction (`supabase.auth.getUser()`), pas par le gateway — qui
+peut rejeter des JWT valides de façon imprévisible.
+
+⚠️ Ce réglage est posé dans `supabase/config.toml`, **mais** il doit aussi
+être vérifié dans le **Dashboard** (Edge Functions → *nom de la fonction* →
+Details → « Verify JWT with legacy secret » **décoché**) après chaque
+**redéploiement de fonction** : selon la méthode de déploiement, le réglage
+Dashboard peut être réécrasé, ce qui casse silencieusement la suppression de
+compte (RGPD) et le checkout.
+
+**Filet de sécurité automatique** : le smoke de production
+(`e2e-prod/edge-functions.spec.js`, workflow *Smoke de production*) appelle
+les deux fonctions sans jeton et vérifie que la réponse 401 vient de la
+fonction (`{"error":"Authentification requise."}`) et non du gateway — à
+lancer après tout redéploiement d'Edge Function.
+
 
 
 ## Tester le flux compte + boutique

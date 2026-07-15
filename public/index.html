@@ -26,19 +26,65 @@
 <meta name="twitter:image" content="https://tactic-master.vercel.app/og-image.jpg">
 <link rel="canonical" href="https://tactic-master.vercel.app/">
 
-<!-- Données structurées (SEO) : fiche jeu pour Google -->
+<!-- Données structurées (SEO, #182) : site + fiche jeu + FAQ pour Google.
+     La FAQPage doit rester le miroir exact de la FAQ visible en bas de page
+     (#181) — Google pénalise les données structurées sans contenu visible. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "VideoGame",
-  "name": "Tactic Master",
-  "url": "https://tactic-master.vercel.app/",
-  "description": "Jeu de plateau tactique façon dames et foot : pousse le ballon jusqu'à la cage adverse. Solo, contre l'IA ou en ligne. Parties de 5 minutes.",
-  "inLanguage": "fr",
-  "applicationCategory": "Game",
-  "gamePlatform": ["Web", "PWA"],
-  "playMode": ["SinglePlayer", "MultiPlayer"],
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://tactic-master.vercel.app/#website",
+      "url": "https://tactic-master.vercel.app/",
+      "name": "Tactic Master",
+      "inLanguage": "fr"
+    },
+    {
+      "@type": "VideoGame",
+      "@id": "https://tactic-master.vercel.app/#game",
+      "name": "Tactic Master",
+      "url": "https://tactic-master.vercel.app/",
+      "image": "https://tactic-master.vercel.app/og-image.jpg",
+      "description": "Jeu de plateau tactique façon dames et foot : pousse le ballon jusqu'à la cage adverse. Solo, contre l'IA ou en ligne. Parties de 5 minutes.",
+      "inLanguage": "fr",
+      "genre": ["Jeu de plateau", "Stratégie", "Sport"],
+      "gamePlatform": ["Web", "PWA"],
+      "operatingSystem": "Web",
+      "applicationCategory": "GameApplication",
+      "playMode": ["SinglePlayer", "MultiPlayer"],
+      "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
+      "author": { "@type": "Organization", "name": "Tactic Master" },
+      "publisher": { "@type": "Organization", "name": "Tactic Master" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://tactic-master.vercel.app/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Tactic Master est-il gratuit ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui. Le jeu se joue gratuitement dans le navigateur, sans installation. Une boutique optionnelle propose des thèmes de terrain et des packs de joueurs à collectionner." }
+        },
+        {
+          "@type": "Question",
+          "name": "Peut-on jouer à deux ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui : face à face sur le même appareil, ou en ligne en partageant un code de partie. Un mode contre l'ordinateur à trois niveaux de difficulté est aussi disponible." }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment marque-t-on un but ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "En poussant le ballon dans la cage adverse, c'est-à-dire les trois cases centrales de la ligne de fond. Le ballon se pousse en ligne droite avec un pion adjacent et s'arrête au premier obstacle." }
+        },
+        {
+          "@type": "Question",
+          "name": "Peut-on installer Tactic Master sur mobile ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Oui. C'est une application web (PWA) : ouvrez le site dans votre navigateur puis « Ajouter à l'écran d'accueil » sur iOS ou Android. Les modes locaux fonctionnent même hors connexion." }
+        }
+      ]
+    }
+  ]
 }
 </script>
 
@@ -225,12 +271,13 @@
           SAISON 01 — ÉDITION TACTIQUE
         </div>
 
-        <!-- Titre principal : traitement typographique affiche -->
-        <div class="logo-title">
+        <!-- Titre principal : traitement typographique affiche.
+             h1 (et non div) : seul heading de niveau 1 de la page (#181). -->
+        <h1 class="logo-title">
           TACTIC<br>
           <span>MASTER</span>
-          <div class="logo-title-underline" aria-hidden="true"></div>
-        </div>
+          <span class="logo-title-underline" aria-hidden="true"></span>
+        </h1>
         <div class="logo-sub">Le foot se joue aussi assis</div>
 
         <!-- Stats visuelles façon bandeau japonais -->
@@ -306,21 +353,21 @@
         <div class="feature-icon-wrap" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="2" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="12" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M14 15h4M16 13v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </div>
-        <div class="feature-title">Stratégie pure</div>
+        <h2 class="feature-title">Stratégie pure</h2>
         <p class="feature-desc">Un pion, une case, dans n'importe quelle direction. 6 joueurs par équipe, un ballon à pousser.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon-wrap" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="15" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M1 20c0-4 3-6 7-6M14 14c4 0 7 2 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </div>
-        <div class="feature-title">Deux joueurs, un écran</div>
+        <h2 class="feature-title">Deux joueurs, un écran</h2>
         <p class="feature-desc">Face à face sur le même appareil, en ligne par code, ou contre l'ordinateur en 3 niveaux.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon-wrap" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 3l1.5 4.5H17L13.5 10l1.5 4.5L11 12l-4 2.5 1.5-4.5L5 7.5h4.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
         </div>
-        <div class="feature-title">Joueurs à pouvoirs</div>
+        <h2 class="feature-title">Joueurs à pouvoirs</h2>
         <p class="feature-desc">Rares et légendaires : Sprint, Tir Puissant, Mur, Relais, Repli adverse. À collecter et aligner.</p>
       </div>
     </div>
@@ -875,6 +922,65 @@
     <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>
   </div>
 </div>
+
+<!-- === CONTENU ÉDITORIAL INDEXABLE (#181) =================================
+     Seul texte réellement lisible par les moteurs sur cette SPA : il porte les
+     requêtes cibles (« jeu de plateau de foot en ligne », règles, FAQ). Doit
+     rester VISIBLE (pas de display:none — texte caché dévalorisé par Google)
+     et SYNCHRONISÉ avec le bloc JSON-LD FAQPage du <head> (#182). -->
+<section class="seo-about" aria-label="À propos de Tactic Master">
+  <h2>Tactic Master, le jeu de plateau de foot en ligne</h2>
+  <p>Tactic Master est un <strong>jeu de plateau de foot</strong> gratuit, jouable
+  directement dans le navigateur. La prise en main est aussi simple que les
+  dames&nbsp;: chaque tour, on déplace un pion d'une case, on pousse le ballon en
+  ligne droite, et on marque en l'envoyant dans la cage adverse. Aucun dé, aucun
+  hasard&nbsp;: comme aux échecs ou aux dames, tout se joue au placement et à
+  l'anticipation. Une partie dure environ cinq minutes.</p>
+
+  <h3>Les règles en bref</h3>
+  <ul>
+    <li>Plateau de 7×9 cases&nbsp;; 6 pions par équipe (1 gardien, 2 défenseurs, 3 attaquants).</li>
+    <li>À son tour&nbsp;: déplacer un pion d'une case, dans n'importe quelle direction.</li>
+    <li>Un pion adjacent au ballon peut le pousser en ligne droite, jusqu'au premier obstacle.</li>
+    <li>Le gardien ne se déplace que latéralement, sur sa ligne de cage.</li>
+    <li>Pas de capture&nbsp;: la partie se gagne aux buts, et la défense compte — un
+    pion couvre les cases voisines et coupe les lignes de passe adverses.</li>
+  </ul>
+
+  <h3>Questions fréquentes</h3>
+  <details>
+    <summary>Tactic Master est-il gratuit&nbsp;?</summary>
+    <p>Oui. Le jeu se joue gratuitement dans le navigateur, sans installation.
+    Une boutique optionnelle propose des thèmes de terrain et des packs de
+    joueurs à collectionner.</p>
+  </details>
+  <details>
+    <summary>Peut-on jouer à deux&nbsp;?</summary>
+    <p>Oui&nbsp;: face à face sur le même appareil, ou en ligne en partageant un
+    code de partie. Un mode contre l'ordinateur à trois niveaux de difficulté
+    est aussi disponible.</p>
+  </details>
+  <details>
+    <summary>Comment marque-t-on un but&nbsp;?</summary>
+    <p>En poussant le ballon dans la cage adverse, c'est-à-dire les trois cases
+    centrales de la ligne de fond. Le ballon se pousse en ligne droite avec un
+    pion adjacent et s'arrête au premier obstacle.</p>
+  </details>
+  <details>
+    <summary>Peut-on installer Tactic Master sur mobile&nbsp;?</summary>
+    <p>Oui. C'est une application web (PWA)&nbsp;: ouvrez le site dans votre
+    navigateur puis «&nbsp;Ajouter à l'écran d'accueil&nbsp;» sur iOS ou Android.
+    Les modes locaux fonctionnent même hors connexion.</p>
+  </details>
+</section>
+
+<noscript>
+  <div class="seo-about">
+    <p>Tactic Master est un jeu de plateau de foot en ligne, gratuit&nbsp;: on
+    déplace ses pions comme aux dames, on pousse le ballon et on marque dans la
+    cage adverse. Activez JavaScript pour jouer.</p>
+  </div>
+</noscript>
 
 <!-- Pied de page légal : accessible sans compte, exigé pour la vente en ligne -->
 <footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">

@@ -7,7 +7,7 @@
 
 import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
-  resetBallAfterGoal, applyMove, applyBallMovement, PHASES
+  applyMove, applyBallMovement, PHASES
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS } from '../engine/constants.js';
@@ -25,6 +25,7 @@ import { initMercato } from './mercatoUI.js';
 import { initAccount } from './accountUI.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { initOnline } from './onlineUI.js';
+import { initOverlays } from './overlaysUI.js';
 import { initTutorial } from './tutorialUI.js';
 import { initLang, getLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
 
@@ -51,9 +52,9 @@ import { getAdvertisingConsent } from '../services/advertisingConsentService.js'
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
 import { loadConsentMessaging } from '../services/ads/googleCmp.js';
-import { recordMatchEnd, shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
+import { shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
-import { recordGameResult, fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
+import { fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { resolveLineup, displayNameForToken } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
@@ -126,6 +127,7 @@ const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujour
 // l'autre équipe n'est jouable qu'en recevant les mises à jour de l'adversaire.
 // La session en ligne (id + abonnement Realtime) vit dans onlineUI.js.
 let onlineModule = null;     // { syncOnlineStateIfNeeded, leaveOnlineSession } — voir onlineUI.js
+let overlaysModule = null;   // { showGoalOverlay, hideGoalOverlayAndResume, showEndOverlay, backToSetup, goToLanding } — voir overlaysUI.js
 
 // Identité des joueurs fictifs alignés (résolue une fois par partie, pas
 // par coup). null si pas de compte ou pas encore de composition choisie —
@@ -528,9 +530,9 @@ function handlePostActionEffects(previousState) {
     }
 
     if (gameState.gameOver) {
-      setTimeout(() => showEndOverlay(gameState.winner), 350);
+      setTimeout(() => overlaysModule.showEndOverlay(gameState.winner), 350);
     } else {
-      showGoalOverlay(gameState.lastGoalBy);
+      overlaysModule.showGoalOverlay(gameState.lastGoalBy);
     }
     return;
   }
@@ -563,7 +565,7 @@ function handlePostActionEffects(previousState) {
     if (gameState.isDraw) {
       setTimeout(() => shootoutModule?.startShootoutDepartage(), 450);
     } else {
-      setTimeout(() => showEndOverlay(gameState.winner), 350);
+      setTimeout(() => overlaysModule.showEndOverlay(gameState.winner), 350);
     }
     return;
   }
@@ -627,144 +629,6 @@ function handleCancel() {
     undoSnapshot = null;
     render();
   }
-}
-
-// ---------- Overlays ----------
-
-// v0.5 — un peu de "juice" : titres/mini-commentaires varies, et une mention
-// speciale quand le but conclut une belle serie de passes (momentum).
-const GOAL_TITLES = ['BUT !', 'BUUUT !', 'MAGNIFIQUE !', 'QUEL BUT !', 'GOLAZO !'];
-const GOAL_LINES = ['Frappe imparable', 'Le gardien battu', 'En pleine lucarne', 'Ça fait mouche', 'Le public exulte'];
-function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function showGoalOverlay(scoringTeam) {
-  els.goalTitle.className = 'overlay-title ' + scoringTeam;
-  const streak = gameState.lastGoalPassStreak || 0;
-  els.goalTitle.textContent = t(streak >= 3 ? pickRandom(GOAL_TITLES.slice(1)) : pickRandom(GOAL_TITLES));
-  const who = scoringTeam === TEAMS.BLEU ? t("L'équipe bleue marque") : t("L'équipe rouge marque");
-  els.goalSub.textContent = streak >= 3 ? t('{who} — action à {n} passes !', { who, n: streak }) : `${who} · ${t(pickRandom(GOAL_LINES))}`;
-  // Affiche le nouveau score dans l'overlay pour un retour immédiat
-  if (els.goalScoreFlash) {
-    els.goalScoreFlash.textContent =
-      `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
-  }
-  els.goalOverlay.classList.add('show');
-}
-
-function hideGoalOverlayAndResume() {
-  els.goalOverlay.classList.remove('show');
-  gameState = resetBallAfterGoal(gameState);
-  undoSnapshot = null;
-  render();
-  onlineModule?.syncOnlineStateIfNeeded();
-  maybeTriggerAiTurn();
-}
-
-function showEndOverlay(winningTeam) {
-  // Garde anti "overlay fantôme" : si le joueur a déjà quitté l'écran de
-  // jeu (retour accueil pendant le délai de 350 ms ou pendant le timer de
-  // l'IA), ne pas réafficher l'écran de fin par-dessus un autre écran.
-  if (els.gameScreen.classList.contains('hidden')) return;
-  els.endTitle.className = 'overlay-title ' + winningTeam;
-  els.endTitle.textContent = winningTeam === TEAMS.BLEU ? t('BLEU GAGNE') : t('ROUGE GAGNE');
-  els.endSub.textContent = `${gameState.score[TEAMS.BLEU]} – ${gameState.score[TEAMS.ROUGE]}`;
-
-  // Colorier le trophée selon l'équipe gagnante
-  const trophy = els.endOverlay.querySelector('.end-trophy');
-  if (trophy) { trophy.className = 'end-trophy ' + winningTeam; }
-
-  // Stats de fin : buts du gagnant + streak si disponible
-  if (els.endStatsRow) {
-    // Contre l'IA ou en ligne, les stats sont montrées du point de vue du
-    // JOUEUR (myTeam), pas du vainqueur : afficher « 1 but marqué » à un
-    // joueur qui vient de perdre 0-1 était trompeur. En local 2 joueurs
-    // (écran partagé), on garde le point de vue du vainqueur.
-    const povTeam = (gameMode === 'local') ? winningTeam : myTeam;
-    const winner = gameState.score[povTeam];
-    const loser = gameState.score[povTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU];
-    els.endStatsRow.innerHTML = `
-      <div class="end-stat">
-        <span class="end-stat-val">${winner}</span>
-        <span class="end-stat-lbl">${t('Buts marqués')}</span>
-      </div>
-      <div class="end-stat">
-        <span class="end-stat-val">${loser}</span>
-        <span class="end-stat-lbl">${t('Buts encaissés')}</span>
-      </div>
-    `;
-  }
-
-  els.endOverlay.classList.add('show');
-
-  // Récompense vidéo (opt-in) : proposée seulement si autorisée (3 verrous +
-  // flag rewarded) et si un compte est connecté (le crédit SSV cible un
-  // user_id). Masquée sinon.
-  if (els.watchRewardedBtn) {
-    const canReward = !!currentUser && adService.isFormatAllowed('rewarded');
-    els.watchRewardedBtn.classList.toggle('hidden', !canReward);
-    els.watchRewardedBtn.disabled = false;
-  }
-
-  // Compte ce match pour le plafond de fréquence des interstitiels (hors
-  // tutoriel, qui n'est pas une vraie partie). N'AFFICHE rien ici : la pub
-  // n'apparaît qu'à la transition suivante (backToSetup), jamais sur l'écran
-  // de victoire.
-  if (!tutorialModule?.isActive()) recordMatchEnd();
-
-  if (currentUser && !tutorialModule?.isActive()) {
-    const won = winningTeam === myTeam;
-    const goalsScored = gameState.score[myTeam];
-    // XP, streak, défis ET pièces sont attribués côté serveur en un seul
-    // appel (record_game_result, migration 0026) : +10 victoire, +3 défaite,
-    // +15 par défi complété. On relit ensuite le solde et on affiche le
-    // gain réel (différence), qui peut inclure un bonus de défi.
-    const previousBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
-    recordGameResult(won, goalsScored)
-      .then(() => getCurrencyBalance())
-      .then(newBalance => {
-        accountModule?.updateCoinDisplay(newBalance);
-        if (newBalance > previousBalance) accountModule?.showCoinGain(newBalance - previousBalance);
-      })
-      .catch(err => {
-        console.error('Résultat de partie non enregistré :', err);
-      });
-  }
-}
-
-function backToSetup() {
-  onlineModule?.leaveOnlineSession();
-  // gameMode n'est plus réinitialisé ici : le sélecteur visuel ("2 joueurs"
-  // / "Ordinateur" / "En ligne") reste affiché tel que l'utilisateur l'a
-  // choisi, donc la variable réelle doit rester cohérente avec lui. La
-  // remettre à 'local' systématiquement créait une partie à 2 joueurs
-  // silencieuse après une partie contre l'IA, sans que rien à l'écran ne
-  // le laisse deviner.
-  els.gameScreen.classList.add('hidden');
-  els.shootoutScreen?.classList.add('hidden');
-  els.endOverlay.classList.remove('show');
-  els.goalOverlay.classList.remove('show');
-  els.configScreen.classList.remove('hidden');
-
-  // Transition entre deux matchs : moment autorisé pour un interstitiel
-  // (plafonné). Fire-and-forget : ne bloque pas le retour à la configuration.
-  maybeShowInterstitial();
-}
-
-// Retour a la page d'accueil (landing / hero) — declenche par un clic sur le
-// logo TM en haut a gauche. Ferme tous les ecrans/overlays et reaffiche l'accueil.
-function goToLanding() {
-  onlineModule?.leaveOnlineSession();
-  els.gameScreen?.classList.add('hidden');
-  els.configScreen?.classList.add('hidden');
-  els.waitingScreen?.classList.add('hidden');
-  els.shopScreen?.classList.add('hidden');
-  els.profileScreen?.classList.add('hidden');
-  els.shootoutScreen?.classList.add('hidden');
-  els.endOverlay?.classList.remove('show');
-  els.goalOverlay?.classList.remove('show');
-  els.accountOverlay?.classList.remove('show');
-  els.setupScreen?.classList.remove('hidden');
-  refreshHomeBanner();
 }
 
 // ---------- Publicité (bannière hors-jeu, épic pub PR C) ----------
@@ -1031,12 +895,12 @@ function openPowerTargetSelection(token) {
 
 function wireGameControls() {
   // Bouton "← Accueil" dans l'overlay de fin de partie
-  els.backToSetupFromEndBtn?.addEventListener('click', backToSetup);
+  els.backToSetupFromEndBtn?.addEventListener('click', () => overlaysModule.backToSetup());
   els.cancelBtn.addEventListener('click', handleCancel);
   els.endTurnBtn.addEventListener('click', handleEndTurnClick);
-  els.restartBtn.addEventListener('click', backToSetup);
-  els.continueBtn.addEventListener('click', hideGoalOverlayAndResume);
-  els.newGameBtn.addEventListener('click', backToSetup);
+  els.restartBtn.addEventListener('click', () => overlaysModule.backToSetup());
+  els.continueBtn.addEventListener('click', () => overlaysModule.hideGoalOverlayAndResume());
+  els.newGameBtn.addEventListener('click', () => overlaysModule.backToSetup());
   els.watchRewardedBtn?.addEventListener('click', handleWatchRewarded);
 }
 
@@ -1167,6 +1031,27 @@ function init() {
   }
 
   wireSetupScreen();
+  // Overlays but/fin + navigation : module extrait (#21, lot 5). Toutes les
+  // dépendances vers les autres modules sont des fermetures paresseuses :
+  // l'ordre de création des modules dans init() n'a pas d'importance.
+  overlaysModule = initOverlays({
+    els,
+    getUser: () => currentUser,
+    getGameState: () => gameState,
+    setGameState: s => { gameState = s; },
+    getGameMode: () => gameMode,
+    getMyTeam: () => myTeam,
+    clearUndoSnapshot: () => { undoSnapshot = null; },
+    render,
+    maybeTriggerAiTurn,
+    syncOnlineState: () => onlineModule?.syncOnlineStateIfNeeded(),
+    leaveOnlineSession: () => onlineModule?.leaveOnlineSession(),
+    isTutorialActive: () => tutorialModule?.isActive() ?? false,
+    updateCoinDisplay: b => accountModule?.updateCoinDisplay(b),
+    showCoinGain: n => accountModule?.showCoinGain(n),
+    maybeShowInterstitial,
+    refreshHomeBanner
+  });
   // Multijoueur en ligne : module extrait (#21, lot 4). La session Realtime
   // est la propriété du module ; gameState et myTeam restent dans main.js.
   onlineModule = initOnline({
@@ -1255,7 +1140,7 @@ function init() {
     clearUndoSnapshot: () => { undoSnapshot = null; },
     handleCellClick,
     render,
-    backToSetup,
+    backToSetup: () => overlaysModule.backToSetup(),
     openRealProfileTab: tab => {
       if (currentUser && profileModuleRef && mercatoModuleRef) {
         switchProfileTab(tab, profileModuleRef, mercatoModuleRef);
@@ -1271,8 +1156,8 @@ function init() {
     promptSignIn: () => accountModule?.openAccountOverlay('signin')
   });
   const homeLogo = document.getElementById('homeLogoBtn');
-  homeLogo?.addEventListener('click', goToLanding);
-  homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToLanding(); } });
+  homeLogo?.addEventListener('click', () => overlaysModule.goToLanding());
+  homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); overlaysModule.goToLanding(); } });
   // La seance de tirs est un ecran plein : toute navigation vers un autre ecran
   // doit la masquer (sinon elle "resterait" affichee par-dessous).
   document.getElementById('shopBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));

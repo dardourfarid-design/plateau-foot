@@ -21,7 +21,7 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v13'; // v13 : overlaysUI.js (#21 lot 5)
+const CACHE_NAME = 'tactic-master-v14'; // v14 : powersUI.js (#21 lot 6)
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -78,6 +78,7 @@ const STATIC_ASSETS = [
   './src/ui/overlaysUI.js',
   './src/ui/playerAvatar.js',
   './src/ui/playerIdentity.js',
+  './src/ui/powersUI.js',
   './src/ui/profileUI.js',
   './src/ui/shootoutUI.js',
   './src/ui/shopUI.js',

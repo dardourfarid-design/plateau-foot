@@ -5,8 +5,8 @@ import { describe, test, expect } from './test-utils.js';
 
 if (typeof globalThis.window === 'undefined') globalThis.window = {};
 
-const { setAnalyticsConsent } = await import('../src/services/analyticsConsentService.js');
-const adAnalytics = await import('../src/services/ads/adAnalytics.js');
+const { setAnalyticsConsent } = await import('../public/src/services/analyticsConsentService.js');
+const adAnalytics = await import('../public/src/services/ads/adAnalytics.js');
 
 describe('adAnalytics — gating par consentement', () => {
   test('n\'émet rien si l\'analytics est refusé', async () => {

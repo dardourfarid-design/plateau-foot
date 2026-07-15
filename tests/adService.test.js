@@ -11,8 +11,8 @@ import { describe, test, expect } from './test-utils.js';
 
 if (typeof globalThis.window === 'undefined') globalThis.window = {};
 
-const ads = await import('../src/services/ads/adService.js');
-const { setAdvertisingConsent } = await import('../src/services/advertisingConsentService.js');
+const ads = await import('../public/src/services/ads/adService.js');
+const { setAdvertisingConsent } = await import('../public/src/services/advertisingConsentService.js');
 
 function enableAds() { globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: true } }; }
 function killSwitchOff() { globalThis.window.__PLATEAU_FOOT_CONFIG__ = { ads: { enabled: false } }; }

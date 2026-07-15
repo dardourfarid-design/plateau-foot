@@ -1,6 +1,6 @@
 import { describe, test, expect } from './test-utils.js';
-import { createGame, applyMove, listLegalMoves } from '../src/engine/gameEngine.js';
-import { TEAMS } from '../src/engine/constants.js';
+import { createGame, applyMove, listLegalMoves } from '../public/src/engine/gameEngine.js';
+import { TEAMS } from '../public/src/engine/constants.js';
 
 // ===================== SIMULATION DE BACKEND MULTIJOUEUR =====================
 // Ce test ne touche pas à src/services/multiplayerService.js (qui nécessite

@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { isThemeUnlocked, formatPrice } from '../src/ui/themeManager.js';
+import { isThemeUnlocked, formatPrice } from '../public/src/ui/themeManager.js';
 
 describe('isThemeUnlocked', () => {
   test('un thème gratuit est toujours débloqué', () => {

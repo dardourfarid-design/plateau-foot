@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { renderMercatoPlayerOptions, renderMercatoFriendOptions, escapeHtml } from '../src/ui/mercatoUI.js';
+import { renderMercatoPlayerOptions, renderMercatoFriendOptions, escapeHtml } from '../public/src/ui/mercatoUI.js';
 
 // ===================== TESTS mercatoUI.js =====================
 // Couvre renderMercatoPlayerOptions et renderMercatoFriendOptions : les deux

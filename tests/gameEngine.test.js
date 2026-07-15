@@ -5,8 +5,8 @@ import {
   tokenAt, isAdjacent, PHASES, listLegalMoves, applyMove,
   isCellCoveredBy, isWingPass, applyBallMovement, STALL_LIMIT,
   penaltySpotFor, isPenaltyShot
-} from '../src/engine/gameEngine.js';
-import { TEAMS, CENTER } from '../src/engine/constants.js';
+} from '../public/src/engine/gameEngine.js';
+import { TEAMS, CENTER } from '../public/src/engine/constants.js';
 
 describe('createGame', () => {
   test('crée un état initial cohérent', () => {

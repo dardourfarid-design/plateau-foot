@@ -25,23 +25,8 @@ jobs:
           node-version: '20'
       - run: node tests/run-tests.js
 
-  sync-check:
-    name: Parité src/ ↔ public/src/
-    if: ${{ inputs.suite == 'all' || inputs.suite == 'unit' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: node build.js
-      - name: Vérifier l'absence de dérive
-        run: |
-          if ! git diff --quiet -- public/src; then
-            echo "::error::public/src/ n'est pas synchronisé avec src/. Lance 'node build.js' puis committe public/src/."
-            git --no-pager diff --stat -- public/src
-            exit 1
-          fi
+  # Le job « Parité src/ ↔ public/src/ » a été retiré : public/src/ est
+  # désormais la SOURCE UNIQUE du code applicatif (#20).
 
   e2e:
     name: Tests E2E (Playwright)

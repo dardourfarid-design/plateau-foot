@@ -21,10 +21,10 @@ pions, la feuille de match et les boutons. Un thème couleur classique (sans cl�
 
 | Fichier | Action |
 |---|---|
-| `src/ui/themeManager.js` | modifié — ajoute `applySkin()` + appel dans `applyTheme()` |
-| `src/ui/shopUI.js` | modifié — 3 thèmes ajoutés au catalogue de secours (offline) |
-| `public/src/ui/themeManager.js` | copie synchronisée (`node build.js`) |
-| `public/src/ui/shopUI.js` | copie synchronisée (`node build.js`) |
+| `public/src/ui/themeManager.js` | modifié — ajoute `applySkin()` + appel dans `applyTheme()` |
+| `public/src/ui/shopUI.js` | modifié — 3 thèmes ajoutés au catalogue de secours (offline) |
+
+
 | `public/index.html` | modifié — `<link ... skins.css>` + police Fredoka |
 | `public/skins.css` | **nouveau** — les 3 habillages |
 | `public/skins-preview.html` | **nouveau** — outil de dev pour prévisualiser (optionnel, non servi en prod) |
@@ -33,7 +33,7 @@ pions, la feuille de match et les boutons. Un thème couleur classique (sans cl�
 ## Étapes
 
 1. Copie les fichiers ci-dessus aux mêmes chemins dans ton dépôt (écrase les 5 modifiés).
-   (Ou : édite seulement les `src/`, puis `node build.js` régénère `public/src/`.)
+   (`public/src/` est la source unique — édite directement ces fichiers.)
 2. Exécute la migration `0022_ui_skins.sql` dans le SQL Editor Supabase (comme les précédentes).
 3. Commit + push. Le déploiement Vercel/Netlify étant 100% statique, rien d'autre à faire.
 4. (Local) `python3 -m http.server 8080` puis ouvre `/public/skins-preview.html`

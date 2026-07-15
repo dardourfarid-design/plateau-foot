@@ -1,11 +1,11 @@
 import { describe, test, expect } from './test-utils.js';
-import { createGame, selectToken, passTurn, moveSelectedToken, passBall, applyBallMovement, getMoveDestinations } from '../src/engine/gameEngine.js';
-import { TEAMS } from '../src/engine/constants.js';
+import { createGame, selectToken, passTurn, moveSelectedToken, passBall, applyBallMovement, getMoveDestinations } from '../public/src/engine/gameEngine.js';
+import { TEAMS } from '../public/src/engine/constants.js';
 import {
   POWER_TYPES, canActivatePower, getPowerShotDestinations, activateTirPuissant,
   getSprintDestinations, activateSprint, activateMur, isBlockedByWall, expireWallIfNeeded,
   activateRelais, confirmRelaisAfterPass, getValidRepliTargets, activateRepliAdverse
-} from '../src/engine/powers.js';
+} from '../public/src/engine/powers.js';
 
 function givePower(state, tokenId, power) {
   return {

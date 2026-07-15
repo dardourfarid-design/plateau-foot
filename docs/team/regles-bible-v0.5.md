@@ -6,7 +6,7 @@ toute personne qui doit raisonner sur l'équilibrage. Chaque règle introduite e
 v0.5 est décrite avec ses conditions exactes, ses cas limites, et l'intention de
 design qui la motive.
 
-Toutes les règles vivent dans `src/engine/` (moteur pur, sans DOM) et sont
+Toutes les règles vivent dans `public/src/engine/` (moteur pur, sans DOM) et sont
 couvertes par la suite de tests (`npm test`, 140 tests à ce jour).
 
 ---
@@ -208,7 +208,7 @@ sert le public qui veut plus de duels.
   sur 60 manches IA de 40 tours, ~1/3 finissent nulles et déclenchent le
   départage, le reste est décidé au score.
 
-### 8.3 Séance de tirs au but (`src/engine/penaltyShootout.js`)
+### 8.3 Séance de tirs au but (`public/src/engine/penaltyShootout.js`)
 
 Mini‑jeu déterministe de départage des égalités. Chaque tir oppose une direction
 choisie par le tireur (`gauche`/`centre`/`droite`) à une direction choisie par le

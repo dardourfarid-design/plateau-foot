@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { buildStartingFormation, validateNoOverlap, BOARD_COLS, BOARD_ROWS, TEAMS } from '../src/engine/constants.js';
+import { buildStartingFormation, validateNoOverlap, BOARD_COLS, BOARD_ROWS, TEAMS } from '../public/src/engine/constants.js';
 
 describe('constants - formation initiale', () => {
   test('génère exactement 6 pions par équipe', () => {

@@ -681,8 +681,37 @@ body{
   padding:16px;
   font-size:16px;
 }
+/* #204 — bouton secondaire « Personnaliser » sous le « Jouer » immédiat */
+.cta-secondary{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+}
 
 .setup-field{ width:100%; margin-bottom:20px; text-align:left; }
+/* #205 — bloc « Options avancées » repliable (divulgation progressive) */
+.advanced-options{
+  width:100%; text-align:left; margin-bottom:20px;
+  border:1px solid rgba(245,242,232,0.12); border-radius:6px;
+  background: rgba(255,255,255,0.02);
+}
+.advanced-options[open]{ padding-bottom:4px; }
+.advanced-summary{
+  cursor:pointer; list-style:none; user-select:none;
+  padding:12px 14px;
+  font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+  color: var(--craie-att);
+  display:flex; align-items:center; gap:8px;
+}
+.advanced-summary::-webkit-details-marker{ display:none; }
+.advanced-summary::before{
+  content:'▸'; color: var(--ambre); font-size:11px;
+  transition: transform 0.15s ease;
+}
+.advanced-options[open] .advanced-summary::before{ transform: rotate(90deg); }
+.advanced-summary:hover{ color: var(--craie); }
+.advanced-options .setup-field{ padding:0 14px; margin-bottom:16px; }
+.advanced-options .setup-field:first-of-type{ margin-top:4px; }
 .setup-label{
   font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
   color: var(--craie-att); margin-bottom:8px; display:block;

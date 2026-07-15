@@ -120,6 +120,8 @@ let selectedRuleset = 'classique'; // palier de regles (#206) : decouverte | cla
 let selectedVariant = 'standard'; // 'standard' (6 pions) | 'tactique' (8 pions)
 let freePowersOn = true;          // pouvoir bonus tire au sort par equipe/match
 let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limite de tours, departage TAB)
+let selectedGoals = 3;            // buts pour gagner (#204 : promu au scope module pour "Jouer en 1 clic")
+let hintsOn = true;               // #207 : conseils contextuels en jeu (desactivables)
 let aiThinking = false;
 const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujours Bleu en mode IA
 
@@ -189,6 +191,9 @@ function cacheDomRefs() {
   els.variantOptions = document.getElementById('variantOptions');
   els.powersOptions = document.getElementById('powersOptions');
   els.formatOptions = document.getElementById('formatOptions');
+  els.hintsOptions = document.getElementById('hintsOptions');
+  els.advancedOptions = document.getElementById('advancedOptions');
+  els.quickPlayBtn = document.getElementById('quickPlayBtn');
   els.localAiBlock = document.getElementById('localAiBlock');
   els.onlineBlock = document.getElementById('onlineBlock');
   els.createOnlineBtn = document.getElementById('createOnlineBtn');
@@ -356,6 +361,8 @@ function applyPowersToGameState() {
 }
 
 function startGame(goalsToWin) {
+  selectedGoals = goalsToWin;
+  saveLastConfig(); // #204 : mémorise les réglages pour le prochain « Jouer »
   gameState = createGame({ goalsToWin, ruleset: selectedRuleset, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
   els.shootoutScreen?.classList.add('hidden');
@@ -456,6 +463,8 @@ function render() {
 }
 
 function updateHint() {
+  // #207 : conseils désactivables pour les habitués.
+  if (!hintsOn) { els.hintBar.textContent = ''; return; }
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
   if (gameMode === 'ai' && gameState.turn === AI_TEAM) {
     els.hintBar.textContent = t('L\'ordinateur réfléchit…');
@@ -463,6 +472,16 @@ function updateHint() {
   }
   if (gameMode === 'online' && gameState.turn !== myTeam) {
     els.hintBar.textContent = t('En attente du coup de ton adversaire…');
+    return;
+  }
+  // #207 : mouvements bonus (une-deux / Relais) — l'indice explique le bonus,
+  // sinon le joueur ne comprend pas pourquoi c'est encore à lui de jouer.
+  if (gameState.comboMoveAvailable) {
+    els.hintBar.textContent = t('Une‑deux ! Déplace un pion pour ton mouvement bonus');
+    return;
+  }
+  if (gameState.relaisBonusMoveAvailable) {
+    els.hintBar.textContent = t('Relais ! Déplace un second pion');
     return;
   }
   if (gameState.phase === PHASES.SELECT) {
@@ -753,7 +772,6 @@ function requireAccountThen(action) {
 }
 
 function wireSetupScreen() {
-  let selectedGoals = 3;
   const options = els.goalOptions.querySelectorAll('.setup-option');
   options.forEach(opt => {
     opt.addEventListener('click', () => {
@@ -842,7 +860,30 @@ function wireSetupScreen() {
     });
   });
 
+  // #207 — conseils contextuels en jeu (activés/désactivés), mémorisé.
+  const hintsOpts = els.hintsOptions ? els.hintsOptions.querySelectorAll('.setup-option') : [];
+  hintsOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      hintsOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      hintsOn = opt.dataset.val === 'on';
+    });
+  });
+
+  // #205 — mémorise l'état plié/déplié des Options avancées.
+  els.advancedOptions?.addEventListener('toggle', () => {
+    try { localStorage.setItem('tm_advancedOpen', els.advancedOptions.open ? '1' : '0'); } catch { /* stockage indispo */ }
+  });
+
   els.startBtn.addEventListener('click', () => startGame(selectedGoals));
+
+  // #204 — « Jouer » : démarre immédiatement avec les derniers réglages (ou des
+  // défauts sains). L'online exige un code, donc on retombe sur vs IA.
+  els.quickPlayBtn?.addEventListener('click', () => {
+    if (!localStorage.getItem('tm_lastConfig')) gameMode = 'ai'; // 1re fois : solo vs IA
+    if (gameMode === 'online') gameMode = 'ai';
+    startGame(selectedGoals);
+  });
 
   els.goToSetupBtn.addEventListener('click', () => {
     els.setupScreen.classList.add('hidden');
@@ -853,6 +894,64 @@ function wireSetupScreen() {
     els.configScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');
   });
+
+  // Restaure les derniers réglages et les reflète dans l'écran de config.
+  restoreLastConfig();
+  applyConfigToUI();
+}
+
+// #204/#205/#207 — persistance des réglages de partie entre les sessions.
+const CONFIG_KEY = 'tm_lastConfig';
+
+function saveLastConfig() {
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({
+      gameMode, aiLevel, selectedRuleset, selectedVariant,
+      freePowersOn, selectedFormat, selectedGoals, hintsOn
+    }));
+  } catch { /* stockage indispo : on ignore */ }
+}
+
+function restoreLastConfig() {
+  let cfg = null;
+  try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)); } catch { cfg = null; }
+  if (!cfg || typeof cfg !== 'object') return;
+  if (['local', 'ai', 'online'].includes(cfg.gameMode)) gameMode = cfg.gameMode;
+  if (Object.values(AI_LEVELS).includes(cfg.aiLevel)) aiLevel = cfg.aiLevel;
+  if (['decouverte', 'classique', 'expert'].includes(cfg.selectedRuleset)) selectedRuleset = cfg.selectedRuleset;
+  if (['standard', 'tactique'].includes(cfg.selectedVariant)) selectedVariant = cfg.selectedVariant;
+  if (typeof cfg.freePowersOn === 'boolean') freePowersOn = cfg.freePowersOn;
+  if (['score', 'manche'].includes(cfg.selectedFormat)) selectedFormat = cfg.selectedFormat;
+  if ([1, 3, 5, 99].includes(cfg.selectedGoals)) selectedGoals = cfg.selectedGoals;
+  if (typeof cfg.hintsOn === 'boolean') hintsOn = cfg.hintsOn;
+}
+
+// Reflète l'état courant des réglages dans les boutons de l'écran de config,
+// pour que « Personnaliser » montre toujours les derniers choix.
+function applyConfigToUI() {
+  const setActive = (container, val) => {
+    if (!container) return;
+    container.querySelectorAll('.setup-option').forEach(o =>
+      o.classList.toggle('active', o.dataset.val === String(val)));
+  };
+  setActive(els.modeOptions, gameMode === 'ai' ? 'ai' : gameMode === 'online' ? 'online' : 'local');
+  setActive(els.aiDifficultyOptions, aiLevel);
+  setActive(els.rulesetOptions, selectedRuleset);
+  setActive(els.variantOptions, selectedVariant);
+  setActive(els.powersOptions, freePowersOn ? 'on' : 'off');
+  setActive(els.formatOptions, selectedFormat);
+  setActive(els.goalOptions, selectedGoals);
+  setActive(els.hintsOptions, hintsOn ? 'on' : 'off');
+
+  // Visibilité des blocs selon le mode (réplique le handler de sélection de mode).
+  els.aiDifficultyField?.classList.toggle('hidden', gameMode !== 'ai');
+  els.onlineBlock?.classList.toggle('hidden', gameMode !== 'online');
+  els.localAiBlock?.classList.toggle('hidden', gameMode === 'online');
+
+  // État plié/déplié des Options avancées.
+  if (els.advancedOptions) {
+    els.advancedOptions.open = localStorage.getItem('tm_advancedOpen') === '1';
+  }
 }
 
 function wireGameControls() {

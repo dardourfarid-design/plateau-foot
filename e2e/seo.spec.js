@@ -32,7 +32,8 @@ test('la landing /en/ se charge : h1, hreflang réciproques, CTA vers /?lang=en'
 
 test("l'app démarre en anglais via /?lang=en (#183)", async ({ page }) => {
   await page.goto('/?lang=en');
-  await expect(page.locator('#goToSetupBtn')).toContainText('Play now');
+  // Le CTA principal de l'accueil (« Jouer » → « Play ») doit être traduit.
+  await expect(page.locator('#quickPlayBtn')).toContainText('Play');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 

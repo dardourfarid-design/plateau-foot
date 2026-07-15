@@ -64,6 +64,57 @@ export function buildStartingFormation(variant = 'standard') {
   return tokens;
 }
 
+// ===================== PALIERS DE RÈGLES (#206, spike #198) =====================
+// La v0.5 applique couverture / une-deux / ailes / point de penalty en
+// permanence. Pour réconcilier « simple comme les dames » et la profondeur
+// réelle, on expose ces mécaniques comme des flags regroupés en 3 paliers.
+// Voir docs/team/regles-paliers.md pour les décisions et le contrat.
+//
+// Ces quatre flags concernent la mécanique de PASSE (les seules mécaniques
+// jusque-là non désactivables). `variant` et `powers` gardent leurs propres
+// options (`options.variant` / `options.freePowers`) — les paliers ne font que
+// RECOMMANDER une valeur par défaut à l'UI (voir RULESET_DEFAULTS).
+export const RULE_FLAGS = Object.freeze(['coverage', 'oneTwo', 'wings', 'penaltySpot']);
+
+// Défaut moteur = tout activé (comportement historique v0.5). Un `createGame()`
+// sans `ruleset` se comporte exactement comme avant l'introduction des paliers,
+// ce qui préserve la suite de tests et les appelants existants (online, tutoriel).
+export const DEFAULT_RULES = Object.freeze({
+  coverage: true, oneTwo: true, wings: true, penaltySpot: true
+});
+
+export const RULESETS = Object.freeze({
+  decouverte: Object.freeze({ coverage: false, oneTwo: false, wings: false, penaltySpot: false }),
+  classique:  Object.freeze({ coverage: true,  oneTwo: true,  wings: false, penaltySpot: false }),
+  expert:     Object.freeze({ coverage: true,  oneTwo: true,  wings: true,  penaltySpot: true })
+});
+
+export const DEFAULT_RULESET = 'classique';
+
+// Valeurs recommandées de variant/pouvoirs par palier — consommées par l'UI
+// (préréglages de difficulté #206), jamais par le moteur pur.
+export const RULESET_DEFAULTS = Object.freeze({
+  decouverte: Object.freeze({ variant: 'standard', powers: false }),
+  classique:  Object.freeze({ variant: 'standard', powers: true }),
+  expert:     Object.freeze({ variant: 'tactique', powers: true })
+});
+
+// Résout l'ensemble de flags de règles effectif pour une partie.
+// - `options.ruleset` ('decouverte'|'classique'|'expert') choisit un palier ;
+//   absent/inconnu -> DEFAULT_RULES (tout activé, rétrocompat).
+// - `options.rules` surcharge finement un ou plusieurs flags par-dessus le
+//   palier (utilisé par « Options avancées » #205).
+export function resolveRules(options = {}) {
+  const base = (options.ruleset && RULESETS[options.ruleset]) || DEFAULT_RULES;
+  const merged = { ...base };
+  if (options.rules) {
+    for (const f of RULE_FLAGS) {
+      if (typeof options.rules[f] === 'boolean') merged[f] = options.rules[f];
+    }
+  }
+  return Object.freeze(merged);
+}
+
 // Garde-fou structurel : si jamais quelqu'un modifie buildStartingFormation()
 // sans faire attention, cette fonction permet de vérifier qu'aucun chevauchement
 // n'est réintroduit (le bug qui a coûté cher en debug manuel la dernière fois).

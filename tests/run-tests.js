@@ -18,6 +18,7 @@ await import('./adService.test.js');
 await import('./interstitialFrequency.test.js');
 await import('./adAnalytics.test.js');
 await import('./abTest.test.js');
+await import('./tutorial.test.js');
 
 // Les imports ci-dessus ne font qu'ENREGISTRER les tests ; on les exécute
 // ici séquentiellement (avec await), pour que les tests async ne s'entrelacent

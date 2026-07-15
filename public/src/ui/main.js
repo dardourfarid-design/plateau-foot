@@ -10,7 +10,7 @@ import {
   applyMove, PHASES
 } from '../engine/gameEngine.js';
 import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
-import { TEAMS } from '../engine/constants.js';
+import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
 import {
   POWER_LABELS, canActivatePower, confirmRelaisAfterPass, expireWallIfNeeded
@@ -116,6 +116,7 @@ let purchasedThemeIds = [];
 let activeThemeId = loadSavedThemeId();
 let gameMode = 'local'; // 'local' | 'ai' | 'online'
 let aiLevel = AI_LEVELS.MOYEN;
+let selectedRuleset = 'classique'; // palier de regles (#206) : decouverte | classique | expert
 let selectedVariant = 'standard'; // 'standard' (6 pions) | 'tactique' (8 pions)
 let freePowersOn = true;          // pouvoir bonus tire au sort par equipe/match
 let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limite de tours, departage TAB)
@@ -167,6 +168,8 @@ function cacheDomRefs() {
   els.sidebarScoreBleu = document.getElementById('sidebarScoreBleu');
   els.sidebarScoreRouge = document.getElementById('sidebarScoreRouge');
   els.sidebarTurn = document.getElementById('sidebarTurn');
+  els.sidebarRules = document.getElementById('sidebarRules');
+  els.rulesPalierBadge = document.getElementById('rulesPalierBadge');
   els.turnBanner = document.getElementById('turnBanner');
   els.hintBar = document.getElementById('hintBar');
   els.cancelBtn = document.getElementById('cancelBtn');
@@ -181,6 +184,8 @@ function cacheDomRefs() {
   els.modeOptions = document.getElementById('modeOptions');
   els.aiDifficultyField = document.getElementById('aiDifficultyField');
   els.aiDifficultyOptions = document.getElementById('aiDifficultyOptions');
+  els.rulesetOptions = document.getElementById('rulesetOptions');
+  els.rulesetHint = document.getElementById('rulesetHint');
   els.variantOptions = document.getElementById('variantOptions');
   els.powersOptions = document.getElementById('powersOptions');
   els.formatOptions = document.getElementById('formatOptions');
@@ -351,7 +356,7 @@ function applyPowersToGameState() {
 }
 
 function startGame(goalsToWin) {
-  gameState = createGame({ goalsToWin, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
+  gameState = createGame({ goalsToWin, ruleset: selectedRuleset, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
   els.shootoutScreen?.classList.add('hidden');
   // En local ou vs IA, l'humain principal joue toujours Bleu. Sans cette
@@ -367,9 +372,52 @@ function startGame(goalsToWin) {
   maybeTriggerAiTurn();
 }
 
+// #199 — Aide en jeu filtrée par palier : le rappel des règles de la feuille
+// de match liste les règles de base PLUS les règles avancées réellement
+// actives dans la partie en cours. Mémoïsé (les règles ne changent pas en
+// cours de partie) pour ne rien reconstruire à chaque frame.
+let _rulesSig = null;
+function updateRulesReminder(state) {
+  const ul = els.sidebarRules;
+  if (!ul) return;
+  const rules = state.rules || {};
+  const hasPowers = state.tokens.some(t => t.power);
+  const sig = [rules.coverage, rules.oneTwo, rules.wings, rules.penaltySpot, hasPowers].join(',');
+  if (sig === _rulesSig) return;
+  _rulesSig = sig;
+
+  const base = [
+    "Déplace un pion d'une case, dans n'importe quelle direction.",
+    "Adjacent au ballon ? Pousse-le en ligne droite aussi loin que tu veux.",
+    "Le gardien glisse uniquement sur sa ligne de cage.",
+    "Premier arrivé au nombre de buts fixé gagne la partie."
+  ];
+  const extra = [];
+  if (rules.coverage) extra.push("Un défenseur adverse coupe les cases voisines : une passe ne les traverse pas (hachures rouges).");
+  if (rules.oneTwo) extra.push("Une passe qui tombe à côté d'un coéquipier t'offre un déplacement bonus (une‑deux).");
+  if (rules.wings) extra.push("Une passe partant d'une aile (colonne de bord) ignore la couverture adverse.");
+  if (rules.penaltySpot) extra.push("Depuis le point de penalty, ton tir transperce un défenseur (jamais le gardien).");
+  if (hasPowers) extra.push("Un pion marqué ★ porte un pouvoir à usage unique.");
+
+  ul.innerHTML = '';
+  base.concat(extra).forEach((txt, i) => {
+    const li = document.createElement('li');
+    li.textContent = txt;
+    if (i >= base.length) li.classList.add('rule-advanced');
+    ul.appendChild(li);
+  });
+
+  if (els.rulesPalierBadge) {
+    els.rulesPalierBadge.textContent = !rules.coverage
+      ? 'Découverte'
+      : (rules.wings || rules.penaltySpot ? 'Expert' : 'Classique');
+  }
+}
+
 function render() {
   const lineupsByTeam = myResolvedLineup ? { bleu: myResolvedLineup } : null;
   renderBoard(els.boardGrid, gameState, lineupsByTeam);
+  updateRulesReminder(gameState);
   // Flash d'animation sur le score qui vient de changer
   const prevBleu = parseInt(els.scoreBleu.textContent, 10);
   const prevRouge = parseInt(els.scoreRouge.textContent, 10);
@@ -750,6 +798,35 @@ function wireSetupScreen() {
       powersOpts.forEach(o => o.classList.remove('active'));
       opt.classList.add('active');
       freePowersOn = opt.dataset.val === 'on';
+    });
+  });
+
+  // #206 — palier de regles (Decouverte / Classique / Expert). Choisir un palier
+  // applique aussi la variante et les pouvoirs RECOMMANDES (l'utilisateur peut
+  // ensuite les ajuster librement dans les Options avancees).
+  const setActive = (opts, val) => opts.forEach(o =>
+    o.classList.toggle('active', o.dataset.val === val));
+  const RULESET_HINTS = {
+    decouverte: 'Découverte : règles minimales — déplacer, pousser le ballon, marquer. Idéal pour une première partie.',
+    classique: 'Classique : couverture défensive et une‑deux. L’équilibre recommandé.',
+    expert: 'Expert : ajoute les ailes, le point de penalty, les pouvoirs et la formation Tactique à 8 pions.'
+  };
+  const rulesetOpts = els.rulesetOptions ? els.rulesetOptions.querySelectorAll('.setup-option') : [];
+  rulesetOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      rulesetOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedRuleset = opt.dataset.val;
+      if (els.rulesetHint && RULESET_HINTS[selectedRuleset]) {
+        els.rulesetHint.textContent = RULESET_HINTS[selectedRuleset];
+      }
+      const reco = RULESET_DEFAULTS[selectedRuleset];
+      if (reco) {
+        selectedVariant = reco.variant;
+        freePowersOn = reco.powers;
+        setActive(variantOpts, reco.variant);
+        setActive(powersOpts, reco.powers ? 'on' : 'off');
+      }
     });
   });
 

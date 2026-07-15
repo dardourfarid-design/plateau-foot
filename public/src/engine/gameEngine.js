@@ -5,7 +5,8 @@
 
 import {
   BOARD_COLS, BOARD_ROWS, GOAL_COLS, GOAL_ROW_TOP, GOAL_ROW_BOTTOM,
-  GK_ZONE_ROWS_TOP, GK_ZONE_ROWS_BOTTOM, TEAMS, CENTER, buildStartingFormation
+  GK_ZONE_ROWS_TOP, GK_ZONE_ROWS_BOTTOM, TEAMS, CENTER, buildStartingFormation,
+  DEFAULT_RULES, resolveRules
 } from './constants.js';
 
 export const PHASES = Object.freeze({
@@ -48,6 +49,9 @@ export function createGame(options = {}) {
   return Object.freeze({
     tokens,
     variant,
+    // Paliers de règles (#206) : flags de mécaniques de passe activées pour
+    // cette partie. Voir constants.js/resolveRules et docs/team/regles-paliers.md.
+    rules: resolveRules(options),
     ball: { row: CENTER.row, col: CENTER.col },
     turn: TEAMS.BLEU,
     score: { [TEAMS.BLEU]: 0, [TEAMS.ROUGE]: 0 },
@@ -173,8 +177,13 @@ export function getPassDestinations(state, options = {}) {
   // sur, ni traverser une case couverte par l'equipe adverse. Ignoree si l'on
   // part d'une aile ("centre") ou si l'appelant force ignoreCoverage (pouvoirs,
   // sequences internes).
-  const penalty = isPenaltyShot(state);
-  const ignoreCoverage = options.ignoreCoverage ?? (isWingPass(state) || penalty);
+  // Paliers de regles (#206) : ailes et point de penalty ne s'appliquent que si
+  // le palier les active ; si la couverture elle-meme est desactivee (palier
+  // Decouverte), toute passe ignore la couverture.
+  const rules = state.rules || DEFAULT_RULES;
+  const penalty = rules.penaltySpot && isPenaltyShot(state);
+  const wing = rules.wings && isWingPass(state);
+  const ignoreCoverage = options.ignoreCoverage ?? (!rules.coverage || wing || penalty);
   const opponent = state.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU;
 
   const dests = [];
@@ -339,7 +348,11 @@ export function applyBallMovement(state, row, col) {
   // champ orthogonalement adjacent), l'equipe rejoue immediatement un
   // deplacement bonus (jamais une 2e passe). Non cumulable, jamais pendant un
   // bonus deja en cours ou un Relais.
+  // Palier de regles (#206) : la une-deux n'est offerte que si le palier
+  // l'active (desactivee en Decouverte).
+  const rules = state.rules || DEFAULT_RULES;
   const eligibleForCombo =
+    rules.oneTwo &&
     !state.comboMoveAvailable &&
     !state.relaisBonusMoveAvailable &&
     !state.relaisPendingForTeam &&

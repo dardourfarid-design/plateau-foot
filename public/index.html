@@ -429,6 +429,16 @@
       <!-- Bloc Local/IA -->
       <div id="localAiBlock">
         <div class="setup-field">
+          <span class="setup-label">Palier de règles</span>
+          <div class="setup-options" id="rulesetOptions">
+            <div class="setup-option" data-val="decouverte">Découverte</div>
+            <div class="setup-option active" data-val="classique">Classique</div>
+            <div class="setup-option" data-val="expert">Expert</div>
+          </div>
+          <p class="setup-hint" id="rulesetHint">Classique : couverture défensive et une‑deux. Découverte = règles minimales ; Expert = ailes, penalty, pouvoirs.</p>
+        </div>
+
+        <div class="setup-field">
           <span class="setup-label">Style de jeu</span>
           <div class="setup-options" id="variantOptions">
             <div class="setup-option active" data-val="standard">Classique · 6</div>
@@ -573,8 +583,8 @@
       </div>
 
       <div class="sidebar-card">
-        <div class="sidebar-title">Rappel des règles</div>
-        <ul class="sidebar-rules">
+        <div class="sidebar-title">Rappel des règles <span class="rules-palier-badge" id="rulesPalierBadge"></span></div>
+        <ul class="sidebar-rules" id="sidebarRules">
           <li>Déplace un pion d'une case, dans n'importe quelle direction.</li>
           <li>Adjacent au ballon ? Pousse-le en ligne droite aussi loin que tu veux.</li>
           <li>Le gardien glisse uniquement sur sa ligne de cage.</li>

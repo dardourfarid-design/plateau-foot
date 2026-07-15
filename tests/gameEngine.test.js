@@ -6,7 +6,7 @@ import {
   isCellCoveredBy, isWingPass, applyBallMovement, STALL_LIMIT,
   penaltySpotFor, isPenaltyShot
 } from '../public/src/engine/gameEngine.js';
-import { TEAMS, CENTER } from '../public/src/engine/constants.js';
+import { TEAMS, CENTER, resolveRules } from '../public/src/engine/constants.js';
 
 describe('createGame', () => {
   test('crée un état initial cohérent', () => {
@@ -581,6 +581,83 @@ describe('manche courte (turnLimit) et depart au nul (v0.5)', () => {
     }
     expect(state.gameOver).toBe(false);
     expect(state.turnLimit).toBeNull();
+  });
+});
+
+// ===================== PALIERS DE RÈGLES (#206, spike #198) ==================
+describe('paliers de règles (#206)', () => {
+  function withRules(ruleset, ball, tokens, turn = TEAMS.BLEU) {
+    return { ...createGame({ ruleset, goalsToWin: 99 }), ball, tokens, turn };
+  }
+
+  test('resolveRules : défaut tout activé, palier, et surcharge fine', () => {
+    expect(resolveRules()).toEqual({ coverage: true, oneTwo: true, wings: true, penaltySpot: true });
+    expect(resolveRules({ ruleset: 'decouverte' })).toEqual({ coverage: false, oneTwo: false, wings: false, penaltySpot: false });
+    expect(resolveRules({ ruleset: 'classique' })).toEqual({ coverage: true, oneTwo: true, wings: false, penaltySpot: false });
+    // surcharge fine (Options avancées #205) : rétablir la couverture sur Découverte
+    const o = resolveRules({ ruleset: 'decouverte', rules: { coverage: true } });
+    expect(o.coverage).toBe(true);
+    expect(o.oneTwo).toBe(false);
+  });
+
+  test('createGame expose rules selon le palier (défaut rétrocompatible = tout activé)', () => {
+    expect(createGame().rules.wings).toBe(true);
+    expect(createGame({ ruleset: 'classique' }).rules.wings).toBe(false);
+    expect(createGame({ ruleset: 'decouverte' }).rules.coverage).toBe(false);
+    expect(createGame({ ruleset: 'expert' }).rules.penaltySpot).toBe(true);
+  });
+
+  test('Découverte : la couverture est désactivée (une case adjacente à un adverse reste jouable)', () => {
+    const state = withRules('decouverte', { row: 6, col: 3 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 3, col: 3, isGK: false }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    // (4,3) est couverte par (3,3) — bloquée en Classique/Expert, mais jouable en Découverte
+    expect(passes.some(([r, c]) => r === 4 && c === 3)).toBeTruthy();
+  });
+
+  test('Découverte : pas de une-deux (aucun mouvement bonus, la main passe à l adversaire)', () => {
+    let state = withRules('decouverte', { row: 6, col: 3 }, [
+      { id: 'b-p', team: TEAMS.BLEU, row: 7, col: 3, isGK: false },
+      { id: 'b-a', team: TEAMS.BLEU, row: 4, col: 3, isGK: false } // appui à côté de (5,3)
+    ]);
+    state = selectToken(state, 'b-p');
+    const after = passBall(state, 5, 3);
+    expect(after.comboMoveAvailable).toBeFalsy();
+    expect(after.turn).toBe(TEAMS.ROUGE);
+  });
+
+  test('Classique : les ailes n ignorent PAS la couverture (contrairement au défaut)', () => {
+    const state = withRules('classique', { row: 6, col: 0 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 3, col: 0, isGK: false }
+    ]);
+    const passes = getPassDestinations(state).map(([r, c]) => [r, c]);
+    // (4,0) couverte par (3,0) : bloquée car l exception "aile" est en Expert
+    expect(passes.some(([r, c]) => r === 4 && c === 0)).toBeFalsy();
+  });
+
+  test('Classique : pas de tir perforant au point de penalty (défenseur bloque)', () => {
+    const sp = penaltySpotFor(TEAMS.BLEU); // (2,3)
+    const state = withRules('classique', { row: sp.row, col: sp.col }, [
+      { id: 'r-d', team: TEAMS.ROUGE, row: 1, col: 3, isGK: false },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 1, isGK: true }
+    ]);
+    const dests = getPassDestinations(state).map(([r, c]) => [r, c]);
+    expect(dests.some(([r, c]) => r === 0 && c === 3)).toBeFalsy();
+  });
+
+  test('Expert : ailes ET point de penalty actifs (comme le comportement historique)', () => {
+    const wing = withRules('expert', { row: 6, col: 0 }, [
+      { id: 'r-x', team: TEAMS.ROUGE, row: 3, col: 0, isGK: false }
+    ]);
+    expect(getPassDestinations(wing).some(([r, c]) => r === 4 && c === 0)).toBeTruthy();
+
+    const sp = penaltySpotFor(TEAMS.BLEU);
+    const pen = withRules('expert', { row: sp.row, col: sp.col }, [
+      { id: 'r-d', team: TEAMS.ROUGE, row: 1, col: 3, isGK: false },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 1, isGK: true }
+    ]);
+    expect(getPassDestinations(pen).some(([r, c]) => r === 0 && c === 3)).toBeTruthy();
   });
 });
 

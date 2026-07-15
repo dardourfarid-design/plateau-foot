@@ -190,6 +190,17 @@ body{
   color: var(--craie-att);
 }
 .sidebar-rules li::marker{ color: var(--terre-vif); }
+/* #199 — règles avancées du palier actif, distinguées du socle de base */
+.sidebar-rules li.rule-advanced{ color: var(--craie-att); opacity:0.9; }
+.sidebar-rules li.rule-advanced::marker{ color: #FFD87A; }
+/* #199 — badge du palier de règles à côté du titre du rappel */
+.rules-palier-badge{
+  font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+  padding:2px 7px; border-radius:999px; vertical-align:middle;
+  background: rgba(255,216,122,0.14); color:#FFD87A;
+  border:1px solid rgba(255,216,122,0.28);
+}
+.rules-palier-badge:empty{ display:none; }
 
 .scoreboard{
   width:100%;
@@ -336,6 +347,21 @@ body{
   border-radius:50%;
   background: rgba(255,216,122,0.55);
   box-shadow: 0 0 6px rgba(255,216,122,0.4);
+  pointer-events:none;
+}
+
+/* #201 — cases coupées par la couverture adverse (interception). Hachurée
+   rouge discrète : "tu ne peux pas passer ici". Non cliquable, purement
+   pédagogique. N'apparaît que si le palier active la couverture. */
+.cell.covered-cell::before{
+  content:'';
+  position:absolute; inset:3px;
+  border-radius:3px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(214,72,72,0.16) 0, rgba(214,72,72,0.16) 2px,
+    transparent 2px, transparent 5px);
+  box-shadow: inset 0 0 0 1px rgba(214,72,72,0.18);
   pointer-events:none;
 }
 
@@ -660,6 +686,10 @@ body{
 .setup-label{
   font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
   color: var(--craie-att); margin-bottom:8px; display:block;
+}
+.setup-hint{
+  font-size:12px; line-height:1.4; color: var(--craie-att);
+  opacity:0.75; margin:8px 0 0;
 }
 .setup-options{ display:flex; gap:8px; }
 .setup-option{

@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { hashSeedToAvatar, renderAvatarSvg, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from '../src/ui/playerAvatar.js';
+import { hashSeedToAvatar, renderAvatarSvg, AVATAR_COLORS, AVATAR_PATTERNS, AVATAR_ACCESSORIES } from '../public/src/ui/playerAvatar.js';
 
 describe('hashSeedToAvatar', () => {
   test('est déterministe : la même seed donne toujours le même avatar', () => {

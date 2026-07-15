@@ -10,8 +10,8 @@
 // mesure a relancer apres tout changement de regle pour garder un oeil sur le
 // nombre de buts/partie et le taux de parties terminees.
 
-import { createGame, applyMove } from '../src/engine/gameEngine.js';
-import { chooseAiMove, AI_LEVELS } from '../src/engine/ai.js';
+import { createGame, applyMove } from '../public/src/engine/gameEngine.js';
+import { chooseAiMove, AI_LEVELS } from '../public/src/engine/ai.js';
 
 function playGame(variant, freePowers, maxTurns = 400) {
   let s = createGame({ goalsToWin: 3, variant, freePowers, rng: Math.random });

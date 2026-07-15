@@ -67,7 +67,7 @@ connect-src … https://pagead2.googlesyndication.com https://fundingchoicesmess
 > Ces ajouts se font dans la **PR d'activation** (quand `googleAdSenseProvider.js` remplace le mock), pas dans #25.
 
 ## Bascule mock → réel (résumé)
-Un seul point à changer : `src/services/ads/adProvider.js` (`activeProvider`). Le reste du code
+Un seul point à changer : `public/src/services/ads/adProvider.js` (`activeProvider`). Le reste du code
 (`adService`, UI, gating) est déjà agnostique du réseau.
 
 ---

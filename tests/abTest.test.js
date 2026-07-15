@@ -6,7 +6,7 @@ import { describe, test, expect } from './test-utils.js';
 
 if (typeof globalThis.window === 'undefined') globalThis.window = {};
 
-const { pick, bucket } = await import('../src/services/ads/abTest.js');
+const { pick, bucket } = await import('../public/src/services/ads/abTest.js');
 
 describe('abTest', () => {
   test('pick est déterministe pour un même client et une même expérience', () => {

@@ -4,8 +4,8 @@ import {
   resolveShot, readKeeperZone, randomSweet, cpuScores,
   createShootout, applyShot, playerShoot, cpuShoot,
   goalsOf, isShootoutOver, shootoutWinner, isSuddenDeath
-} from '../src/engine/penaltyShootoutV2.js';
-import { TEAMS } from '../src/engine/constants.js';
+} from '../public/src/engine/penaltyShootoutV2.js';
+import { TEAMS } from '../public/src/engine/constants.js';
 
 // ===================== TESTS moteur tirs au but v2 =====================
 // Couvre la résolution pure d'un tir (zone/jauge/gardien), les aléas isolés

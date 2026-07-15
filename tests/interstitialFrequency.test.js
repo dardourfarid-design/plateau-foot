@@ -12,7 +12,7 @@ const {
   shouldShowInterstitial,
   markInterstitialShown,
   resetInterstitialFrequency
-} = await import('../src/services/ads/interstitialFrequency.js');
+} = await import('../public/src/services/ads/interstitialFrequency.js');
 
 // Politique déterministe : 1 interstitiel tous les 3 matchs, cooldown 10 s.
 // Fixée À CHAQUE TEST (pas au chargement) car window.__PLATEAU_FOOT_CONFIG__

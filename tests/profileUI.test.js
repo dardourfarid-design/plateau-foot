@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { toOwnedShape, avatarForOwned } from '../src/ui/profileUI.js';
+import { toOwnedShape, avatarForOwned } from '../public/src/ui/profileUI.js';
 
 // ===================== TESTS profileUI.js =====================
 // Couvre les fonctions pures exportées qui ne dépendent ni du DOM ni de

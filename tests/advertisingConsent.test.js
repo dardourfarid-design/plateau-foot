@@ -14,7 +14,7 @@ import { describe, test, expect } from './test-utils.js';
 // sans lever d'exception à l'import.
 if (typeof globalThis.window === 'undefined') globalThis.window = {};
 
-const { CONSENT_PURPOSES } = await import('../src/services/consentService.js');
+const { CONSENT_PURPOSES } = await import('../public/src/services/consentService.js');
 const {
   getAdvertisingConsent,
   hasAdvertisingConsent,
@@ -22,7 +22,7 @@ const {
   setAdvertisingConsent,
   onAdvertisingConsentChange,
   AD_CONSENT
-} = await import('../src/services/advertisingConsentService.js');
+} = await import('../public/src/services/advertisingConsentService.js');
 
 describe('advertisingConsentService', () => {
   test('la finalité ADVERTISING existe côté consentService', () => {

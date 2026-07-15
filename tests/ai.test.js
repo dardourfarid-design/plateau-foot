@@ -1,7 +1,7 @@
 import { describe, test, expect } from './test-utils.js';
-import { createGame, listLegalMoves, applyMove } from '../src/engine/gameEngine.js';
-import { chooseAiMove, AI_LEVELS } from '../src/engine/ai.js';
-import { TEAMS } from '../src/engine/constants.js';
+import { createGame, listLegalMoves, applyMove } from '../public/src/engine/gameEngine.js';
+import { chooseAiMove, AI_LEVELS } from '../public/src/engine/ai.js';
+import { TEAMS } from '../public/src/engine/constants.js';
 
 function isMoveInList(move, list) {
   return list.some(m => JSON.stringify(m) === JSON.stringify(move));

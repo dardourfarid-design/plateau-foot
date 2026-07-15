@@ -25,9 +25,8 @@ secousse d'écran sur but, texte qui « pop »). Il remplace l'ancien rendu vert
    - nouvelle fonction `spawnShootoutConfetti()`.
    - `playShootoutDir()` : sur un but → confettis + secousse de la carte +
      texte « BUT ! » qui pop (sinon « Arrêt ! »).
-   > **Important** : `public/src/ui/main.js` doit être identique à
-   > `src/ui/main.js` (le déploiement est statique, sans build). Recopie
-   > `src/` → `public/src/` avant de pousser (ou lance `node build.js`).
+   > **Note** : `public/src/` est la source unique du code (déploiement
+   > statique, sans build) — édite directement ces fichiers.
 
 ## Vérifs
 - `npm test` → 144 tests au vert (le moteur `penaltyShootout.js` est inchangé).

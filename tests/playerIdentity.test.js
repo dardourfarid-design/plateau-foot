@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { resolveLineup, slotFromTokenId, displayNameForToken } from '../src/ui/playerIdentity.js';
+import { resolveLineup, slotFromTokenId, displayNameForToken } from '../public/src/ui/playerIdentity.js';
 
 describe('slotFromTokenId', () => {
   test('extrait correctement le slot pour chaque type de pion', () => {

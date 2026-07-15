@@ -40,8 +40,10 @@ npm run e2e                      # E2E publics (Playwright, sert public/ tout se
 npm run coverage                 # couverture c8 (échoue sous les seuils package.json)
 npm run integration              # intégration Supabase (nécessite secrets de test)
 deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/   # edge
-node build.js && git diff --quiet -- public/src   # parité src/ ↔ public/src/
 ```
+
+> `public/src/` est la **source unique** du code applicatif (#20) : l'ancien
+> contrôle de parité `src/ ↔ public/src/` (et `build.js`) n'existe plus.
 
 Smoke de production en local :
 

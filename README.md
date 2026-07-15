@@ -41,7 +41,7 @@ surveiller la santé du projet dans la durée. Trois niveaux :
 
 | Niveau | Déclenchement | Contenu |
 |---|---|---|
-| **CI** (`ci.yml`) | auto (PR / push `main`) | 7 jobs : unit, parité `src/↔public/src`, e2e, e2e-auth, edge Deno, coverage c8, intégration Supabase |
+| **CI** (`ci.yml`) | auto (PR / push `main`) | 6 jobs : unit, e2e, e2e-auth, edge Deno, coverage c8, intégration Supabase |
 | **Non-régression complète** (`full-regression.yml`) | **à la demande** (Actions → Run workflow) | rejoue toute la suite lourde d'un coup, entrée `suite` = all/unit/e2e/quality |
 | **Smoke de production** (`prod-smoke.yml`) | **à la demande** | parcours critiques anonymes contre https://tactic-master.vercel.app |
 
@@ -133,14 +133,14 @@ pas l'objectif actuel.
    - Événement à écouter : `checkout.session.completed`
    - Une fois créé, copie le "Signing secret" (commence par `whsec_`) et ajoute-le comme variable `STRIPE_WEBHOOK_SECRET` dans les secrets Supabase (même endroit qu'à l'étape 3)
 6. Exécute la migration `0019_stripe_foundations.sql` (comme les précédentes, via le SQL Editor)
-7. Dans `src/services/payment/paymentProvider.js`, décommente l'import Stripe et remplace `mockProvider` par `stripeProvider` — c'est le seul changement de code nécessaire pour activer réellement Stripe
+7. Dans `public/src/services/payment/paymentProvider.js`, décommente l'import Stripe et remplace `mockProvider` par `stripeProvider` — c'est le seul changement de code nécessaire pour activer réellement Stripe
 8. Teste avec une [carte de test Stripe](https://docs.stripe.com/testing) (ex: `4242 4242 4242 4242`, n'importe quelle date future, n'importe quel CVC) — jamais une vraie carte, le compte étant en mode Test ça ne fonctionnerait de toute façon pas
 
 **Pour revenir au mock à tout moment** : remettre `mockProvider` dans `paymentProvider.js`, aucune autre étape nécessaire — les deux systèmes coexistent sans conflit.
 
 ## Publicité (monétisation hors boutique)
 
-Régie **Google AdSense** (bannières hors-jeu), consentement via le **CMP certifié Google**. Toute la logique vit dans `src/services/ads/` et passe par `adService` (point d'entrée unique). Détails, runbook de déploiement progressif et checklist de conformité : **`docs/monetization-ads.md`**.
+Régie **Google AdSense** (bannières hors-jeu), consentement via le **CMP certifié Google**. Toute la logique vit dans `public/src/services/ads/` et passe par `adService` (point d'entrée unique). Détails, runbook de déploiement progressif et checklist de conformité : **`docs/monetization-ads.md`**.
 
 **Contrôles rapides (dans `public/config.js` → `ads`) :**
 
@@ -151,7 +151,7 @@ Régie **Google AdSense** (bannières hors-jeu), consentement via le **CMP certi
 
 **Garanties structurelles :** aucune pub pendant une partie ; **jamais** pour un détenteur de pass actif ; rien ne se charge en cas de refus explicite ; le crédit des vidéos récompensées est décidé **côté serveur** (SSV, migration 0036) — jamais par le client.
 
-**Basculer AdSense ↔ mock** : changer `activeProvider` dans `src/services/ads/adProvider.js` (le mock sert au développement hors-ligne).
+**Basculer AdSense ↔ mock** : changer `activeProvider` dans `public/src/services/ads/adProvider.js` (le mock sert au développement hors-ligne).
 
 ## Tester l'installation PWA
 
@@ -209,13 +209,17 @@ anciennes traînent en base lors d'un futur nettoyage.
 ## Structure du projet
 
 ```
-src/engine/      moteur de jeu pur (règles, aucune dépendance UI) — testé unitairement
-src/ui/          rendu DOM + orchestration des interactions + compte/auth
-src/services/    accès Supabase et abstraction du paiement (mock / Stripe)
-public/          fichiers servis au navigateur (HTML, CSS, config)
-supabase/        migrations SQL
-tests/           suite de tests du moteur (31 tests)
+public/              fichiers servis au navigateur (HTML, CSS, config) — déployés tels quels
+public/src/engine/   moteur de jeu pur (règles, aucune dépendance UI) — testé unitairement
+public/src/ui/       rendu DOM + orchestration des interactions + compte/auth
+public/src/services/ accès Supabase et abstraction du paiement (mock / Stripe)
+supabase/            migrations SQL
+tests/               suite de tests du moteur
 ```
+
+> **Source unique** (#20) : `public/src/` est LE code applicatif — il n'y a
+> plus de dossier `src/` dupliqué ni d'étape `node build.js`. On édite
+> directement `public/src/`, ce qui est committé est ce qui est servi.
 
 ## Mettre l'app en ligne (déploiement réel)
 
@@ -228,7 +232,7 @@ Le projet est prêt pour Vercel ou Netlify (configs déjà incluses : `vercel.js
 2. Installe leur CLI : `npm install -g vercel` (si npm est accessible chez toi)
 3. Depuis le dossier racine du projet : `vercel`
 4. Réponds aux quelques questions (nom du projet, etc.) — accepte les valeurs par défaut
-5. Vercel détecte `vercel.json`, exécute `node build.js`, publie `public/`
+5. Vercel détecte `vercel.json` et publie `public/` tel quel (aucune étape de build)
 6. Tu obtiens une URL publique du type `https://plateau-foot-xxxx.vercel.app`
 
 Pour les mises à jour suivantes : `vercel --prod` republie en production.
@@ -270,7 +274,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 ## Statut actuel
 
 - 🆕 **Début du découpage de main.js (dette technique, Phase 4 du plan)** :
-  extraction de la boutique de thèmes vers `src/ui/shopUI.js` (catalogue,
+  extraction de la boutique de thèmes vers `public/src/ui/shopUI.js` (catalogue,
   bundle Mondial, achats individuels), -204 lignes sur `main.js`
   (2398 → 2195). Le module reçoit ses dépendances transverses (compte,
   navigation d'écran) via un objet `deps` explicite plutôt que d'accéder à
@@ -330,7 +334,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
     `grant_player_if_purchased()`, qui réutilisent le même chemin
     générique (`paymentProvider.js`) que les thèmes — validé par une
     simulation du flux complet.
-  - Suppression de `src/engine/undoManager.js` (code mort, jamais importé).
+  - Suppression de `public/src/engine/undoManager.js` (code mort, jamais importé).
   - Documentation d'équipe (`docs/team/`) resynchronisée avec l'état réel
     du projet (multijoueur livré, Stripe en tête des priorités backend).
   Prochaine étape du plan : créer les Edge Functions Stripe
@@ -347,7 +351,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 - 🆕 **Pouvoirs de pion (sprint dédié, mécanique terminée)** : 5 pouvoirs
   réservés aux joueurs rares/légendaires du mercato (jamais sur la
   formation de départ ni le starter pack gratuit), chacun activable une
-  fois par partie — voir `src/engine/powers.js` (21 tests dédiés, dont un
+  fois par partie — voir `public/src/engine/powers.js` (21 tests dédiés, dont un
   scénario d'intégration complet pour Relais) :
   - **Tir Puissant** : traverse un pion adverse sur la trajectoire de passe
   - **Sprint** : déplacement de 2 cases au lieu d'1
@@ -378,7 +382,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
   l'occupant. Solution de repli au clic conservée pour le tactile.
 - 🆕 **Création de joueurs personnalisés** : nom, style, et avatar composable
   (couleur + motif + accessoire, rendu en SVG déterministe — voir
-  `src/ui/playerAvatar.js`, 11 tests dédiés). Modèle freemium : 1 joueur
+  `public/src/ui/playerAvatar.js`, 11 tests dédiés). Modèle freemium : 1 joueur
   gratuit par compte, les suivants nécessitent l'achat d'un slot (réutilise
   le système de paiement déjà en place pour les thèmes, jamais de logique
   de quota côté client — tout vérifié dans `create_custom_player()` côté
@@ -397,14 +401,14 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
   progression (XP/niveau), streak quotidien **sans punition d'absence**,
   3 défis tirés chaque jour, classement. Écran "Mon profil" dans la topbar.
   Noms de joueurs affichés sur les pions en partie quand une composition
-  existe (`src/ui/playerIdentity.js`, 9 tests dédiés).
+  existe (`public/src/ui/playerIdentity.js`, 9 tests dédiés).
   ⚠️ Tous les joueurs sont **entièrement fictifs**, par choix délibéré :
   voir la discussion produit qui a écarté les noms de joueurs réels ou
   "légèrement modifiés" pour raisons de droit à l'image / droit des
   marques. Le renommage par l'utilisateur reste libre (usage personnel).
 - 🆕 **Notifications de retour strictement opt-in**, contenu toujours
   factuel (jamais culpabilisant — voir les templates dans
-  `src/services/notificationService.js`). Aucun envoi réel implémenté
+  `public/src/services/notificationService.js`). Aucun envoi réel implémenté
   encore (pas d'infrastructure Web Push) — uniquement la préférence
   utilisateur, stockée dans le même système de consentement RGPD.
 - ⚠️ **Mercato V1 simplifié** : échange direct et immédiat entre deux
@@ -413,7 +417,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 - ℹ️ **Le jeu reste accessible sans compte** (tutoriel et parties locales/IA
   inclus). Un compte obligatoire pour jouer a été implémenté puis désactivé
   temporairement pour faciliter les tests — le code existe toujours
-  (`requireAccountThen()` dans `src/ui/main.js`, non appelé) si on veut le
+  (`requireAccountThen()` dans `public/src/ui/main.js`, non appelé) si on veut le
   réactiver plus tard. Un compte reste nécessaire pour la boutique, le
   profil (progression/collection/classement) et le multijoueur en ligne.
 - ⚠️ **Système de consentement RGPD granulaire** : 3 cases séparées et non
@@ -437,7 +441,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
   depuis l'accueil via "Comment jouer ?". Le joueur sélectionne un pion,
   le déplace, pousse le ballon, et marque un vrai but guidé avant de basculer
   vers une partie normale. Bouton "Passer le tutoriel" disponible à tout
-  moment. Voir `src/ui/tutorial.js` pour la séquence d'étapes.
+  moment. Voir `public/src/ui/tutorial.js` pour la séquence d'étapes.
 - ✅ **Règles simplifiées (v2)** : plateau réduit de 9×11 à 7×9, 6 pions par
   équipe au lieu de 11 (1 gardien + 2 défenseurs + 3 attaquants), gardien
   limité à sa seule ligne de cage au lieu d'une zone profonde de 3 lignes —
@@ -466,7 +470,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 - ✅ Règles simplifiées : bouton "Terminer le tour" explicite dès qu'un pion
   touche le ballon, messages d'aide reformulés pour rester directs
 - ✅ Mode solo contre l'ordinateur, 3 niveaux de difficulté (Facile / Moyen /
-  Difficile) — moteur IA pur et testé dans `src/engine/ai.js`, aucune
+  Difficile) — moteur IA pur et testé dans `public/src/engine/ai.js`, aucune
   dépendance réseau, fonctionne même hors-ligne
 - ✅ Schéma Supabase posé avec sécurité RLS stricte
 - ✅ Système de thèmes : 8 thèmes en base (1 gratuit + 7 payants à 1,99€),
@@ -478,7 +482,7 @@ sera branché (voir plus bas) faudra-t-il ajouter des clés serveur.
 - ✅ Connexion / inscription / déconnexion via Supabase Auth (email + mot de passe)
 - ⏳ Multijoueur en ligne (lien d'invitation, liste de joueurs connectés,
   matchmaking) — pas encore commencé, nécessite Supabase Realtime
-- ⏳ Stripe réel : squelette prêt dans `src/services/payment/stripePaymentProvider.js`,
+- ⏳ Stripe réel : squelette prêt dans `public/src/services/payment/stripePaymentProvider.js`,
   à compléter quand le compte Stripe sera créé (voir commentaires dans ce fichier)
 - ⏳ Pas encore testé en conditions réelles avec ta vraie instance Supabase
   (le sandbox de développement n'a pas accès réseau à ton projet — à valider

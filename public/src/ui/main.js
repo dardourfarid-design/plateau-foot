@@ -168,6 +168,8 @@ function cacheDomRefs() {
   els.sidebarScoreBleu = document.getElementById('sidebarScoreBleu');
   els.sidebarScoreRouge = document.getElementById('sidebarScoreRouge');
   els.sidebarTurn = document.getElementById('sidebarTurn');
+  els.sidebarRules = document.getElementById('sidebarRules');
+  els.rulesPalierBadge = document.getElementById('rulesPalierBadge');
   els.turnBanner = document.getElementById('turnBanner');
   els.hintBar = document.getElementById('hintBar');
   els.cancelBtn = document.getElementById('cancelBtn');
@@ -370,9 +372,52 @@ function startGame(goalsToWin) {
   maybeTriggerAiTurn();
 }
 
+// #199 — Aide en jeu filtrée par palier : le rappel des règles de la feuille
+// de match liste les règles de base PLUS les règles avancées réellement
+// actives dans la partie en cours. Mémoïsé (les règles ne changent pas en
+// cours de partie) pour ne rien reconstruire à chaque frame.
+let _rulesSig = null;
+function updateRulesReminder(state) {
+  const ul = els.sidebarRules;
+  if (!ul) return;
+  const rules = state.rules || {};
+  const hasPowers = state.tokens.some(t => t.power);
+  const sig = [rules.coverage, rules.oneTwo, rules.wings, rules.penaltySpot, hasPowers].join(',');
+  if (sig === _rulesSig) return;
+  _rulesSig = sig;
+
+  const base = [
+    "Déplace un pion d'une case, dans n'importe quelle direction.",
+    "Adjacent au ballon ? Pousse-le en ligne droite aussi loin que tu veux.",
+    "Le gardien glisse uniquement sur sa ligne de cage.",
+    "Premier arrivé au nombre de buts fixé gagne la partie."
+  ];
+  const extra = [];
+  if (rules.coverage) extra.push("Un défenseur adverse coupe les cases voisines : une passe ne les traverse pas (hachures rouges).");
+  if (rules.oneTwo) extra.push("Une passe qui tombe à côté d'un coéquipier t'offre un déplacement bonus (une‑deux).");
+  if (rules.wings) extra.push("Une passe partant d'une aile (colonne de bord) ignore la couverture adverse.");
+  if (rules.penaltySpot) extra.push("Depuis le point de penalty, ton tir transperce un défenseur (jamais le gardien).");
+  if (hasPowers) extra.push("Un pion marqué ★ porte un pouvoir à usage unique.");
+
+  ul.innerHTML = '';
+  base.concat(extra).forEach((txt, i) => {
+    const li = document.createElement('li');
+    li.textContent = txt;
+    if (i >= base.length) li.classList.add('rule-advanced');
+    ul.appendChild(li);
+  });
+
+  if (els.rulesPalierBadge) {
+    els.rulesPalierBadge.textContent = !rules.coverage
+      ? 'Découverte'
+      : (rules.wings || rules.penaltySpot ? 'Expert' : 'Classique');
+  }
+}
+
 function render() {
   const lineupsByTeam = myResolvedLineup ? { bleu: myResolvedLineup } : null;
   renderBoard(els.boardGrid, gameState, lineupsByTeam);
+  updateRulesReminder(gameState);
   // Flash d'animation sur le score qui vient de changer
   const prevBleu = parseInt(els.scoreBleu.textContent, 10);
   const prevRouge = parseInt(els.scoreRouge.textContent, 10);

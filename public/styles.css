@@ -190,6 +190,17 @@ body{
   color: var(--craie-att);
 }
 .sidebar-rules li::marker{ color: var(--terre-vif); }
+/* #199 — règles avancées du palier actif, distinguées du socle de base */
+.sidebar-rules li.rule-advanced{ color: var(--craie-att); opacity:0.9; }
+.sidebar-rules li.rule-advanced::marker{ color: #FFD87A; }
+/* #199 — badge du palier de règles à côté du titre du rappel */
+.rules-palier-badge{
+  font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+  padding:2px 7px; border-radius:999px; vertical-align:middle;
+  background: rgba(255,216,122,0.14); color:#FFD87A;
+  border:1px solid rgba(255,216,122,0.28);
+}
+.rules-palier-badge:empty{ display:none; }
 
 .scoreboard{
   width:100%;

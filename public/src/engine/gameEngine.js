@@ -71,6 +71,9 @@ export function createGame(options = {}) {
     possession: TEAMS.BLEU, // derniere equipe a avoir touche (passe) le ballon
     passStreak: 0,          // passes consecutives de l'equipe en possession (momentum)
     lastGoalPassStreak: 0,  // momentum du but qui vient d'etre marque (pour bonus XP/pieces)
+    // #203 : meilleur momentum (nb de passes) d'un but marque sur la partie,
+    // par equipe. Sert a recompenser le "beau jeu" cote serveur en fin de partie.
+    bestPassStreak: { [TEAMS.BLEU]: 0, [TEAMS.ROUGE]: 0 },
     ballIdleTurns: 0,       // tours consecutifs sans passe (anti-blocage)
     stalled: false,         // vrai le tour ou l'engagement neutre s'est declenche
     history: [] // pile d'événements pour debug / replay éventuel
@@ -458,6 +461,14 @@ function endTurn(state, opts = {}) {
 function registerGoal(state, scoringTeam) {
   const newScore = { ...state.score, [scoringTeam]: state.score[scoringTeam] + 1 };
   const isGameOver = newScore[scoringTeam] >= state.goalsToWin;
+  const goalStreak = state.passStreak || 0;
+
+  // #203 : on garde le meilleur momentum de but de chaque equipe sur la partie.
+  const prevBest = state.bestPassStreak || { [TEAMS.BLEU]: 0, [TEAMS.ROUGE]: 0 };
+  const bestPassStreak = {
+    ...prevBest,
+    [scoringTeam]: Math.max(prevBest[scoringTeam] || 0, goalStreak)
+  };
 
   return Object.freeze({
     ...state,
@@ -467,7 +478,8 @@ function registerGoal(state, scoringTeam) {
     movedTokenPos: null,
     canUndo: false,
     lastGoalBy: scoringTeam,
-    lastGoalPassStreak: state.passStreak || 0, // momentum du but (bonus si >= 3)
+    lastGoalPassStreak: goalStreak, // momentum du but (bonus si >= 3)
+    bestPassStreak,
     possession: null,
     passStreak: 0,
     ballIdleTurns: 0,

@@ -9,7 +9,7 @@ import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
   applyMove, PHASES
 } from '../engine/gameEngine.js';
-import { chooseAiMove, AI_LEVELS } from '../engine/ai.js';
+import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
 import {
@@ -648,13 +648,16 @@ function maybeTriggerAiTurn() {
   els.boardGrid.classList.add('ai-thinking');
   setTimeout(() => {
     const before = gameState;
-    const move = chooseAiMove(gameState, aiLevel);
+    // #202 : applyAiTurn joue une action atomique — un pouvoir avantageux si
+    // disponible (sauf niveau Facile), sinon un coup normal. Retourne l'état
+    // inchangé s'il n'y a rien à jouer (on s'arrête alors sans reboucler).
+    const next = applyAiTurn(gameState, aiLevel);
     aiThinking = false;
-    if (!move) {
+    if (next === before) {
       els.boardGrid.classList.remove('ai-thinking');
       return;
     }
-    gameState = applyMove(gameState, move);
+    gameState = next;
     els.boardGrid.classList.remove('ai-thinking');
     handlePostActionEffects(before);
   }, 550);

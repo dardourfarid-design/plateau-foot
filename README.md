@@ -98,6 +98,7 @@ dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
 25. `0025_commercial_hardening.sql` — **AUDIT COMMERCIALISATION (à exécuter absolument)** : suppression des fonctions de paiement mock (self-grant gratuit possible sinon), earn_coins à montant fixe + anti-spam, achat de kit par pièces atomique et persisté, enregistrement + livraison réelle des packs (Académie, Légendes, 3 Kits → crédits, Fondateurs), récompense Rare du pass, bonus XP +20 % du pass, verrouillage des RPCs webhook
 26. `0026_coin_economy.sql` — packs de pièces achetables (Stripe), gains en jouant : +10 victoire, +3 défaite, +15 par défi complété (tout dans record_game_result), suppression d'earn_coins
 27. `0027_shop_rationalization.sql` — rationalisation boutique : kit du jour à 100 pièces, packs de pièces réalignés (100/250/600 à 1,99/3,99/7,99 €) pour préserver la vente de kits à l'unité (2,49 €), pack 3 Kits à 5,49 €
+28. `0037_momentum_bonus.sql` — **bonus « beau jeu » (#203)** : `record_game_result` prend un paramètre `p_best_momentum` ; un but marqué en ≥ 3 passes rapporte +10 XP et +5 pièces, décidés côté serveur et protégés par le même anti-spam que les gains de base. À exécuter après `0026`. (Les migrations `0028`–`0036` — correctifs, social, avatars, skins shootout, consentement pub, rewarded SSV — sont dans `supabase/migrations/`, à appliquer dans l'ordre numéroté.)
 
 ## Activer la réinitialisation de mot de passe
 

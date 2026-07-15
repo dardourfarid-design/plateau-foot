@@ -38,21 +38,22 @@ Prérequis : `npm install` puis `npx playwright install chromium` (déjà faits 
 node tests/run-tests.js          # unitaires (moteur + UI-pure + pub), sans dépendances
 npm run e2e                      # E2E publics (Playwright, sert public/ tout seul)
 npm run coverage                 # couverture c8 (échoue sous les seuils package.json)
-npm run integration              # intégration Supabase (nécessite secrets de test)
+npm run integration              # intégration Supabase — CI uniquement (sans secrets : sauté ; avec : refusé hors CI)
 deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/   # edge
 ```
 
 > `public/src/` est la **source unique** du code applicatif (#20) : l'ancien
 > contrôle de parité `src/ ↔ public/src/` (et `build.js`) n'existe plus.
 
-Smoke de production en local :
-
-```bash
-PROD_URL=https://tactic-master.vercel.app npx playwright test --config playwright.prod.config.js
-```
-
-E2E authentifiés en local : nécessitent un `public/config.js` pointant vers le **backend de
-test** + les variables `E2E_USER` / `E2E_PASS`, puis `npx playwright test --config playwright.auth.config.js`.
+> **⛔ Smoke prod et E2E authentifiés : CI uniquement (politique IT, 2026-07-15).**
+> Ces deux suites génèrent du trafic réseau vers le backend Supabase depuis la
+> machine qui les lance — interdit depuis les postes de travail. Les configs
+> (`playwright.prod.config.js`, `playwright.auth.config.js`) refusent désormais
+> de démarrer hors CI (`CI` non défini → erreur explicite).
+>
+> - Smoke prod → workflow **prod-smoke** (Actions → Run workflow).
+> - E2E authentifiés → job **« E2E authentifiés »** de `ci.yml` (à chaque PR)
+>   ou **full-regression** (à la demande).
 
 ### Piège Windows
 

@@ -18,6 +18,14 @@ if (!url || !anonKey) {
   process.exit(0);
 }
 
+// Garde-fou politique IT (2026-07-15) : même munis des secrets, ces tests ne
+// doivent jamais tourner depuis un poste de travail (trafic réseau vers le
+// backend Supabase). Exécution réservée aux runners GitHub Actions (CI=true).
+if (!process.env.CI) {
+  console.error('Intégration Supabase : exécution locale interdite (politique IT — trafic vers le backend Supabase). Utiliser le job « Intégration Supabase » de la CI.');
+  process.exit(1);
+}
+
 // Rendu accessible aux fichiers de test (chargés dynamiquement ci-dessous).
 globalThis.__TM_TEST_SUPABASE__ = {
   url,

@@ -14,7 +14,14 @@
 // profil) : ces requêtes passent par un domaine externe (supabase.co) non
 // intercepté ici, donc elles restent toujours en direct.
 
-const CACHE_NAME = 'tactic-master-v10'; // v10 : SDK Supabase self-hébergé (#16)
+// v11 (#21 lot 3) : liste JS régénérée depuis le graphe d'imports statiques
+// réel de src/ui/main.js (40 modules — ajout des modules extraits shootoutUI/
+// accountUI/tutorialUI, des services ads/i18n manquants ; retrait des fichiers
+// non importés au runtime : notificationService, mockPaymentProvider,
+// PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
+// précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
+// À maintenir en même temps que la liste modulepreload d'index.html.
+const CACHE_NAME = 'tactic-master-v11';
 const STATIC_ASSETS = [
   './index.html',
   './styles.css',
@@ -34,35 +41,47 @@ const STATIC_ASSETS = [
   './img/shootout/shooter-cartoon.png',
   './img/shootout/keeper-manga.png',
   './img/shootout/shooter-manga.png',
+  './src/engine/ai.js',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
-  './src/engine/ai.js',
-  './src/engine/powers.js',
   './src/engine/penaltyShootoutV2.js',
-  './src/ui/main.js',
-  './src/ui/boardRenderer.js',
-  './src/ui/themeManager.js',
-  './src/ui/tutorial.js',
-  './src/ui/playerIdentity.js',
-  './src/ui/playerAvatar.js',
-  './src/ui/shopUI.js',
-  './src/ui/profileUI.js',
-  './src/ui/mercatoUI.js',
-  './src/ui/dialogs.js',
-  './src/services/supabaseClient.js',
+  './src/engine/powers.js',
+  './src/services/ads/abTest.js',
+  './src/services/ads/adAnalytics.js',
+  './src/services/ads/adProvider.js',
+  './src/services/ads/adService.js',
+  './src/services/ads/googleAdSenseProvider.js',
+  './src/services/ads/googleCmp.js',
+  './src/services/ads/interstitialFrequency.js',
+  './src/services/ads/mockAdProvider.js',
+  './src/services/advertisingConsentService.js',
+  './src/services/analyticsConsentService.js',
   './src/services/consentService.js',
   './src/services/currencyService.js',
   './src/services/customPlayerService.js',
   './src/services/mercatoService.js',
   './src/services/multiplayerService.js',
-  './src/services/notificationService.js',
   './src/services/passService.js',
-  './src/services/playerCollectionService.js',
-  './src/services/progressService.js',
   './src/services/payment/paymentProvider.js',
   './src/services/payment/stripePaymentProvider.js',
-  './src/services/payment/mockPaymentProvider.js',
-  './src/services/payment/PaymentProvider.contract.js'
+  './src/services/playerCollectionService.js',
+  './src/services/progressService.js',
+  './src/services/supabaseClient.js',
+  './src/ui/accountUI.js',
+  './src/ui/boardRenderer.js',
+  './src/ui/dialogs.js',
+  './src/ui/i18n.js',
+  './src/ui/i18n-en.js',
+  './src/ui/main.js',
+  './src/ui/mercatoUI.js',
+  './src/ui/playerAvatar.js',
+  './src/ui/playerIdentity.js',
+  './src/ui/profileUI.js',
+  './src/ui/shootoutUI.js',
+  './src/ui/shopUI.js',
+  './src/ui/themeManager.js',
+  './src/ui/tutorial.js',
+  './src/ui/tutorialUI.js'
 ];
 
 self.addEventListener('install', event => {

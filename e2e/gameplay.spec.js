@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Boucle de jeu de base (sans compte) : lancer une partie, sélectionner un pion
 // bleu (surbrillance des destinations), jouer un coup (le pion se déplace, la

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Couverture de l'écran de configuration : bascules de mode, groupes d'options,
 // et validation du code en ligne — trous de docs/regression-matrix.md (#147).

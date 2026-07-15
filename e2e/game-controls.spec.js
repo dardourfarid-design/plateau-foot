@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Couverture des contrôles de partie (hors coup joué, déjà couvert par
 // gameplay.spec.js) — trous de docs/regression-matrix.md (#147). Mode local

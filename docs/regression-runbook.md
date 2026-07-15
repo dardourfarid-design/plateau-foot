@@ -54,6 +54,15 @@ deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/  
 > - Smoke prod → workflow **prod-smoke** (Actions → Run workflow).
 > - E2E authentifiés → job **« E2E authentifiés »** de `ci.yml` (à chaque PR)
 >   ou **full-regression** (à la demande).
+> - **Tests manuels de l'app** (achat, suppression de compte…) : appareil
+>   **hors réseau d'entreprise** — le front appelle le backend par nature.
+> - Les **E2E publics** restent lançables en local : `e2e/fixtures.js` coupe
+>   toute requête vers le backend avant qu'elle ne quitte le processus et
+>   fait échouer le test en cas de fuite non prévue (les lectures publiques
+>   thèmes/Fondateurs sont coupées silencieusement — catalogue de secours).
+>   Les lectures « mes données » sont gardées par session locale
+>   (`hasLocalSession`, supabaseClient.js) : un anonyme ne déclenche plus
+>   aucun RPC.
 
 ### Piège Windows
 

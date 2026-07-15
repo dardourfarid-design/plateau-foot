@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Pages légales (#147) : accessibles sans compte, exigées pour la vente.
 // Parcours anonymes, aucun backend.

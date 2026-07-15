@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Retour de paiement Stripe (#147) : après Checkout, Stripe renvoie sur l'app
 // avec `?checkout=success|cancelled` → toast de confirmation/annulation. C'est

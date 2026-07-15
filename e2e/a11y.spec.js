@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 import AxeBuilder from '@axe-core/playwright';
 
 // Accessibilité automatisée (axe-core, WCAG 2.0/2.1 A & AA) sur les écrans

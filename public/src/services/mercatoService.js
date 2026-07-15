@@ -5,7 +5,7 @@
 // 0014_friends_and_mercato_offers.sql pour le détail de cette garantie
 // appliquée côté serveur).
 
-import { supabase } from './supabaseClient.js';
+import { hasLocalSession, supabase } from './supabaseClient.js';
 
 function requireClient() {
   if (!supabase) {
@@ -129,6 +129,8 @@ export async function fetchMyMercatoOffers() {
  */
 export async function fetchFriendCollection(friendUserId) {
   const client = requireClient();
+  // Anonyme : la RPC ne peut que refuser — même erreur, sans aller-retour backend.
+  if (!(await hasLocalSession())) throw new Error('Connexion requise.');
   const { data, error } = await client.rpc('fetch_friend_collection', {
     p_friend_user_id: friendUserId
   });

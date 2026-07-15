@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures.js';
 
 // Tests E2E « fumée » : parcours critiques dans un vrai navigateur. Volontairement
 // robustes (sélecteurs par id stables, pas de dépendance à un compte — le jeu est

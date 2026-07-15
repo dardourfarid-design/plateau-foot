@@ -38,11 +38,14 @@ export async function fetchTodayChallenges() {
  * niveau, streak et défis du jour — jamais de mise à jour directe de ces
  * compteurs depuis le client.
  */
-export async function recordGameResult(won, goalsScored) {
+export async function recordGameResult(won, goalsScored, bestMomentum = 0) {
   const client = requireClient();
   const { error } = await client.rpc('record_game_result', {
     p_won: won,
-    p_goals_scored: goalsScored
+    p_goals_scored: goalsScored,
+    // #203 : meilleur momentum (nb de passes d'un but) de la partie. Le bonus
+    // éventuel est décidé côté serveur (jamais par le client), voir 0037.
+    p_best_momentum: bestMomentum
   });
   if (error) throw error;
 }

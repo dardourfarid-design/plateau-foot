@@ -56,7 +56,7 @@ export function initOverlays({
     const streak = gameState.lastGoalPassStreak || 0;
     els.goalTitle.textContent = t(streak >= 3 ? pickRandom(GOAL_TITLES.slice(1)) : pickRandom(GOAL_TITLES));
     const who = scoringTeam === TEAMS.BLEU ? t("L'équipe bleue marque") : t("L'équipe rouge marque");
-    els.goalSub.textContent = streak >= 3 ? t('{who} — action à {n} passes !', { who, n: streak }) : `${who} · ${t(pickRandom(GOAL_LINES))}`;
+    els.goalSub.textContent = streak >= 3 ? t('{who} — action à {n} passes, bonus momentum !', { who, n: streak }) : `${who} · ${t(pickRandom(GOAL_LINES))}`;
     // Affiche le nouveau score dans l'overlay pour un retour immédiat
     if (els.goalScoreFlash) {
       els.goalScoreFlash.textContent =
@@ -136,7 +136,10 @@ export function initOverlays({
       // +15 par défi complété. On relit ensuite le solde et on affiche le
       // gain réel (différence), qui peut inclure un bonus de défi.
       const previousBalance = parseInt(els.coinAmount?.textContent, 10) || 0;
-      recordGameResult(won, goalsScored)
+      // #203 : meilleur momentum d'un but marqué par mon équipe sur la partie
+      // (>= 3 passes => bonus XP/pièces décidé côté serveur).
+      const bestMomentum = gameState.bestPassStreak?.[myTeam] || 0;
+      recordGameResult(won, goalsScored, bestMomentum)
         .then(() => getCurrencyBalance())
         .then(newBalance => {
           updateCoinDisplay(newBalance);

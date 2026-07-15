@@ -441,6 +441,23 @@ describe('momentum (v0.5)', () => {
     expect(after.score[TEAMS.BLEU]).toBe(1);
     expect(after.lastGoalPassStreak).toBe(4); // 3 + la passe du but
   });
+
+  test('#203 : bestPassStreak retient le meilleur momentum de but par equipe', () => {
+    // Etat initial : aucun but marque.
+    expect(createGame().bestPassStreak).toEqual({ [TEAMS.BLEU]: 0, [TEAMS.ROUGE]: 0 });
+
+    // Premier but bleu a 4 passes (3 + la passe du but).
+    let s = { ...createGame({ goalsToWin: 99 }), ball: { row: 1, col: 2 },
+      turn: TEAMS.BLEU, possession: TEAMS.BLEU, passStreak: 3, tokens: [] };
+    s = applyBallMovement(s, 0, 2);
+    expect(s.bestPassStreak[TEAMS.BLEU]).toBe(4);
+    expect(s.bestPassStreak[TEAMS.ROUGE]).toBe(0);
+
+    // But bleu ulterieur plus faible (1 passe) : le meilleur (4) est conserve.
+    s = { ...s, ball: { row: 1, col: 3 }, turn: TEAMS.BLEU, possession: TEAMS.ROUGE, passStreak: 0 };
+    s = applyBallMovement(s, 0, 3);
+    expect(s.bestPassStreak[TEAMS.BLEU]).toBe(4);
+  });
 });
 
 describe('anti-blocage (v0.5)', () => {

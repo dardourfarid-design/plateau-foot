@@ -5,11 +5,11 @@
 // (main.js), qui décide quelle action du moteur appeler.
 
 import {
-  BOARD_COLS, BOARD_ROWS, GOAL_COLS, GOAL_ROW_TOP, GOAL_ROW_BOTTOM
+  BOARD_COLS, BOARD_ROWS, GOAL_COLS, GOAL_ROW_TOP, GOAL_ROW_BOTTOM, TEAMS
 } from '../engine/constants.js';
 import {
   getMoveDestinations, getPassDestinations, isBallAt,
-  isAdjacent, canSelectToken, PHASES
+  isAdjacent, canSelectToken, PHASES, isCellCoveredBy, tokenAt
 } from '../engine/gameEngine.js';
 import { displayNameForToken } from './playerIdentity.js';
 
@@ -27,10 +27,9 @@ export function buildBoardGrid(container, onCellClick) {
       cell.dataset.col = c;
       if (r === GOAL_ROW_TOP && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-rouge');
       if (r === GOAL_ROW_BOTTOM && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-bleu');
-      // v0.5 : reperes visuels des cases speciales. Ailes (colonnes de bord) =
-      // "centre" ignorant la couverture ; points de penalty = tir perforant.
-      if (c === 0 || c === BOARD_COLS - 1) cell.classList.add('wing-lane');
-      if ((r === 2 || r === BOARD_ROWS - 3) && c === 3) cell.classList.add('penalty-spot');
+      // #201 : les reperes des cases speciales (ailes / points de penalty) ne
+      // sont plus statiques — ils dependent du palier de regles actif et sont
+      // poses/retires par renderBoard() (voir applySpecialCellMarkers).
       cell.addEventListener('click', () => onCellClick(r, c));
       container.appendChild(cell);
     }
@@ -52,12 +51,19 @@ export function renderBoard(container, state, lineupsByTeam = null) {
   const tokensByCell = new Map();
   state.tokens.forEach(tok => tokensByCell.set(tok.row + ',' + tok.col, tok));
 
+  const rules = state.rules || {};
+
   cells.forEach(cell => {
-    cell.classList.remove('dest-move', 'dest-pass');
+    cell.classList.remove('dest-move', 'dest-pass', 'covered-cell', 'wing-lane', 'penalty-spot');
     cell.innerHTML = '';
 
     const r = parseInt(cell.dataset.row, 10);
     const c = parseInt(cell.dataset.col, 10);
+
+    // #201 : reperes des cases speciales conditionnes au palier actif — on ne
+    // montre l'aile / le point de penalty que si la regle correspondante joue.
+    if (rules.wings && (c === 0 || c === BOARD_COLS - 1)) cell.classList.add('wing-lane');
+    if (rules.penaltySpot && (r === 2 || r === BOARD_ROWS - 3) && c === 3) cell.classList.add('penalty-spot');
 
     const tok = tokensByCell.get(r + ',' + c);
     if (tok) {
@@ -71,7 +77,40 @@ export function renderBoard(container, state, lineupsByTeam = null) {
     }
   });
 
+  renderCoverageMarkers(container, state);
   renderDestinationMarkers(container, state);
+}
+
+/**
+ * #201 — Teinte les cases « coupées » par la couverture adverse quand un
+ * passeur potentiel est prêt à jouer le ballon. Rend visible la mécanique
+ * d'interception (jusque-là invisible : une passe s'arrêtait sans explication).
+ * N'affiche rien si le palier désactive la couverture (Découverte).
+ */
+function renderCoverageMarkers(container, state) {
+  const rules = state.rules || {};
+  if (!rules.coverage) return;
+
+  // Ne montrer les « murs » défensifs que dans les moments de passe : soit un
+  // pion adjacent au ballon est sélectionné, soit on est en phase MOVED_CAN_PASS.
+  const passContext =
+    state.phase === PHASES.MOVED_CAN_PASS ||
+    (state.phase === PHASES.SELECT && state.selectedTokenId && (() => {
+      const tok = state.tokens.find(t => t.id === state.selectedTokenId);
+      return tok && isAdjacent(tok.row, tok.col, state.ball.row, state.ball.col);
+    })());
+  if (!passContext) return;
+
+  const opponent = state.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU;
+  for (let r = 0; r < BOARD_ROWS; r++) {
+    for (let c = 0; c < BOARD_COLS; c++) {
+      if (tokenAt(state, r, c)) continue;        // uniquement les cases vides
+      if (isBallAt(state, r, c)) continue;
+      if (!isCellCoveredBy(state, r, c, opponent)) continue;
+      const cell = container.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      if (cell) cell.classList.add('covered-cell');
+    }
+  }
 }
 
 // Icônes SVG dédiées à chaque pouvoir, dessinées au trait — identiques

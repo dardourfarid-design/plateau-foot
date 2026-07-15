@@ -339,6 +339,21 @@ body{
   pointer-events:none;
 }
 
+/* #201 — cases coupées par la couverture adverse (interception). Hachurée
+   rouge discrète : "tu ne peux pas passer ici". Non cliquable, purement
+   pédagogique. N'apparaît que si le palier active la couverture. */
+.cell.covered-cell::before{
+  content:'';
+  position:absolute; inset:3px;
+  border-radius:3px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(214,72,72,0.16) 0, rgba(214,72,72,0.16) 2px,
+    transparent 2px, transparent 5px);
+  box-shadow: inset 0 0 0 1px rgba(214,72,72,0.18);
+  pointer-events:none;
+}
+
 .center-mark{
   position:absolute;
   top:50%; left:50%;

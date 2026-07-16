@@ -1,0 +1,49 @@
+name: Miroir GitLab
+
+# Sauvegarde hors-site : GitHub reste la source unique de vérité, GitLab n'est
+# qu'une copie. Le sens du miroir est imposé par les paliers GitLab : le « pull
+# mirroring » (GitLab qui va chercher GitHub) est réservé au plan Premium, seul
+# le push est gratuit — c'est donc GitHub qui pousse.
+
+on:
+  push:
+    branches: [main]
+  # Filet de sécurité : rattrape les tags et branches poussés hors de main.
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+# Deux miroirs simultanés se marcheraient dessus (push --mirror est destructif
+# côté distant) : on sérialise sans annuler celui qui tourne.
+concurrency:
+  group: mirror-gitlab
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Pousser le miroir vers GitLab
+    runs-on: ubuntu-latest
+    steps:
+      # Clone *bare* et non actions/checkout : on veut toutes les branches et
+      # tous les tags, pas seulement le ref courant.
+      - name: Cloner le dépôt en bare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git clone --bare \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            repo.git
+
+      # --mirror rend GitLab strictement identique à GitHub (y compris les
+      # suppressions de branches). C'est voulu : une copie, pas un cimetière.
+      - name: Pousser vers GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        working-directory: repo.git
+        run: |
+          if [ -z "$GITLAB_TOKEN" ]; then
+            echo "Secret GITLAB_MIRROR_TOKEN absent — miroir ignoré."
+            exit 0
+          fi
+          git push --mirror \
+            "https://oauth2:${GITLAB_TOKEN}@gitlab.com/dardourfarid-design/plateau-foot.git"

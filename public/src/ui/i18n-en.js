@@ -36,7 +36,8 @@ registerMessages({
   'Nouveau maillot, même maladresse': 'New kit, same clumsy finish',
   'Pass Saison : l’XP en heures sup': 'Season Pass: XP overtime',
   'Joueurs à pouvoirs : triche légale': 'Players with powers: legal cheating',
-  'Le foot se joue aussi assis': 'Football, played sitting down',
+  // « Le foot se joue aussi assis » (dernier panneau) est déjà traduit plus haut
+  // avec le slogan de l'accueil : une 2e clé identique écraserait la première.
   'Ordinateur': 'Computer',
   'Toi': 'You',
   'Joueur 1': 'Player 1',

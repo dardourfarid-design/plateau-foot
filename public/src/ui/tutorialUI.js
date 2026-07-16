@@ -16,7 +16,6 @@ import { showToast } from './dialogs.js';
 import { createGame, getMoveDestinations } from '../engine/gameEngine.js';
 import { TEAMS } from '../engine/constants.js';
 import { buildBoardGrid } from './boardRenderer.js';
-import { getMyFounderStatus } from '../services/passService.js';
 
 /**
  * Initialise l'UI du tutoriel et branche ses boutons.
@@ -33,11 +32,13 @@ import { getMyFounderStatus } from '../services/passService.js';
  * @param {(tab: string) => boolean} deps.openRealProfileTab  affiche le VRAI onglet
  *        profil si les modules connectés sont disponibles ; retourne false sinon
  *        (le module affiche alors l'aperçu statique).
+ * @param {() => void} deps.refreshFounderBadge  rafraîchit le badge Fondateur de
+ *        l'entête du profil (#61). Fourni par profileUI, à qui le badge appartient.
  * @returns {{ isActive: () => boolean, checkTutorialProgress: (eventType: string, payload: object) => void }}
  */
 export function initTutorial({
   els, getUser, getGameState, setGameState, setGameMode, clearUndoSnapshot,
-  handleCellClick, render, backToSetup, openRealProfileTab
+  handleCellClick, render, backToSetup, openRealProfileTab, refreshFounderBadge
 }) {
 
   const tutorial = createTutorialController();
@@ -134,19 +135,8 @@ export function initTutorial({
       if (!openRealProfileTab(tab)) {
         _showProfilePanelStatic(tab);
       }
-      refreshFounderBadge();
+      refreshFounderBadge?.();
     }
-  }
-
-  // Badge Fondateur (#61) : affiché dans l'entête du profil si l'utilisateur
-  // connecté a acheté le Pack Fondateurs (profiles.is_founder). Masqué sinon
-  // (non connecté, ou non fondateur).
-  function refreshFounderBadge() {
-    if (!els.founderBadge) return;
-    if (!getUser()) { els.founderBadge.classList.add('hidden'); return; }
-    getMyFounderStatus()
-      .then(isFounder => els.founderBadge.classList.toggle('hidden', !isFounder))
-      .catch(() => els.founderBadge.classList.add('hidden'));
   }
 
   /**

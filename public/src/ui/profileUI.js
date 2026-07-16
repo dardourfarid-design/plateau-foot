@@ -330,6 +330,8 @@ export function initProfile(deps) {
     loadChallengesPanel: () => loadChallengesPanel(deps),
     loadTeamPanel: () => loadTeamPanel(deps),
     loadLeaderboardPanel: () => loadLeaderboardPanel(deps),
+    /** Exposé pour le tutoriel, qui affiche le vrai entête de profil (#61). */
+    refreshFounderBadge: () => refreshFounderBadge(deps),
     /** Exposé pour mercatoUI (recharge la collection après un échange). */
     toOwnedShape
   };
@@ -346,7 +348,32 @@ export function initProfile(deps) {
     els.gameScreen.classList.add('hidden');
     els.shopScreen.classList.add('hidden');
     els.profileScreen.classList.remove('hidden');
+    refreshFounderBadge(deps);
     await loadProgressPanel(deps);
+  }
+
+  // ---------- Badge Fondateur (#61) ----------
+
+  /**
+   * Affiche le badge doré dans l'entête du profil si l'utilisateur connecté a
+   * acheté le Pack Fondateurs (profiles.is_founder), le masque sinon.
+   *
+   * `getMyFounderStatus` arrive par deps et n'est pas importé ici : ce module est
+   * chargé par la suite de tests Node, et importer passService tirerait
+   * supabaseClient, qui touche `window` au chargement. Même raison que
+   * fetchMyProgress & co.
+   *
+   * Volontairement non bloquant : on n'attend pas la réponse réseau pour
+   * afficher le profil (le badge apparaît quand elle arrive). En cas d'erreur
+   * on masque — mieux vaut ne rien montrer qu'un badge faux.
+   */
+  function refreshFounderBadge(deps) {
+    const { els } = deps;
+    if (!els.founderBadge) return;
+    if (!deps.getCurrentUser()) { els.founderBadge.classList.add('hidden'); return; }
+    deps.getMyFounderStatus()
+      .then(isFounder => els.founderBadge.classList.toggle('hidden', !isFounder))
+      .catch(() => els.founderBadge.classList.add('hidden'));
   }
 
   // ---------- Onglet Progression ----------

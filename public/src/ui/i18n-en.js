@@ -12,6 +12,8 @@ registerMessages({
   // --- Topbar / global ---
   'Non connecté': 'Not signed in',
   'Mon profil': 'My profile',
+  '👑 Fondateur': '👑 Founder',
+  'Membre Fondateur — merci de ton soutien de la première heure': 'Founder member — thank you for your early support',
   'Boutique': 'Shop',
   'Solde de pièces tactiques': 'Tactical coins balance',
 

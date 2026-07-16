@@ -56,6 +56,7 @@ import { loadConsentMessaging } from '../services/ads/googleCmp.js';
 import { shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
+import { getMyFounderStatus } from '../services/passService.js';
 import { resolveLineup } from './playerIdentity.js';
 import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
@@ -1308,6 +1309,7 @@ function init() {
     CUSTOM_PLAYER_SLOT_THEME_ID,
     ensureStarterPack,
     fetchMyProgress,
+    getMyFounderStatus,
     fetchTodayChallenges,
     claimLevelRewards,
     fetchMyCollection,
@@ -1385,7 +1387,8 @@ function init() {
         return true;
       }
       return false;
-    }
+    },
+    refreshFounderBadge: () => profileModuleRef?.refreshFounderBadge()
   });
   // Tirs au but : module extrait (#21), même pattern d'injection que initShop().
   shootoutModule = initShootout({

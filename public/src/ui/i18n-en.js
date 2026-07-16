@@ -27,6 +27,8 @@ registerMessages({
   'Jouer': 'Play',
   'Personnaliser la partie': 'Customize the match',
   '🧩 Puzzle du jour': '🧩 Daily puzzle',
+  '⚽ Tirs au but': '⚽ Penalty shootout',
+  'Égalité — départage aux tirs au but': 'Draw — decided by a penalty shootout',
   '{title} — {hint} (coups restants : {n})': '{title} — {hint} (moves left: {n})',
   '🎉 Puzzle résolu en {n} coup(s) !': '🎉 Puzzle solved in {n} move(s)!',
   'Raté — le puzzle recommence, réessaie !': 'Missed — the puzzle restarts, try again!',

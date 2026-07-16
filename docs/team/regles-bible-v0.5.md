@@ -225,9 +225,17 @@ gardien : **but si les deux diffèrent**, arrêt sinon. Règles classiques :
 Le moteur du mini‑jeu est complet et testé, **et son écran interactif est câblé**
 (choix de direction : tu tires quand c'est ton tour, tu plonges quand l'IA tire ;
 gardien et ballon animés, score, pastilles de tirs, mort subite). Deux usages :
-en **standalone** (bouton « Séance de tirs au but » en config) et en **départage**
-automatique d'une manche courte terminée sur un nul (`state.isDraw`), où la séance
-désigne le vainqueur du match.
+
+1. **Amical / standalone** — bouton **« ⚽ Tirs au but » sur l'accueil**, au même
+   niveau que « Jouer » (#220). C'est un mode de jeu à part entière, plus un
+   réglage : il ne vit donc plus dans l'écran de configuration.
+2. **Départage** — automatique quand une partie se termine à égalité
+   (`state.isDraw`), annoncé au joueur (« Égalité — départage aux tirs au but »,
+   #221) ; la séance désigne alors le vainqueur du match.
+
+⚠️ **Seul le format « Manche courte » (`turnLimit`) peut finir à égalité.** Au
+format « Au score », le premier à N buts gagne : aucun nul n'est possible, donc
+aucun départage n'y est déclenché.
 
 ---
 

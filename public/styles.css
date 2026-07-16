@@ -3063,7 +3063,6 @@ body{
   border-radius:var(--pk-radius) !important; box-shadow:var(--pk-cta-shadow); }
 .pk-cta:active{ transform:scale(.96); }
 .shootout-end-row{ display:flex; justify-content:center; gap:12px; }
-.shootout-launch-btn{ border:1px dashed rgba(232,160,48,0.45); }
 
 /* ---- Animations ---- */
 @keyframes pkPulse{ 0%,100%{transform:scale(1);opacity:.68} 50%{transform:scale(1.16);opacity:1} }

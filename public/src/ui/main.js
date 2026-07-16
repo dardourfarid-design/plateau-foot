@@ -771,8 +771,12 @@ function handlePostActionEffects(previousState) {
 
   // Fin de manche courte : si egalite -> departage aux tirs au but, sinon fin
   // de partie classique. (Le cas gameOver APRES un but est traite plus haut.)
+  // NB : seul le format « Manche courte » (turnLimit) peut finir a egalite ; au
+  // format « Au score », le premier a N buts gagne, aucun nul n'est possible.
   if (gameState.gameOver) {
     if (gameState.isDraw) {
+      // #221 : on ANNONCE le departage, sinon la seance surgit sans explication.
+      showToast(t('Égalité — départage aux tirs au but'));
       setTimeout(() => shootoutModule?.startShootoutDepartage(), 450);
     } else {
       setTimeout(() => overlaysModule.showEndOverlay(gameState.winner), 350);

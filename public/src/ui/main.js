@@ -11,6 +11,7 @@ import {
 } from '../engine/gameEngine.js';
 import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
 import { getDailyPuzzle } from '../engine/puzzles.js';
+import { setSoundEnabled, playSound, vibrate } from '../services/soundService.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
 import {
@@ -123,6 +124,7 @@ let freePowersOn = true;          // pouvoir bonus tire au sort par equipe/match
 let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limite de tours, departage TAB)
 let selectedGoals = 3;            // buts pour gagner (#204 : promu au scope module pour "Jouer en 1 clic")
 let hintsOn = true;               // #207 : conseils contextuels en jeu (desactivables)
+let soundOn = false;              // #209 : sons & vibrations (opt-in, off par defaut)
 let aiThinking = false;
 // #210 — mode « puzzle du jour » : partie solo scriptée à objectif (marquer en
 // <= N coups). puzzleActive court-circuite l'IA et le passage de tour à l'adversaire.
@@ -198,6 +200,7 @@ function cacheDomRefs() {
   els.powersOptions = document.getElementById('powersOptions');
   els.formatOptions = document.getElementById('formatOptions');
   els.hintsOptions = document.getElementById('hintsOptions');
+  els.soundOptions = document.getElementById('soundOptions');
   els.advancedOptions = document.getElementById('advancedOptions');
   els.quickPlayBtn = document.getElementById('quickPlayBtn');
   els.dailyPuzzleBtn = document.getElementById('dailyPuzzleBtn');
@@ -365,6 +368,46 @@ function applyPowersToGameState() {
       return { ...t, power, powerUsed: false };
     })
   };
+}
+
+// ---------- #208 : Juice (trajectoire de passe, flash de but) ----------
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Fait « filer » une pastille lumineuse le long de la ligne de passe, case par
+// case. Purement visuel et non bloquant (les classes s'auto-nettoient).
+function animateBallTravel(from, to) {
+  if (!from || !to || prefersReducedMotion()) return;
+  const dr = Math.sign(to.row - from.row);
+  const dc = Math.sign(to.col - from.col);
+  if (dr === 0 && dc === 0) return;
+  let r = from.row, c = from.col;
+  const path = [];
+  while (!(r === to.row && c === to.col) && path.length < 20) {
+    r += dr; c += dc;
+    path.push([r, c]);
+  }
+  path.forEach(([pr, pc], i) => {
+    setTimeout(() => {
+      const cell = els.boardGrid?.querySelector(`.cell[data-row="${pr}"][data-col="${pc}"]`);
+      if (!cell) return;
+      cell.classList.add('pass-trail');
+      setTimeout(() => cell.classList.remove('pass-trail'), 350);
+    }, i * 45);
+  });
+}
+
+function flashGoalBoard() {
+  if (prefersReducedMotion()) return;
+  const wrap = document.querySelector('.board-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('goal-flash-board');
+  void wrap.offsetWidth; // reflow pour re-déclencher l'animation
+  wrap.classList.add('goal-flash-board');
+  setTimeout(() => wrap.classList.remove('goal-flash-board'), 700);
 }
 
 // ---------- #210 : Puzzle du jour ----------
@@ -633,6 +676,7 @@ function handleCellClick(row, col) {
       }
       gameState = selectToken(gameState, tok.id);
       render();
+      playSound('select'); // #209
       tutorialModule?.checkTutorialProgress('select-token', { tokenId: tok.id });
       return;
     }
@@ -664,6 +708,21 @@ function handleCellClick(row, col) {
 }
 
 function handlePostActionEffects(previousState) {
+  // #208/#209 — le ballon a-t-il bougé (passe) ? Trajectoire animée + son, et
+  // but différencié. Placé avant le reste pour couvrir tous les modes (y c. puzzle).
+  const ballMoved = gameState.ball.row !== previousState.ball.row || gameState.ball.col !== previousState.ball.col;
+  const scored = gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy;
+  if (ballMoved) {
+    animateBallTravel(previousState.ball, gameState.ball);
+    if (scored) {
+      flashGoalBoard();
+      playSound('goal');
+      vibrate([40, 60, 120]);
+    } else {
+      playSound('pass');
+    }
+  }
+
   // #210 — le mode puzzle a sa propre boucle (pas d'IA, pas de but adverse,
   // décompte des coups, réussite/échec) et court-circuite le flux normal.
   if (puzzleActive) { handlePuzzleProgress(previousState); return; }
@@ -956,6 +1015,19 @@ function wireSetupScreen() {
     });
   });
 
+  // #209 — sons & vibrations (opt-in). Le clic « Activés » est le geste qui
+  // débloque l'AudioContext ; on joue un son de confirmation immédiat.
+  const soundOpts = els.soundOptions ? els.soundOptions.querySelectorAll('.setup-option') : [];
+  soundOpts.forEach(opt => {
+    opt.addEventListener('click', () => {
+      soundOpts.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      soundOn = opt.dataset.val === 'on';
+      setSoundEnabled(soundOn);
+      if (soundOn) playSound('select');
+    });
+  });
+
   // #205 — mémorise l'état plié/déplié des Options avancées.
   els.advancedOptions?.addEventListener('toggle', () => {
     try { localStorage.setItem('tm_advancedOpen', els.advancedOptions.open ? '1' : '0'); } catch { /* stockage indispo */ }
@@ -996,7 +1068,7 @@ function saveLastConfig() {
   try {
     localStorage.setItem(CONFIG_KEY, JSON.stringify({
       gameMode, aiLevel, selectedRuleset, selectedVariant,
-      freePowersOn, selectedFormat, selectedGoals, hintsOn
+      freePowersOn, selectedFormat, selectedGoals, hintsOn, soundOn
     }));
   } catch { /* stockage indispo : on ignore */ }
 }
@@ -1013,6 +1085,7 @@ function restoreLastConfig() {
   if (['score', 'manche'].includes(cfg.selectedFormat)) selectedFormat = cfg.selectedFormat;
   if ([1, 3, 5, 99].includes(cfg.selectedGoals)) selectedGoals = cfg.selectedGoals;
   if (typeof cfg.hintsOn === 'boolean') hintsOn = cfg.hintsOn;
+  if (typeof cfg.soundOn === 'boolean') { soundOn = cfg.soundOn; setSoundEnabled(soundOn); }
 }
 
 // Reflète l'état courant des réglages dans les boutons de l'écran de config,
@@ -1031,6 +1104,7 @@ function applyConfigToUI() {
   setActive(els.formatOptions, selectedFormat);
   setActive(els.goalOptions, selectedGoals);
   setActive(els.hintsOptions, hintsOn ? 'on' : 'off');
+  setActive(els.soundOptions, soundOn ? 'on' : 'off');
 
   // Visibilité des blocs selon le mode (réplique le handler de sélection de mode).
   els.aiDifficultyField?.classList.toggle('hidden', gameMode !== 'ai');

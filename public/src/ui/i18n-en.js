@@ -34,6 +34,7 @@ registerMessages({
   'Pouvoirs utilisés': 'Powers used',
   'Options avancées': 'Advanced options',
   'Conseils en jeu': 'In-game tips',
+  'Sons & vibrations': 'Sound & vibration',
   'Une‑deux ! Déplace un pion pour ton mouvement bonus': 'One-two! Move a piece for your bonus move',
   'Relais ! Déplace un second pion': 'Relay! Move a second piece',
   'Comment jouer ? Lancer le tutoriel guidé →': 'How to play? Start the guided tutorial →',

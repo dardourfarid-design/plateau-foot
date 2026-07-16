@@ -16,6 +16,7 @@ import {
   cpuPlanShot, resolveCpuShot, cpuShootAgainstDive
 } from '../engine/penaltyShootoutV2.js';
 import { TEAMS } from '../engine/constants.js';
+import { pickHouseAds } from '../services/ads/houseAds.js';
 import { t } from './i18n.js';
 import { showToast, showAlert } from './dialogs.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
@@ -248,6 +249,19 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     els.goalOverlay?.classList.remove('show');
   }
 
+  /**
+   * #231 — Remplit le panneau LED du stade avec notre PROPRE promo, adaptée au
+   * joueur. Ce sont des messages maison : le projet garantit « aucune pub
+   * pendant une partie », et une séance en est une. Si une vraie régie est un
+   * jour décidée, c'est ce seul point d'entrée qui déléguera.
+   */
+  function renderHouseAds() {
+    const cells = document.querySelectorAll('#pkLed .pk-led-cell');
+    if (!cells.length) return;
+    const ads = pickHouseAds({ signedIn: !!getCurrentUser() }, cells.length);
+    cells.forEach((cell, i) => { cell.textContent = t(ads[i] || ''); });
+  }
+
   function openShootout() { launchShootout('standalone', 'Séance de tirs au but'); }
   function startShootoutDepartage() { launchShootout('departage', 'Départage aux tirs au but'); }
 
@@ -263,6 +277,7 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (els.shootoutTitle) els.shootoutTitle.textContent = t(title);
     hideAllScreensForShootout();
     els.shootoutScreen.classList.remove('hidden');
+    renderHouseAds(); // #231
     applyPkTheme(getStoredPkTheme());
     refreshPkOwnership();   // met à jour les verrous (et retombe sur Stade si le thème mémorisé n'est pas possédé)
     buildPkCrowd();

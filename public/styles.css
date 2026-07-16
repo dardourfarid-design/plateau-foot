@@ -2933,12 +2933,38 @@ body{
 }
 
 /* ---- Sélecteur de thème ---- */
-.pk-switcher{ display:flex; flex-direction:column; align-items:center; gap:8px; }
-/* #229 — libellé « joueur » (Ambiance) plutôt que « DIRECTION VISUELLE »,
-   froid et technique. Le style capitales de la maquette est conservé. */
-.pk-switcher-label{ font-size:10px; letter-spacing:.28em; font-weight:700; color:var(--pk-sub);
-  opacity:.8; text-transform:uppercase; }
+/* #229 — Réglages d'avant-match (Ambiance + Adversaire) : intégrés à la modale
+   sous forme de blocs discrets, au lieu du bandeau « Ambiance » qui flottait
+   au-dessus d'elle. Ils partagent le même habillage que la scène (variables
+   --pk-*) plutôt que les couleurs de l'app, qui juraient sur Néon/Cartoon/Manga. */
+.pk-switcher, .shootout-modal .so-opponent{
+  display:flex; flex-direction:column; gap:8px;
+  padding:10px 12px; border-radius:10px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.07);
+}
+.shootout-modal .setup-label{
+  color:var(--pk-sub); font-family:var(--pk-font); margin-bottom:0;
+  font-size:10px; letter-spacing:.18em;
+}
+.shootout-modal .setup-options{ gap:8px; justify-content:center; flex-wrap:wrap; }
+.shootout-modal .setup-option{
+  flex:0 1 auto; padding:8px 16px; border-radius:999px;
+  font-family:var(--pk-font); font-weight:700; font-size:clamp(11px,2.6vw,13px);
+  letter-spacing:.02em; text-transform:none;
+  border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
+  transition:all .15s;
+}
+.shootout-modal .setup-option.active{
+  background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent);
+}
 .pk-switcher-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+/* #229 — dans la modale, les 4 thèmes doivent tenir sur UNE ligne : les thèmes
+   verrouillés affichent leur prix et s'élargissent, ce qui laissait « Manga »
+   orphelin sur une 2e ligne. On compacte (le retour à la ligne reste possible
+   sur les petits écrans, où il tombe alors sur 2 lignes équilibrées). */
+.pk-switcher .pk-theme-btn{ padding:8px 10px; }
+.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:9px; }
 .pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
   font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);

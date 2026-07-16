@@ -210,17 +210,19 @@
 
   <!-- ECRAN SEANCE DE TIRS AU BUT (partie a part entiere) -->
   <div class="shootout-screen hidden" id="shootoutScreen" data-pk-theme="stade">
-    <div class="pk-switcher" id="pkSwitcher">
-      <span class="pk-switcher-label">Ambiance</span>
-      <div class="pk-switcher-row">
-        <button class="pk-theme-btn" data-theme="stade" type="button">Stade</button>
-        <button class="pk-theme-btn" data-theme="neon" type="button">Néon</button>
-        <button class="pk-theme-btn" data-theme="cartoon" type="button">Cartoon</button>
-        <button class="pk-theme-btn" data-theme="manga" type="button">Manga</button>
-      </div>
-    </div>
     <div class="shootout-modal">
       <div class="shootout-title" id="shootoutTitle">Séance de tirs au but</div>
+      <!-- #229 — l'ambiance rejoint les réglages d'avant-match (elle flottait
+           au-dessus de la modale comme un bandeau collé). -->
+      <div class="pk-switcher" id="pkSwitcher">
+        <span class="setup-label">Ambiance</span>
+        <div class="pk-switcher-row">
+          <button class="pk-theme-btn" data-theme="stade" type="button">Stade</button>
+          <button class="pk-theme-btn" data-theme="neon" type="button">Néon</button>
+          <button class="pk-theme-btn" data-theme="cartoon" type="button">Cartoon</button>
+          <button class="pk-theme-btn" data-theme="manga" type="button">Manga</button>
+        </div>
+      </div>
       <!-- #228 — choix de l'adversaire, visible avant le coup d'envoi -->
       <div class="so-opponent" id="soOpponent">
         <span class="setup-label">Adversaire</span>

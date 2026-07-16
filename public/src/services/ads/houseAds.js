@@ -14,15 +14,18 @@
 //
 // Fonction PURE (aucun DOM, aucun réseau) : testable et déterministe.
 
-/** Catalogue des messages maison, du plus ciblé au plus générique. */
+/** Catalogue des messages maison, du plus ciblé au plus générique.
+ *  Ton : panneau de stade, pas encart publicitaire — on chambre le joueur.
+ *  Contrainte de forme : ~34 caractères max, une cellule fait un tiers du
+ *  panneau et le texte doit rester lisible jusqu'en mobile. */
 const HOUSE_ADS = Object.freeze([
-  { id: 'signup', text: 'Crée ton compte — gratuit', when: c => !c.signedIn },
-  { id: 'progress', text: 'Gagne de l’XP à chaque partie', when: c => !c.signedIn },
-  { id: 'puzzle', text: 'Puzzle du jour — nouveau chaque jour', when: () => true },
-  { id: 'shop', text: 'Kits & habillages en boutique', when: () => true },
-  { id: 'pass', text: 'Pass Saison — bonus d’XP', when: c => c.signedIn },
-  { id: 'powers', text: 'Joueurs à pouvoirs à collectionner', when: () => true },
-  { id: 'tactic', text: 'Tactic Master', when: () => true }
+  { id: 'signup', text: 'Compte gratuit. Excuses en option.', when: c => !c.signedIn },
+  { id: 'progress', text: 'Pas de compte = pas de gloire', when: c => !c.signedIn },
+  { id: 'puzzle', text: 'Puzzle du jour : neuf chaque matin', when: () => true },
+  { id: 'shop', text: 'Nouveau maillot, même maladresse', when: () => true },
+  { id: 'pass', text: 'Pass Saison : l’XP en heures sup', when: c => c.signedIn },
+  { id: 'powers', text: 'Joueurs à pouvoirs : triche légale', when: () => true },
+  { id: 'tactic', text: 'Le foot se joue aussi assis', when: () => true }
 ]);
 
 /**

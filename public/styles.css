@@ -3007,10 +3007,12 @@ body{
   border-radius:50% 50% 42% 42%; opacity:.75; animation:pkBob 1.9s ease-in-out infinite; }
 /* #241 — Le panneau appartient à la scène, il n'est pas posé dessus : il court
    sur toute la largeur au pied des tribunes et passe DERRIÈRE la cage (z-index
-   sous .pk-goal, qui reste opaque avec son filet), en translucide pour tenir la
-   profondeur. Le bas du panneau doit rester au-dessus de .pk-pitch (50%) pour ne
-   jamais mordre sur la zone de jeu. */
-.pk-led{ position:absolute; top:10.5%; left:2%; right:2%; height:15%; z-index:0; display:flex; gap:5px; padding:4px;
+   sous .pk-goal), en translucide pour tenir la profondeur.
+   Géométrie critique : le fond de la cage est translucide, donc un panneau qui
+   descend DANS la cage se voit à travers le filet et repasse visuellement par
+   dessus. Son bord bas doit donc mourir dans la barre transversale (22,1 % +
+   7px de montant), jamais en dessous — d'où le bas calé à 23 %. */
+.pk-led{ position:absolute; top:8%; left:2%; right:2%; height:15%; z-index:0; display:flex; gap:5px; padding:4px;
   overflow:hidden; border-radius:4px; background:var(--pk-led-bg); opacity:.8; pointer-events:none;
   transform:perspective(680px) rotateX(34deg); transform-origin:50% 100%;
   box-shadow:0 10px 22px rgba(0,0,0,.4), 0 0 26px var(--pk-led-glow); border:1px solid rgba(255,255,255,.08); }

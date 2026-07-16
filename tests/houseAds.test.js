@@ -13,15 +13,15 @@ describe('pickHouseAds (#231)', () => {
 
   test('personnalise selon le joueur : invite à créer un compte si non connecté', () => {
     const anon = pickHouseAds({ signedIn: false }, 3);
-    expect(anon.includes('Crée ton compte — gratuit')).toBe(true);
+    expect(anon.includes('Compte gratuit. Excuses en option.')).toBe(true);
     // Un joueur connecté ne se voit jamais proposer de créer un compte.
     const signed = pickHouseAds({ signedIn: true }, 3);
-    expect(signed.includes('Crée ton compte — gratuit')).toBe(false);
+    expect(signed.includes('Compte gratuit. Excuses en option.')).toBe(false);
   });
 
   test('propose le Pass uniquement à un joueur connecté', () => {
-    expect(pickHouseAds({ signedIn: true }, 5).includes('Pass Saison — bonus d’XP')).toBe(true);
-    expect(pickHouseAds({ signedIn: false }, 3).includes('Pass Saison — bonus d’XP')).toBe(false);
+    expect(pickHouseAds({ signedIn: true }, 5).includes('Pass Saison : l’XP en heures sup')).toBe(true);
+    expect(pickHouseAds({ signedIn: false }, 3).includes('Pass Saison : l’XP en heures sup')).toBe(false);
   });
 
   test('jamais de doublon ni de cellule vide', () => {

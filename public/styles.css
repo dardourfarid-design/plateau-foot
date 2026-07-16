@@ -350,6 +350,35 @@ body{
   pointer-events:none;
 }
 
+/* #208 — trajectoire de passe animée : une pastille lumineuse « file » le long
+   de la ligne de passe, case par case, puis s'efface. Non bloquant. */
+.cell.pass-trail::after{
+  content:'';
+  position:absolute; top:50%; left:50%;
+  width:44%; height:44%;
+  transform: translate(-50%,-50%);
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,216,122,0.85) 0%, rgba(255,216,122,0) 70%);
+  pointer-events:none;
+  animation: passTrail 0.35s ease-out forwards;
+}
+@keyframes passTrail{
+  0%{ opacity:0; transform: translate(-50%,-50%) scale(0.4); }
+  40%{ opacity:1; }
+  100%{ opacity:0; transform: translate(-50%,-50%) scale(1.1); }
+}
+/* #208 — flash de but sur le plateau. */
+.board-wrap.goal-flash-board{ animation: goalFlashBoard 0.6s ease-out; }
+@keyframes goalFlashBoard{
+  0%{ box-shadow: 0 0 0 0 rgba(255,216,122,0); }
+  30%{ box-shadow: 0 0 0 6px rgba(255,216,122,0.35); }
+  100%{ box-shadow: 0 0 0 0 rgba(255,216,122,0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .cell.pass-trail::after{ animation:none; opacity:0; }
+  .board-wrap.goal-flash-board{ animation:none; }
+}
+
 /* #201 — cases coupées par la couverture adverse (interception). Hachurée
    rouge discrète : "tu ne peux pas passer ici". Non cliquable, purement
    pédagogique. N'apparaît que si le palier active la couverture. */

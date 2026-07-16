@@ -10,6 +10,7 @@
 import { t } from './i18n.js';
 import { TEAMS } from '../engine/constants.js';
 import { resetBallAfterGoal } from '../engine/gameEngine.js';
+import { buildMatchSummary } from './matchSummary.js';
 import * as adService from '../services/ads/adService.js';
 import { recordMatchEnd } from '../services/ads/interstitialFrequency.js';
 import { recordGameResult } from '../services/progressService.js';
@@ -90,25 +91,23 @@ export function initOverlays({
     const trophy = els.endOverlay.querySelector('.end-trophy');
     if (trophy) { trophy.className = 'end-trophy ' + winningTeam; }
 
-    // Stats de fin : buts du gagnant + streak si disponible
+    // Carte-bilan de fin (#211) : buts + meilleure action (momentum) + pouvoirs.
+    // Contre l'IA ou en ligne, du point de vue du JOUEUR (myTeam) ; en local
+    // 2 joueurs (écran partagé), du point de vue du vainqueur.
     if (els.endStatsRow) {
-      // Contre l'IA ou en ligne, les stats sont montrées du point de vue du
-      // JOUEUR (myTeam), pas du vainqueur : afficher « 1 but marqué » à un
-      // joueur qui vient de perdre 0-1 était trompeur. En local 2 joueurs
-      // (écran partagé), on garde le point de vue du vainqueur.
       const povTeam = (getGameMode() === 'local') ? winningTeam : myTeam;
-      const winner = gameState.score[povTeam];
-      const loser = gameState.score[povTeam === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU];
-      els.endStatsRow.innerHTML = `
-        <div class="end-stat">
-          <span class="end-stat-val">${winner}</span>
-          <span class="end-stat-lbl">${t('Buts marqués')}</span>
-        </div>
-        <div class="end-stat">
-          <span class="end-stat-val">${loser}</span>
-          <span class="end-stat-lbl">${t('Buts encaissés')}</span>
-        </div>
-      `;
+      const summary = buildMatchSummary(gameState, povTeam);
+      const stats = [
+        `<div class="end-stat"><span class="end-stat-val">${summary.myGoals}</span><span class="end-stat-lbl">${t('Buts marqués')}</span></div>`,
+        `<div class="end-stat"><span class="end-stat-val">${summary.oppGoals}</span><span class="end-stat-lbl">${t('Buts encaissés')}</span></div>`
+      ];
+      if (summary.bestMomentum >= 2) {
+        stats.push(`<div class="end-stat"><span class="end-stat-val">${summary.bestMomentum}</span><span class="end-stat-lbl">${t('Meilleure action (passes)')}</span></div>`);
+      }
+      if (summary.powersUsed > 0) {
+        stats.push(`<div class="end-stat"><span class="end-stat-val">${summary.powersUsed}</span><span class="end-stat-lbl">${t('Pouvoirs utilisés')}</span></div>`);
+      }
+      els.endStatsRow.innerHTML = stats.join('');
     }
 
     els.endOverlay.classList.add('show');

@@ -21,7 +21,7 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v20'; // v20 : avatars de la séance en SVG (#230), 8 PNG teintés retirés
+const CACHE_NAME = 'tactic-master-v21'; // v21 : avatars illustrés + ballon unique partagé plateau/séance (#243)
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -38,8 +38,9 @@ const STATIC_ASSETS = [
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   // #230 : 2 SVG au lieu de 8 PNG teintés (la couleur par thème est un filtre CSS).
-  './img/shootout/keeper.svg',
-  './img/shootout/shooter.svg',
+  './img/shootout/keeper.png',
+  './img/shootout/shooter.png',
+  './img/ball.png',
   './src/engine/ai.js',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',

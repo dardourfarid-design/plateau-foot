@@ -537,11 +537,12 @@ body{
 /* Ballon */
 
 .ball{
+  /* #243 — Ballon unique du jeu (img/ball.png), partagé avec la séance de tirs
+     au but : avant, le plateau avait son propre ballon en data-URI et la séance
+     un simple rond blanc — deux dessins pour un même objet. */
   width:74%; height:74%;
   border-radius:50%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='g' cx='32%25' cy='26%25' r='78%25'%3E%3Cstop offset='0%25' stop-color='%23FDFAF4'/%3E%3Cstop offset='45%25' stop-color='%23E8DFCA'/%3E%3Cstop offset='80%25' stop-color='%23C4B898'/%3E%3Cstop offset='100%25' stop-color='%23A09070'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='97' fill='url(%23g)'/%3E%3Cg fill='%231A1208' opacity='0.82'%3E%3Cpolygon points='100,62 124,79 115,107 85,107 76,79'/%3E%3Cpolygon points='100,22 118,35 112,56 88,56 82,35'/%3E%3Cpolygon points='50,50 65,56 60,77 40,80 31,59'/%3E%3Cpolygon points='150,50 169,59 160,80 140,77 135,56'/%3E%3Cpolygon points='38,115 58,111 65,132 50,148 32,136'/%3E%3Cpolygon points='162,115 168,136 150,148 135,132 142,111'/%3E%3Cpolygon points='100,178 82,166 88,144 112,144 118,166'/%3E%3C/g%3E%3Cg fill='none' stroke='%231A1208' stroke-width='1.2' opacity='0.35' stroke-linecap='round'%3E%3Cpath d='M100,62 Q99,44 100,22'/%3E%3Cpath d='M76,79 Q63,64 50,50'/%3E%3Cpath d='M124,79 Q137,64 150,50'/%3E%3Cpath d='M85,107 Q62,111 38,115'/%3E%3Cpath d='M115,107 Q138,111 162,115'/%3E%3Cpath d='M92,114 Q96,146 100,178'/%3E%3C/g%3E%3Ccircle cx='68' cy='52' r='8' fill='rgba(255,255,255,0.22)'/%3E%3Ccircle cx='100' cy='100' r='97' fill='none' stroke='rgba(0,0,0,0.1)' stroke-width='2'/%3E%3C/svg%3E");
-  background-size: cover;
-  background-position: center;
+  background: url('img/ball.png') center/cover no-repeat;
   position:relative;
   z-index:4;
   box-shadow: 0 4px 10px var(--ombre), 0 0 0 2px rgba(0,0,0,0.08);
@@ -2864,7 +2865,6 @@ body{
   --pk-crowd-bg:linear-gradient(180deg,#0a1120 0%,#101b32 100%);
   --pk-led-bg:linear-gradient(180deg,#05121a,#020a10); --pk-led-cell:#06222e; --pk-led-glow:rgba(34,230,255,.33);
   --pk-zone-ring:rgba(255,255,255,.34); --pk-zone-active:#f5c542; --pk-zone-glow:none;
-  --pk-ball:#fff;
   --pk-stage-bg:radial-gradient(45% 34% at 14% -6%, rgba(255,255,255,.16), transparent),radial-gradient(45% 34% at 86% -6%, rgba(255,255,255,.16), transparent),radial-gradient(120% 80% at 50% 0%, #12233f, #0a1220 62%);
   --pk-stage-border:1px solid rgba(255,255,255,.06);
   --pk-radius:20px; --pk-font:'Archivo',sans-serif; --pk-display:'Anton',sans-serif;
@@ -2889,7 +2889,6 @@ body{
   --pk-crowd-bg:linear-gradient(180deg,#0a0320,#160a3e);
   --pk-led-bg:linear-gradient(180deg,#0a0326,#05011a); --pk-led-cell:#12063a; --pk-led-glow:rgba(255,47,176,.5);
   --pk-zone-ring:rgba(34,230,255,.42); --pk-zone-active:#ff2fb0; --pk-zone-glow:0 0 22px #ff2fb0;
-  --pk-ball:#eafcff;
   --pk-stage-bg:radial-gradient(45% 34% at 14% -6%, rgba(34,230,255,.22), transparent),radial-gradient(45% 34% at 86% -6%, rgba(255,47,176,.2), transparent),radial-gradient(120% 80% at 50% 0%, #14063a, #060112 62%);
   --pk-stage-border:1px solid rgba(34,230,255,.2);
   --pk-radius:8px; --pk-font:'Space Mono',monospace; --pk-display:'Anton',sans-serif;
@@ -2907,7 +2906,6 @@ body{
   --pk-crowd-bg:linear-gradient(180deg,#33508c,#43619e);
   --pk-led-bg:linear-gradient(180deg,#1c2b4a,#0f1830); --pk-led-cell:#22345a; --pk-led-glow:rgba(255,138,61,.3);
   --pk-zone-ring:rgba(28,43,74,.3); --pk-zone-active:#ff8a3d; --pk-zone-glow:none;
-  --pk-ball:#fff;
   --pk-stage-bg:linear-gradient(180deg,#bfe8ff,#a3dcff); --pk-stage-border:3px solid #22314f;
   --pk-radius:26px; --pk-font:'Fredoka',sans-serif; --pk-display:'Fredoka',sans-serif;
   --pk-title-shadow:none; --pk-cta-shadow:0 6px 0 #d96a1f; --pk-cta-transform:none;
@@ -2924,7 +2922,6 @@ body{
   --pk-crowd-bg:linear-gradient(180deg,#0d1e42,#1a3d6e);
   --pk-led-bg:#16130f; --pk-led-cell:#0e0c0a; --pk-led-glow:rgba(229,52,42,.5);
   --pk-zone-ring:rgba(255,255,255,.62); --pk-zone-active:#ffd166; --pk-zone-glow:none;
-  --pk-ball:#fff;
   --pk-stage-bg:radial-gradient(circle at 50% 8%, #dcefff 0%, #5b8fe0 16%, #23478f 44%, #0e1f4d 100%);
   --pk-stage-border:4px solid #16130f;
   --pk-radius:6px; --pk-font:'Archivo',sans-serif; --pk-display:'Anton',sans-serif;
@@ -3057,22 +3054,32 @@ body{
 .pk-zones.dive .pk-zone-dot{ background:#ff5b5b; }
 .pk-stage.opponent-turn .pk-shooter{ filter: hue-rotate(140deg) saturate(1.25); }
 
-/* #230 — Avatars : un seul dessin SVG par figure, recoloré par thème via un
-   filtre (avant : 8 PNG teintés à la main, ~180 Ko). Les thèmes payants restent
+/* #230/#243 — Avatars : un seul dessin par figure, recoloré par thème via un
+   filtre (avant : 8 PNG teintés à la main). Les thèmes payants restent
    visuellement différenciés. Appliqué sur l'<img>, donc composable avec le
-   filtre de tour adverse posé sur le conteneur .pk-shooter. */
+   filtre de tour adverse posé sur le conteneur .pk-shooter.
+   Le ballon suit les mêmes filtres, sinon il jurerait avec les figures. */
 [data-pk-theme="neon"] .pk-keeper img,
-[data-pk-theme="neon"] .pk-shooter img{ filter:saturate(1.5) contrast(1.12) drop-shadow(0 0 6px rgba(0,240,255,.5)); }
+[data-pk-theme="neon"] .pk-shooter img,
+[data-pk-theme="neon"] .pk-ball{ filter:saturate(1.5) contrast(1.12) drop-shadow(0 0 6px rgba(0,240,255,.5)); }
 [data-pk-theme="cartoon"] .pk-keeper img,
-[data-pk-theme="cartoon"] .pk-shooter img{ filter:saturate(1.35) brightness(1.08); }
+[data-pk-theme="cartoon"] .pk-shooter img,
+[data-pk-theme="cartoon"] .pk-ball{ filter:saturate(1.35) brightness(1.08); }
 [data-pk-theme="manga"] .pk-keeper img,
-[data-pk-theme="manga"] .pk-shooter img{ filter:grayscale(.72) contrast(1.5) brightness(1.04); }
-.pk-ball{ position:absolute; left:50%; top:79%; width:clamp(22px,6.5%,36px); height:clamp(22px,6.5%,36px);
-  transform:translate(-50%,-50%); border-radius:50%; background:var(--pk-ball); z-index:9;
-  box-shadow:0 5px 9px rgba(0,0,0,.4), inset -3px -4px 7px rgba(0,0,0,.2);
+[data-pk-theme="manga"] .pk-shooter img,
+[data-pk-theme="manga"] .pk-ball{ filter:grayscale(.72) contrast(1.5) brightness(1.04); }
+/* #243 — Même ballon que le plateau (img/ball.png) : c'est le seul objet qui
+   traverse tout le jeu, il ne doit pas changer de dessin d'un écran à l'autre.
+   L'ombre portée reste en CSS, elle suit les déplacements sans coût. */
+/* aspect-ratio et non une hauteur en % : un % de hauteur se résout sur la
+   HAUTEUR de la scène et un % de largeur sur sa LARGEUR — la scène étant en
+   6/5, le ballon sortait en ellipse (31x26). Invisible sur un rond uni, pas
+   sur un ballon à panneaux. */
+.pk-ball{ position:absolute; left:50%; top:79%; width:clamp(22px,6.5%,36px); aspect-ratio:1;
+  transform:translate(-50%,-50%); border-radius:50%; z-index:9;
+  background:url('img/ball.png') center/cover no-repeat;
+  box-shadow:0 5px 9px rgba(0,0,0,.4);
   transition:left .64s cubic-bezier(.25,.7,.3,1), top .64s cubic-bezier(.4,0,.75,.6), transform .64s; }
-.pk-ball-gloss{ position:absolute; top:14%; left:22%; width:34%; height:30%; border-radius:50%;
-  background:radial-gradient(circle, rgba(255,255,255,.95), transparent 70%); }
 .pk-result{ position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); display:flex; flex-direction:column;
   align-items:center; gap:2px; z-index:14; white-space:nowrap; pointer-events:none; opacity:0; }
 .pk-result.show{ opacity:1; animation:pkPop .42s ease-out both; }

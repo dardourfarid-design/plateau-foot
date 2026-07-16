@@ -2934,7 +2934,10 @@ body{
 
 /* ---- Sélecteur de thème ---- */
 .pk-switcher{ display:flex; flex-direction:column; align-items:center; gap:8px; }
-.pk-switcher-label{ font-size:10px; letter-spacing:.28em; font-weight:700; color:var(--pk-sub); opacity:.8; }
+/* #229 — libellé « joueur » (Ambiance) plutôt que « DIRECTION VISUELLE »,
+   froid et technique. Le style capitales de la maquette est conservé. */
+.pk-switcher-label{ font-size:10px; letter-spacing:.28em; font-weight:700; color:var(--pk-sub);
+  opacity:.8; text-transform:uppercase; }
 .pk-switcher-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
 .pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
   font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;

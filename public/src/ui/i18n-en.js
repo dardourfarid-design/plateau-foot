@@ -28,6 +28,7 @@ registerMessages({
   'Personnaliser la partie': 'Customize the match',
   '🧩 Puzzle du jour': '🧩 Daily puzzle',
   '⚽ Tirs au but': '⚽ Penalty shootout',
+  'Ambiance': 'Vibe',
   'Rouge tire — devine le coin et plonge !': 'Red is shooting — guess the corner and dive!',
   'Au tour de Rouge': "Red's turn",
   'Égalité — départage aux tirs au but': 'Draw — decided by a penalty shootout',

@@ -21,7 +21,10 @@ import { showToast, showAlert } from './dialogs.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { fetchMyPurchases } from '../services/supabaseClient.js';
 
-const SO_DIFFICULTY = 55;
+// #228 — adversaire de la séance amicale, mémorisé d'une séance à l'autre.
+// 'cpu' = ordinateur (avec niveau), 'human' = 2 joueurs sur le même écran.
+let soOpponent = 'cpu';
+let soDifficulty = 55;
 const PK_ZONES = [
   { id: 'tl', x: 25, y: 30 }, { id: 'tc', x: 50, y: 26 }, { id: 'tr', x: 75, y: 30 },
   { id: 'bl', x: 25, y: 47 }, { id: 'bc', x: 50, y: 50 }, { id: 'br', x: 75, y: 47 },
@@ -203,6 +206,28 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     // #220 : la séance se lance depuis l'ACCUEIL, au même niveau que « Jouer »
     // (elle n'est plus enfouie dans l'écran de configuration).
     document.getElementById('homeShootoutBtn')?.addEventListener('click', openShootout);
+
+    // #228 — choix de l'adversaire (Ordinateur + niveau, ou 2 joueurs).
+    els.soOpponent = document.getElementById('soOpponent');
+    els.soLevelOptions = document.getElementById('soLevelOptions');
+    els.soLabelBleu = document.getElementById('soLabelBleu');
+    els.soLabelRouge = document.getElementById('soLabelRouge');
+    document.getElementById('soOpponentOptions')?.querySelectorAll('.setup-option').forEach(o => {
+      o.addEventListener('click', () => {
+        o.parentElement.querySelectorAll('.setup-option').forEach(x => x.classList.remove('active'));
+        o.classList.add('active');
+        soOpponent = o.dataset.val;
+        if (so) { so.opponent = soOpponent; renderShootout(); }
+      });
+    });
+    els.soLevelOptions?.querySelectorAll('.setup-option').forEach(o => {
+      o.addEventListener('click', () => {
+        els.soLevelOptions.querySelectorAll('.setup-option').forEach(x => x.classList.remove('active'));
+        o.classList.add('active');
+        soDifficulty = parseInt(o.dataset.val, 10);
+        if (so && so.phase === 'ready') { so.engine = createShootout({ difficulty: soDifficulty }); renderShootout(); }
+      });
+    });
     els.pkCta?.addEventListener('click', pkOnCta);
     document.getElementById('shootoutReplayBtn')?.addEventListener('click', () => {
       // Départage : le match est joué, on rend la main à l'accueil. Amical : on relance une séance.
@@ -227,8 +252,12 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
   function startShootoutDepartage() { launchShootout('departage', 'Départage aux tirs au but'); }
 
   function launchShootout(mode, title) {
+    // #228 : le départage hérite du contexte (toujours face à l'ordinateur, comme
+    // la partie qu'il tranche) ; l'amical suit le choix fait à l'écran.
+    const opponent = mode === 'departage' ? 'cpu' : soOpponent;
     so = {
-      phase: 'ready', mode, engine: createShootout({ difficulty: SO_DIFFICULTY }),
+      phase: 'ready', mode, opponent,
+      engine: createShootout({ difficulty: soDifficulty }),
       selectedZone: null, sweet: 50, powerPct: 0, dir: 1, raf: null
     };
     if (els.shootoutTitle) els.shootoutTitle.textContent = t(title);
@@ -283,7 +312,8 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
 
   function pkPickZone(id) {
     if (!so) return;
-    if (so.phase === 'dive') { pkDive(id); return; } // #227 : le joueur plonge
+    if (so.phase === 'dive') { pkDive(id); return; }   // #227 : le joueur plonge face au CPU
+    if (so.phase === 'keeper') { pkKeeperPick(id); return; } // #228 : gardien humain
     if (so.phase !== 'aim') return;
     so.selectedZone = id;
     so.sweet = randomSweet();
@@ -313,12 +343,36 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     so.phase = 'shooting';
 
     const zone = PK_ZONES.find(z => z.id === so.selectedZone) || PK_ZONES[4];
-    const keeperId = readKeeperZone(zone.id, SO_DIFFICULTY);
+
+    // #228 — en 2 joueurs, le gardien est humain : on masque la visée et on
+    // passe la main à l'autre joueur (pass-and-play). Contre l'ordinateur, le
+    // gardien « lit » le tir comme avant.
+    if (so.opponent === 'human') {
+      so.pendingShot = { zone: zone.id, power: so.powerPct, sweet: so.sweet };
+      so.phase = 'keeper';
+      renderShootout();
+      return;
+    }
+
+    const keeperId = readKeeperZone(zone.id, so.engine.difficulty);
     so.engine = playerShoot(so.engine, { zone: zone.id, power: so.powerPct, sweet: so.sweet, keeperZone: keeperId });
     const outcome = so.engine.history[so.engine.history.length - 1].outcome;
 
     renderShootout();
     pkPlayShotAnimation(zone.id, keeperId, outcome === 'miss');
+    setTimeout(() => pkShowResult(outcome), 660);
+  }
+
+  /** #228 — 2 joueurs : le gardien humain choisit son plongeon, puis on résout. */
+  function pkKeeperPick(id) {
+    if (!so || so.phase !== 'keeper' || !so.pendingShot) return;
+    so.phase = 'shooting';
+    const shot = { ...so.pendingShot, keeperZone: id };
+    so.engine = playerShoot(so.engine, shot);
+    const outcome = so.engine.history[so.engine.history.length - 1].outcome;
+    so.pendingShot = null;
+    renderShootout();
+    pkPlayShotAnimation(shot.zone, id, outcome === 'miss');
     setTimeout(() => pkShowResult(outcome), 660);
   }
 
@@ -366,22 +420,25 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
       els.pkResult?.classList.remove('show');
       // #227 : la suite dépend de qui vient de tirer. Bleu (le joueur) -> on
       // enchaîne sur le tour adverse (plongeon) ; Rouge -> manche suivante.
-      const last = so.engine.history[so.engine.history.length - 1];
-      if (last && last.taker === TEAMS.ROUGE) {
-        els.pkStage?.classList.remove('opponent-turn');
-        if (isShootoutOver(so.engine)) { pkEnd(); return; }
-        pkStartRound();
-      } else {
-        pkAfterPlayer();
-      }
+      els.pkStage?.classList.remove('opponent-turn');
+      pkNextTurn();
     }, 1600);
   }
 
-  function pkAfterPlayer() {
+  /**
+   * Enchaîne le tour suivant selon le mode (#228) :
+   *  - contre l'ordinateur, quand c'est à Rouge de tirer, le joueur plonge (#227) ;
+   *  - sinon (Bleu, ou 2 joueurs), un humain tire : manche normale.
+   */
+  function pkNextTurn() {
     if (isShootoutOver(so.engine)) { pkEnd(); return; }
     pkResetScene();
     renderShootout();
-    setTimeout(pkStartDive, 450);
+    if (so.opponent === 'cpu' && so.engine.taker === TEAMS.ROUGE) {
+      setTimeout(pkStartDive, 450);
+    } else {
+      setTimeout(pkStartRound, 450);
+    }
   }
 
   /**
@@ -465,10 +522,15 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
       if (so.mode === 'departage') return w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
       return w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
     }
+    // #228 : en 2 joueurs, on nomme qui doit agir (le duel est en pass-and-play).
+    const twoP = so.opponent === 'human';
+    const shooter = s.taker === TEAMS.BLEU ? t('Joueur 1') : t('Joueur 2');
+    const keeper = s.taker === TEAMS.BLEU ? t('Joueur 2') : t('Joueur 1');
     if (phase === 'ready') return t('Prêt ? Choisis un coin et marque !');
-    if (phase === 'aim') return t('À toi ! Touche un coin du but');
+    if (phase === 'aim') return twoP ? t('{who} tire — choisis ton coin', { who: shooter }) : t('À toi ! Touche un coin du but');
     if (phase === 'power') return t('Stoppe la jauge dans la zone verte');
-    if (phase === 'dive') return t('Rouge tire — devine le coin et plonge !'); // #227
+    if (phase === 'keeper') return t('{who} : à toi de plonger !', { who: keeper }); // #228
+    if (phase === 'dive') return t('Rouge tire — devine le coin et plonge !');       // #227
     return '';
   }
 
@@ -492,11 +554,23 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     }
     if (phase === 'power' && els.pkPowerSweet) els.pkPowerSweet.style.left = (so.sweet - 9) + '%';
 
-    // #227 : les zones sont cliquables pour viser (aim) ET pour plonger (dive).
-    els.pkZones?.classList.toggle('aim', phase === 'aim' || phase === 'dive');
-    els.pkZones?.classList.toggle('dive', phase === 'dive');
+    // #228 : le choix de l'adversaire n'a de sens qu'avant le coup d'envoi, et
+    // le niveau seulement face à l'ordinateur. Jamais en départage (hérité).
+    const pickable = phase === 'ready' && so.mode !== 'departage';
+    els.soOpponent?.classList.toggle('hidden', !pickable);
+    els.soLevelOptions?.classList.toggle('hidden', so.opponent !== 'cpu');
+    if (els.soLabelBleu) els.soLabelBleu.textContent = so.opponent === 'human' ? t('Joueur 1') : t('Toi');
+    if (els.soLabelRouge) els.soLabelRouge.textContent = so.opponent === 'human' ? t('Joueur 2') : t('Ordinateur');
+
+    // #227/#228 : zones cliquables pour viser (aim), plonger face au CPU (dive)
+    // ou garder la cage en 2 joueurs (keeper).
+    const keeping = phase === 'dive' || phase === 'keeper';
+    els.pkZones?.classList.toggle('aim', phase === 'aim' || keeping);
+    els.pkZones?.classList.toggle('dive', keeping);
+    // En phase 'keeper', la visée du tireur DOIT rester masquée : le gardien est
+    // assis devant le même écran.
     els.pkZones?.querySelectorAll('.pk-zone').forEach(z =>
-      z.classList.toggle('selected', z.dataset.zone === so.selectedZone));
+      z.classList.toggle('selected', phase !== 'keeper' && z.dataset.zone === so.selectedZone));
 
     if (els.pkHint) els.pkHint.textContent = pkHintText(phase, s);
   }

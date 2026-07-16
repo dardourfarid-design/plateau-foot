@@ -221,10 +221,23 @@
     </div>
     <div class="shootout-modal">
       <div class="shootout-title" id="shootoutTitle">Séance de tirs au but</div>
+      <!-- #228 — choix de l'adversaire, visible avant le coup d'envoi -->
+      <div class="so-opponent" id="soOpponent">
+        <span class="setup-label">Adversaire</span>
+        <div class="setup-options" id="soOpponentOptions">
+          <div class="setup-option active" data-val="cpu">Ordinateur</div>
+          <div class="setup-option" data-val="human">2 joueurs</div>
+        </div>
+        <div class="setup-options" id="soLevelOptions">
+          <div class="setup-option" data-val="25">Facile</div>
+          <div class="setup-option active" data-val="55">Moyen</div>
+          <div class="setup-option" data-val="85">Difficile</div>
+        </div>
+      </div>
       <div class="shootout-scoreline">
-        <span class="so-team so-bleu">Bleu</span>
+        <span class="so-team so-bleu" id="soLabelBleu">Toi</span>
         <span class="so-score"><b id="shootoutScoreBleu">0</b> : <b id="shootoutScoreRouge">0</b></span>
-        <span class="so-team so-rouge">Rouge</span>
+        <span class="so-team so-rouge" id="soLabelRouge">Ordinateur</span>
       </div>
       <div class="shootout-dots-wrap">
         <span class="shootout-dots" id="shootoutDotsBleu"></span>

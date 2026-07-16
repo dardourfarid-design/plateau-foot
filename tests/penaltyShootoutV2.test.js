@@ -1,8 +1,9 @@
 import { describe, test, expect } from './test-utils.js';
 import {
   SHOT_ZONES, WIDE_THRESHOLD,
-  resolveShot, readKeeperZone, randomSweet, cpuScores,
-  createShootout, applyShot, playerShoot, cpuShoot,
+  resolveShot, readKeeperZone, randomSweet,
+  cpuGoalProbability, cpuPickZone, cpuOnTarget, cpuPlanShot, resolveCpuShot,
+  createShootout, applyShot, playerShoot, cpuShootAgainstDive,
   goalsOf, isShootoutOver, shootoutWinner, isSuddenDeath
 } from '../public/src/engine/penaltyShootoutV2.js';
 import { TEAMS } from '../public/src/engine/constants.js';
@@ -53,10 +54,37 @@ describe('aléas isolés (RNG injectable)', () => {
     expect(hi <= 72 && hi >= 28).toBe(true);
   });
 
-  test('cpuScores suit la proba injectée', () => {
-    // 0.10 < 0.52 + 55*0.0022 => marque ; 0.99 => manque
-    expect(cpuScores(55, () => 0.10)).toBe(true);
-    expect(cpuScores(55, () => 0.99)).toBe(false);
+  // #227 — le tir adverse est désormais JOUÉ (le joueur plonge), il n'est plus
+  // tiré au dé. Le cadrage est calibré pour conserver l'équilibre historique.
+  test('cpuGoalProbability reste la référence d équilibrage historique', () => {
+    const near = (a, b) => Math.abs(a - b) < 1e-9;
+    expect(near(cpuGoalProbability(0), 0.52)).toBe(true);
+    expect(near(cpuGoalProbability(55), 0.641)).toBe(true);
+  });
+
+  test('cpuOnTarget = p(but historique) x 6/5, borné à 1', () => {
+    // p(cadré) à difficulté 55 = 0.641 * 6/5 = 0.7692
+    expect(cpuOnTarget(55, () => 0.70)).toBe(true);
+    expect(cpuOnTarget(55, () => 0.80)).toBe(false);
+  });
+
+  test('cpuPickZone reste dans les 6 zones', () => {
+    expect(SHOT_ZONES.includes(cpuPickZone(() => 0))).toBe(true);
+    expect(SHOT_ZONES.includes(cpuPickZone(() => 0.99))).toBe(true);
+  });
+
+  test('resolveCpuShot : arrêt si on plonge dans la bonne zone, sinon but', () => {
+    const plan = { zone: 'tl', onTarget: true };
+    expect(resolveCpuShot(plan, 'tl')).toBe('save');
+    expect(resolveCpuShot(plan, 'br')).toBe('goal');
+    // Tir non cadré : raté quel que soit le plongeon.
+    expect(resolveCpuShot({ zone: 'tl', onTarget: false }, 'tl')).toBe('miss');
+  });
+
+  test('cpuPlanShot expose zone + cadrage (déterministe avec un RNG injecté)', () => {
+    const plan = cpuPlanShot(55, () => 0.1); // 0.1 -> zone index 0, cadré
+    expect(plan.zone).toBe(SHOT_ZONES[0]);
+    expect(plan.onTarget).toBe(true);
   });
 });
 
@@ -92,12 +120,16 @@ describe('état initial & applyShot', () => {
     expect(s.score[TEAMS.BLEU]).toBe(1);
   });
 
-  test('cpuShoot applique le résultat tiré du RNG', () => {
+  test('cpuShootAgainstDive : le plongeon du joueur décide de l issue', () => {
     let s = createShootout();
-    s = applyShot(s, 'goal');                 // Bleu marque -> au tour de Rouge
-    s = cpuShoot(s, () => 0.99);              // Rouge manque
-    expect(s.score[TEAMS.ROUGE]).toBe(0);
-    expect(s.shots[TEAMS.ROUGE]).toEqual(['miss']);
+    s = applyShot(s, 'goal');                            // Bleu marque -> au tour de Rouge
+    const plan = { zone: 'tl', onTarget: true };
+    const saved = cpuShootAgainstDive(s, plan, 'tl');    // bon plongeon -> arrêt
+    expect(saved.score[TEAMS.ROUGE]).toBe(0);
+    expect(saved.shots[TEAMS.ROUGE]).toEqual(['save']);
+    const beaten = cpuShootAgainstDive(s, plan, 'br');   // mauvais côté -> but
+    expect(beaten.score[TEAMS.ROUGE]).toBe(1);
+    expect(beaten.shots[TEAMS.ROUGE]).toEqual(['goal']);
   });
 });
 

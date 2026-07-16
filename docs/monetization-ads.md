@@ -93,3 +93,25 @@ Les seuils sont **stables par client** (`abTest`) : un joueur ne bascule pas d'u
 - [ ] **Rewarded** : crédit décidé côté serveur (SSV + quota, 0036) ; `REWARDED_SSV_ENABLED` seulement quand Ad Manager est prêt.
 - [ ] **Analytics** : aucun événement de mesure émis en cas de refus analytics.
 - [ ] **Perf** : première bannière différée à l'idle ; dégradation gracieuse si bloqueur/no-fill.
+
+## Panneaux LED de la séance de tirs au but (#231) — décision
+
+La scène de la séance affiche un panneau LED de 3 cellules. Elles portaient le
+texte « VOTRE PUB » et n'étaient **jamais câblées** : ça ressemblait à un
+emplacement publicitaire cassé.
+
+**Décision retenue : promo MAISON personnalisée** (`public/src/services/ads/houseAds.js`),
+et **pas** de régie tierce. Raison : la garantie structurelle du projet est
+« **aucune pub pendant une partie** » (voir plus haut), et une séance de tirs au
+but **est** une partie. Y brancher AdSense supposerait de réviser explicitement
+cette garantie — ce n'est pas le choix fait.
+
+Ce que contiennent les cellules : nos propres messages, adaptés au joueur
+(création de compte si anonyme, Pass si connecté, puzzle du jour, boutique…).
+Ce ne sont pas des impressions publicitaires : rien n'est compté, tracé, ni
+vendu, et `adService` n'est pas sollicité.
+
+**Porte laissée ouverte** : `pickHouseAds(context, count)` est un simple
+fournisseur de contenu. Le jour où une vraie régie serait décidée, l'UI garde le
+même point d'entrée (`renderHouseAds()` dans `shootoutUI.js`) et c'est ce module
+qui déléguerait — mais il faudrait **d'abord** trancher la garantie ci-dessus.

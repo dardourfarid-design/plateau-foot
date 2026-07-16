@@ -47,9 +47,11 @@ pages:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
-nodejs-scan-sast:
-  <<: *securite-planifiee
-
+# NE PAS surcharger nodejs-scan-sast ici : l'analyseur a été supprimé dans
+# GitLab 17.0 et le template n'en garde qu'une pierre tombale (`extends:
+# .deprecated-16.8`), dont le script est un message de dépréciation suivi d'un
+# `exit 1`, neutralisée par `rules: when: never`. Lui donner des rules la
+# réactive et fait échouer le pipeline. Le JavaScript est couvert par semgrep.
 semgrep-sast:
   <<: *securite-planifiee
 

@@ -199,16 +199,19 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     els.pkSwitcher?.querySelectorAll('.pk-theme-btn')
       .forEach(b => b.addEventListener('click', () => selectPkTheme(b.dataset.theme)));
 
-    document.getElementById('launchShootoutBtn')?.addEventListener('click', openShootout);
+    // #220 : la séance se lance depuis l'ACCUEIL, au même niveau que « Jouer »
+    // (elle n'est plus enfouie dans l'écran de configuration).
+    document.getElementById('homeShootoutBtn')?.addEventListener('click', openShootout);
     els.pkCta?.addEventListener('click', pkOnCta);
     document.getElementById('shootoutReplayBtn')?.addEventListener('click', () => {
-      if (so && so.mode === 'departage') { leaveShootout(); els.configScreen.classList.remove('hidden'); }
+      // Départage : le match est joué, on rend la main à l'accueil. Amical : on relance une séance.
+      if (so && so.mode === 'departage') { leaveShootout(); els.setupScreen.classList.remove('hidden'); }
       else openShootout();
     });
     document.getElementById('shootoutBackBtn')?.addEventListener('click', () => {
-      const departage = so && so.mode === 'departage';
+      // L'accueil est désormais le parent de la séance dans les deux modes.
       leaveShootout();
-      (departage ? els.setupScreen : els.configScreen).classList.remove('hidden');
+      els.setupScreen.classList.remove('hidden');
     });
   }
 

@@ -7,8 +7,8 @@ import { test, expect } from './fixtures.js';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await page.locator('#goToSetupBtn').click();
-  await page.locator('#launchShootoutBtn').click();
+  // #220 : la séance se lance directement depuis l'accueil, au niveau de « Jouer ».
+  await page.locator('#homeShootoutBtn').click();
   await expect(page.locator('#shootoutScreen')).toBeVisible();
 });
 

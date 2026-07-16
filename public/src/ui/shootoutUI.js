@@ -459,7 +459,10 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
    */
   function pkStartDive() {
     so.phase = 'dive';
-    so.cpuPlan = cpuPlanShot(SO_DIFFICULTY);
+    // La difficulté est celle de la SÉANCE (#228), plus une constante globale :
+    // l'ancienne SO_DIFFICULTY a été supprimée et la référence oubliée ici
+    // faisait planter tout le tour adverse (séance figée après le 1er tir).
+    so.cpuPlan = cpuPlanShot(so.engine.difficulty);
     so.selectedZone = null;
     pkResetScene();
     els.pkStage?.classList.add('opponent-turn');

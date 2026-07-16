@@ -573,6 +573,10 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     // le niveau seulement face à l'ordinateur. Jamais en départage (hérité).
     const pickable = phase === 'ready' && so.mode !== 'departage';
     els.soOpponent?.classList.toggle('hidden', !pickable);
+    // #229 : l'ambiance est un réglage d'avant-match — on la masque une fois la
+    // séance lancée (elle encombrait la scène en permanence). Reste dispo en
+    // départage, où l'adversaire est imposé mais le décor non.
+    els.pkSwitcher?.classList.toggle('hidden', phase !== 'ready');
     els.soLevelOptions?.classList.toggle('hidden', so.opponent !== 'cpu');
     if (els.soLabelBleu) els.soLabelBleu.textContent = so.opponent === 'human' ? t('Joueur 1') : t('Toi');
     if (els.soLabelRouge) els.soLabelRouge.textContent = so.opponent === 'human' ? t('Joueur 2') : t('Ordinateur');

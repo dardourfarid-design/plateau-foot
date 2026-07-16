@@ -3056,6 +3056,17 @@ body{
 .pk-zones.dive .pk-zone-ring{ border-color:#ff5b5b; animation-duration:1s; }
 .pk-zones.dive .pk-zone-dot{ background:#ff5b5b; }
 .pk-stage.opponent-turn .pk-shooter{ filter: hue-rotate(140deg) saturate(1.25); }
+
+/* #230 — Avatars : un seul dessin SVG par figure, recoloré par thème via un
+   filtre (avant : 8 PNG teintés à la main, ~180 Ko). Les thèmes payants restent
+   visuellement différenciés. Appliqué sur l'<img>, donc composable avec le
+   filtre de tour adverse posé sur le conteneur .pk-shooter. */
+[data-pk-theme="neon"] .pk-keeper img,
+[data-pk-theme="neon"] .pk-shooter img{ filter:saturate(1.5) contrast(1.12) drop-shadow(0 0 6px rgba(0,240,255,.5)); }
+[data-pk-theme="cartoon"] .pk-keeper img,
+[data-pk-theme="cartoon"] .pk-shooter img{ filter:saturate(1.35) brightness(1.08); }
+[data-pk-theme="manga"] .pk-keeper img,
+[data-pk-theme="manga"] .pk-shooter img{ filter:grayscale(.72) contrast(1.5) brightness(1.04); }
 .pk-ball{ position:absolute; left:50%; top:79%; width:clamp(22px,6.5%,36px); height:clamp(22px,6.5%,36px);
   transform:translate(-50%,-50%); border-radius:50%; background:var(--pk-ball); z-index:9;
   box-shadow:0 5px 9px rgba(0,0,0,.4), inset -3px -4px 7px rgba(0,0,0,.2);

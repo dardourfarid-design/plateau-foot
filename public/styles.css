@@ -3021,6 +3021,12 @@ body{
   box-shadow:0 0 0 6px color-mix(in srgb, var(--pk-zone-active) 13%, transparent), var(--pk-zone-glow); }
 .pk-zone-dot{ width:7px; height:7px; border-radius:50%; background:var(--pk-zone-ring); }
 .pk-zone.selected .pk-zone-dot{ background:var(--pk-zone-active); }
+/* #227 — phase « plongeon » : on ne vise plus, on garde la cage. Repère rouge
+   pour distinguer sans ambiguïté le tour adverse du sien, et curseur adapté. */
+.pk-zones.dive .pk-zone{ cursor:grab; }
+.pk-zones.dive .pk-zone-ring{ border-color:#ff5b5b; animation-duration:1s; }
+.pk-zones.dive .pk-zone-dot{ background:#ff5b5b; }
+.pk-stage.opponent-turn .pk-shooter{ filter: hue-rotate(140deg) saturate(1.25); }
 .pk-ball{ position:absolute; left:50%; top:79%; width:clamp(22px,6.5%,36px); height:clamp(22px,6.5%,36px);
   transform:translate(-50%,-50%); border-radius:50%; background:var(--pk-ball); z-index:9;
   box-shadow:0 5px 9px rgba(0,0,0,.4), inset -3px -4px 7px rgba(0,0,0,.2);

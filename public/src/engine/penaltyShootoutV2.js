@@ -59,9 +59,44 @@ export function randomSweet(rng = Math.random) {
   return 28 + rng() * 44;
 }
 
-/** Réussite d'un tir CPU (Rouge) : p(but) = 0.52 + difficulté * 0.0022. */
-export function cpuScores(difficulty, rng = Math.random) {
-  return rng() < (0.52 + difficulty * 0.0022);
+/**
+ * Probabilité de but d'un tir CPU — RÉFÉRENCE D'ÉQUILIBRAGE historique
+ * (p = 0.52 + difficulté * 0.0022). Sert à calibrer le tir adverse joué à
+ * l'écran (#227) pour ne pas déséquilibrer la séance en la rendant jouable.
+ */
+export function cpuGoalProbability(difficulty) {
+  return 0.52 + difficulty * 0.0022;
+}
+
+/** Zone visée par le CPU : uniforme sur les 6 coins. */
+export function cpuPickZone(rng = Math.random) {
+  return SHOT_ZONES[Math.floor(rng() * SHOT_ZONES.length)];
+}
+
+/**
+ * Le tir CPU part-il cadré ? Calibré pour CONSERVER l'équilibre historique :
+ * face à un plongeon « à l'aveugle » (le joueur ne connaît pas la zone visée,
+ * soit 1 chance sur 6 d'arrêter), on a p(but) = p(cadré) × 5/6. On pose donc
+ * p(cadré) = p(but historique) × 6/5, borné à 1.
+ */
+export function cpuOnTarget(difficulty, rng = Math.random) {
+  const n = SHOT_ZONES.length;
+  return rng() < Math.min(1, cpuGoalProbability(difficulty) * n / (n - 1));
+}
+
+/**
+ * Plan de tir adverse, décidé AVANT que le joueur ne plonge : l'UI a besoin de
+ * la zone pour animer le tir, mais l'issue ne peut être connue qu'une fois le
+ * plongeon choisi (voir resolveCpuShot).
+ */
+export function cpuPlanShot(difficulty, rng = Math.random) {
+  return Object.freeze({ zone: cpuPickZone(rng), onTarget: cpuOnTarget(difficulty, rng) });
+}
+
+/** Issue d'un tir adverse planifié face au plongeon `keeperZone` du joueur. */
+export function resolveCpuShot(plan, keeperZone) {
+  if (!plan.onTarget) return 'miss';
+  return keeperZone === plan.zone ? 'save' : 'goal';
 }
 
 // ---------- État & transitions ----------
@@ -124,9 +159,13 @@ export function playerShoot(state, shot) {
   return applyShot(state, resolveShot(shot));
 }
 
-/** Tir CPU (Rouge) : tire un résultat puis l'applique. */
-export function cpuShoot(state, rng = Math.random) {
-  return applyShot(state, cpuScores(state.difficulty, rng) ? 'goal' : 'miss');
+/**
+ * Tir adverse (Rouge) JOUÉ à l'écran (#227) : le joueur plonge dans
+ * `keeperZone`, le plan de tir ayant été décidé en amont par cpuPlanShot().
+ * Remplace l'ancien `cpuShoot()` (tirage de dé invisible, jamais mis en scène).
+ */
+export function cpuShootAgainstDive(state, plan, keeperZone) {
+  return applyShot(state, resolveCpuShot(plan, keeperZone));
 }
 
 /**

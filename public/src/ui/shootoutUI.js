@@ -11,8 +11,9 @@
 // départage de fin de match).
 
 import {
-  createShootout, playerShoot, cpuShoot, shootoutWinner, isShootoutOver,
-  isSuddenDeath, readKeeperZone, randomSweet
+  createShootout, playerShoot, shootoutWinner, isShootoutOver,
+  isSuddenDeath, readKeeperZone, randomSweet,
+  cpuPlanShot, resolveCpuShot, cpuShootAgainstDive
 } from '../engine/penaltyShootoutV2.js';
 import { TEAMS } from '../engine/constants.js';
 import { t } from './i18n.js';
@@ -281,7 +282,9 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
   }
 
   function pkPickZone(id) {
-    if (!so || so.phase !== 'aim') return;
+    if (!so) return;
+    if (so.phase === 'dive') { pkDive(id); return; } // #227 : le joueur plonge
+    if (so.phase !== 'aim') return;
     so.selectedZone = id;
     so.sweet = randomSweet();
     so.powerPct = 0; so.dir = 1;
@@ -311,23 +314,29 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
 
     const zone = PK_ZONES.find(z => z.id === so.selectedZone) || PK_ZONES[4];
     const keeperId = readKeeperZone(zone.id, SO_DIFFICULTY);
-    const kz = PK_ZONES.find(z => z.id === keeperId) || PK_ZONES[4];
     so.engine = playerShoot(so.engine, { zone: zone.id, power: so.powerPct, sweet: so.sweet, keeperZone: keeperId });
     const outcome = so.engine.history[so.engine.history.length - 1].outcome;
-    const wide = outcome === 'miss';
 
     renderShootout();
-    els.pkShooter?.classList.add('kick');
+    pkPlayShotAnimation(zone.id, keeperId, outcome === 'miss');
+    setTimeout(() => pkShowResult(outcome), 660);
+  }
 
+  /**
+   * Chorégraphie d'un tir, partagée par les deux camps (#227) : le tireur frappe,
+   * le gardien plonge dans `keeperZoneId`, le ballon file vers `zoneId` (ou en
+   * dehors si le tir n'est pas cadré).
+   */
+  function pkPlayShotAnimation(zoneId, keeperZoneId, wide) {
+    const zone = PK_ZONES.find(z => z.id === zoneId) || PK_ZONES[4];
+    const kz = PK_ZONES.find(z => z.id === keeperZoneId) || PK_ZONES[4];
+    els.pkShooter?.classList.add('kick');
     const ky = 40 + (kz.y < 38 ? -11 : 8);
     const krot = kz.x < 50 ? -44 : (kz.x > 50 ? 44 : 0);
     pkSetKeeper(kz.x, ky, krot);
-
     let bx = zone.x, by = zone.y;
     if (wide) { if (zone.x === 50) { by = 14; } else { bx = zone.x < 50 ? -8 : 108; by = zone.y - 3; } }
     pkSetBall(bx, by, wide ? 0.8 : 0.55);
-
-    setTimeout(() => pkShowResult(outcome), 660);
   }
 
   function pkShowResult(outcome) {
@@ -355,7 +364,16 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     renderShootout();
     setTimeout(() => {
       els.pkResult?.classList.remove('show');
-      pkAfterPlayer();
+      // #227 : la suite dépend de qui vient de tirer. Bleu (le joueur) -> on
+      // enchaîne sur le tour adverse (plongeon) ; Rouge -> manche suivante.
+      const last = so.engine.history[so.engine.history.length - 1];
+      if (last && last.taker === TEAMS.ROUGE) {
+        els.pkStage?.classList.remove('opponent-turn');
+        if (isShootoutOver(so.engine)) { pkEnd(); return; }
+        pkStartRound();
+      } else {
+        pkAfterPlayer();
+      }
     }, 1600);
   }
 
@@ -363,23 +381,38 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (isShootoutOver(so.engine)) { pkEnd(); return; }
     pkResetScene();
     renderShootout();
-    setTimeout(pkCpuTurn, 450);
+    setTimeout(pkStartDive, 450);
   }
 
-  function pkCpuTurn() {
-    so.engine = cpuShoot(so.engine);
-    const outcome = so.engine.history[so.engine.history.length - 1].outcome;
-    const scored = outcome === 'goal';
+  /**
+   * #227 — Tour adverse : le tir n'est plus tiré au dé puis résumé par un toast.
+   * Le plan de tir (zone + cadrage) est décidé maintenant, MASQUÉ au joueur, qui
+   * doit choisir où plonger. L'issue ne dépend donc plus que de sa lecture.
+   */
+  function pkStartDive() {
+    so.phase = 'dive';
+    so.cpuPlan = cpuPlanShot(SO_DIFFICULTY);
+    so.selectedZone = null;
+    pkResetScene();
+    els.pkStage?.classList.add('opponent-turn');
     if (els.pkToast) {
-      els.pkToast.textContent = scored ? t('⚽ Rouge marque') : t('✕ Rouge manque');
-      els.pkToast.className = 'pk-toast ' + (scored ? 'goal' : 'miss') + ' show';
+      els.pkToast.textContent = t('Au tour de Rouge');
+      els.pkToast.className = 'pk-toast show';
+      setTimeout(() => els.pkToast?.classList.remove('show'), 900);
     }
     renderShootout();
-    setTimeout(() => els.pkToast?.classList.remove('show'), 1150);
-    setTimeout(() => {
-      if (isShootoutOver(so.engine)) { pkEnd(); return; }
-      pkStartRound();
-    }, 1250);
+  }
+
+  /** Le joueur plonge dans `id` : on résout le tir adverse et on l'anime. */
+  function pkDive(id) {
+    if (!so || so.phase !== 'dive') return;
+    so.selectedZone = id;
+    so.phase = 'shooting';
+    const outcome = resolveCpuShot(so.cpuPlan, id);
+    so.engine = cpuShootAgainstDive(so.engine, so.cpuPlan, id);
+    renderShootout();
+    pkPlayShotAnimation(so.cpuPlan.zone, id, outcome === 'miss');
+    setTimeout(() => pkShowResult(outcome), 660);
   }
 
   function pkEnd() {
@@ -435,6 +468,7 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (phase === 'ready') return t('Prêt ? Choisis un coin et marque !');
     if (phase === 'aim') return t('À toi ! Touche un coin du but');
     if (phase === 'power') return t('Stoppe la jauge dans la zone verte');
+    if (phase === 'dive') return t('Rouge tire — devine le coin et plonge !'); // #227
     return '';
   }
 
@@ -458,7 +492,9 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     }
     if (phase === 'power' && els.pkPowerSweet) els.pkPowerSweet.style.left = (so.sweet - 9) + '%';
 
-    els.pkZones?.classList.toggle('aim', phase === 'aim');
+    // #227 : les zones sont cliquables pour viser (aim) ET pour plonger (dive).
+    els.pkZones?.classList.toggle('aim', phase === 'aim' || phase === 'dive');
+    els.pkZones?.classList.toggle('dive', phase === 'dive');
     els.pkZones?.querySelectorAll('.pk-zone').forEach(z =>
       z.classList.toggle('selected', z.dataset.zone === so.selectedZone));
 

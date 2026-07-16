@@ -11,5 +11,8 @@ node_modules/
 .DS_Store
 *.log
 
+# Outillage local Claude Code (launch.json de preview, worktrees…)
+.claude/
+
 # Rapports de couverture (c8) — générés en CI
 /coverage/

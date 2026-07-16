@@ -1,0 +1,57 @@
+# Pipeline GitLab — volontairement minimale.
+#
+# La CI de référence reste GitHub Actions (ci.yml : unitaires, E2E, Deno,
+# couverture, intégration). On ne la duplique PAS ici : le plan Free n'accorde
+# que 400 minutes de compute par mois, que la matrice Playwright épuiserait en
+# quelques jours. GitLab ne fait que ce que GitHub ne fait pas gratuitement :
+#   - publier une copie du site sur Pages (second hébergement / plan B Netlify) ;
+#   - passer les scans SAST et Secret Detection, une fois par semaine.
+#
+# Prérequis : les runners partagés GitLab exigent une carte bancaire validée
+# (vérification d'identité, pas de prélèvement) — sans elle, aucun job ne part.
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+stages:
+  - deploy
+  - test
+
+variables:
+  SAST_EXCLUDED_PATHS: 'node_modules, coverage, test-results, playwright-report, e2e, e2e-prod'
+
+pages:
+  stage: deploy
+  image: alpine:latest
+  # public/src/ est la source unique et le site est déjà servi tel quel depuis
+  # public/ (cf. netlify.toml) : Pages attend précisément un artefact « public »,
+  # il n'y a donc rien à construire.
+  script:
+    # Cette copie ne doit JAMAIS être indexée : elle servirait le même contenu
+    # que la prod sous un autre domaine, soit du duplicate content qui pénalise
+    # le référencement travaillé dans l'épic #176. On écrase le robots.txt.
+    - |
+      printf 'User-agent: *\nDisallow: /\n' > public/robots.txt
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"
+
+# Les templates de sécurité se déclencheraient à chaque push mirroré. On les
+# restreint aux pipelines planifiés (à créer dans CI/CD > Schedules, hebdo) pour
+# tenir le budget des 400 minutes.
+.securite-planifiee: &securite-planifiee
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+nodejs-scan-sast:
+  <<: *securite-planifiee
+
+semgrep-sast:
+  <<: *securite-planifiee
+
+secret_detection:
+  <<: *securite-planifiee

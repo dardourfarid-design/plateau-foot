@@ -10,6 +10,7 @@ import {
   applyMove, PHASES
 } from '../engine/gameEngine.js';
 import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
+import { getDailyPuzzle } from '../engine/puzzles.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
 import {
@@ -123,6 +124,11 @@ let selectedFormat = 'score';     // 'score' (premier a N buts) | 'manche' (limi
 let selectedGoals = 3;            // buts pour gagner (#204 : promu au scope module pour "Jouer en 1 clic")
 let hintsOn = true;               // #207 : conseils contextuels en jeu (desactivables)
 let aiThinking = false;
+// #210 — mode « puzzle du jour » : partie solo scriptée à objectif (marquer en
+// <= N coups). puzzleActive court-circuite l'IA et le passage de tour à l'adversaire.
+let puzzleActive = false;
+let currentPuzzle = null;
+let puzzleMoves = 0;
 const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujours Bleu en mode IA
 
 // État multijoueur : myTeam est l'équipe contrôlée par CE navigateur ;
@@ -194,6 +200,7 @@ function cacheDomRefs() {
   els.hintsOptions = document.getElementById('hintsOptions');
   els.advancedOptions = document.getElementById('advancedOptions');
   els.quickPlayBtn = document.getElementById('quickPlayBtn');
+  els.dailyPuzzleBtn = document.getElementById('dailyPuzzleBtn');
   els.localAiBlock = document.getElementById('localAiBlock');
   els.onlineBlock = document.getElementById('onlineBlock');
   els.createOnlineBtn = document.getElementById('createOnlineBtn');
@@ -360,7 +367,80 @@ function applyPowersToGameState() {
   };
 }
 
+// ---------- #210 : Puzzle du jour ----------
+
+function startPuzzle() {
+  currentPuzzle = getDailyPuzzle();
+  puzzleActive = true;
+  puzzleMoves = 0;
+  gameMode = 'puzzle'; // ni IA ni online : maybeTriggerAiTurn() (garde !== 'ai') ne se déclenche pas
+  undoSnapshot = null;
+  els.setupScreen.classList.add('hidden');
+  els.configScreen.classList.add('hidden');
+  els.shootoutScreen?.classList.add('hidden');
+  els.gameScreen.classList.remove('hidden');
+  myTeam = currentPuzzle.turn;
+  gameState = {
+    ...createGame({ goalsToWin: 1, ruleset: currentPuzzle.ruleset }),
+    tokens: currentPuzzle.tokens.map(t => ({ ...t })),
+    ball: { ...currentPuzzle.ball },
+    turn: currentPuzzle.turn
+  };
+  buildBoardGrid(els.boardGrid, handleCellClick);
+  myResolvedLineup = null;
+  render();
+  updatePuzzleHint();
+}
+
+function handlePuzzleProgress(previousState) {
+  const solver = currentPuzzle.turn;
+  render();
+
+  // Résolu : l'équipe du solveur a marqué (objectif à 1 but -> gameOver).
+  if (gameState.score[solver] > previousState.score[solver]) {
+    endPuzzle(true);
+    return;
+  }
+
+  // Un coup du solveur s'est terminé (le tour a basculé) : on le compte et on
+  // garde la main sur le solveur — il n'y a pas d'adversaire en mode puzzle.
+  if (!gameState.gameOver && gameState.turn !== solver) {
+    puzzleMoves += 1;
+    gameState = { ...gameState, turn: solver };
+    render();
+  }
+
+  updatePuzzleHint();
+
+  // Échec : plus de coups disponibles sans avoir marqué.
+  if (gameState.score[solver] === 0 && puzzleMoves >= currentPuzzle.maxMoves) {
+    endPuzzle(false);
+  }
+}
+
+function updatePuzzleHint() {
+  if (!puzzleActive || !els.hintBar) return;
+  const left = Math.max(0, currentPuzzle.maxMoves - puzzleMoves);
+  els.hintBar.textContent = t('{title} — {hint} (coups restants : {n})', {
+    title: currentPuzzle.title, hint: currentPuzzle.hint, n: left
+  });
+}
+
+function endPuzzle(solved) {
+  puzzleActive = false;
+  const wasPuzzle = currentPuzzle;
+  if (solved) {
+    render();
+    showToast(t('🎉 Puzzle résolu en {n} coup(s) !', { n: puzzleMoves || wasPuzzle.maxMoves }));
+    setTimeout(() => { gameMode = 'local'; overlaysModule.goToLanding(); }, 1800);
+  } else {
+    showToast(t('Raté — le puzzle recommence, réessaie !'));
+    setTimeout(() => startPuzzle(), 1200); // rejoue le même puzzle du jour
+  }
+}
+
 function startGame(goalsToWin) {
+  puzzleActive = false; // sortie de tout mode puzzle en cours
   selectedGoals = goalsToWin;
   saveLastConfig(); // #204 : mémorise les réglages pour le prochain « Jouer »
   gameState = createGame({ goalsToWin, ruleset: selectedRuleset, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
@@ -463,6 +543,8 @@ function render() {
 }
 
 function updateHint() {
+  // #210 : en mode puzzle, l'indice affiche l'objectif et les coups restants.
+  if (puzzleActive) { updatePuzzleHint(); return; }
   // #207 : conseils désactivables pour les habitués.
   if (!hintsOn) { els.hintBar.textContent = ''; return; }
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
@@ -582,6 +664,10 @@ function handleCellClick(row, col) {
 }
 
 function handlePostActionEffects(previousState) {
+  // #210 — le mode puzzle a sa propre boucle (pas d'IA, pas de but adverse,
+  // décompte des coups, réussite/échec) et court-circuite le flux normal.
+  if (puzzleActive) { handlePuzzleProgress(previousState); return; }
+
   if (gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy) {
     render();
     onlineModule?.syncOnlineStateIfNeeded();
@@ -889,6 +975,9 @@ function wireSetupScreen() {
     els.setupScreen.classList.add('hidden');
     els.configScreen.classList.remove('hidden');
   });
+
+  // #210 — Puzzle du jour, démarrage direct depuis l'accueil.
+  els.dailyPuzzleBtn?.addEventListener('click', startPuzzle);
 
   els.configBackBtn.addEventListener('click', () => {
     els.configScreen.classList.add('hidden');

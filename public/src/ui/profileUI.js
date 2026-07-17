@@ -401,6 +401,14 @@ export function initProfile(deps) {
 
   async function loadChallengesPanel(deps) {
     els.challengesList.innerHTML = _skeletonCards(3);
+    // Les défis du jour n'existent que connecté : l'onglet le dit lui-même,
+    // qu'il n'y ait pas de session locale OU que le serveur la refuse (jeton
+    // périmé — le RPC lève alors « Authentification requise »).
+    const connectNote = '<p class="profile-empty-note">🎯 Connecte-toi pour tes défis du jour (+15 pièces chacun)</p>';
+    if (!deps.getCurrentUser()) {
+      els.challengesList.innerHTML = connectNote;
+      return;
+    }
     try {
       const challenges = await deps.fetchTodayChallenges();
       if (!challenges || challenges.length === 0) {
@@ -432,7 +440,14 @@ export function initProfile(deps) {
         els.challengesList.appendChild(card);
       });
     } catch (err) {
-      els.challengesList.innerHTML = '<p class="profile-empty-note">Défis indisponibles pour le moment.</p>';
+      if (/authentification requise/i.test(err?.message || '')) {
+        els.challengesList.innerHTML = connectNote;
+      } else {
+        // Trace la vraie cause : « indisponibles » seul rendait tout
+        // diagnostic impossible (réseau ? RPC ? migration ?).
+        console.error('Défis non chargés :', err);
+        els.challengesList.innerHTML = '<p class="profile-empty-note">Défis indisponibles pour le moment.</p>';
+      }
     }
   }
 

@@ -2,7 +2,7 @@
 // push-game-state (#260). Supabase n'embarque au déploiement que les fichiers
 // situés SOUS supabase/functions/ : un import vers public/src/engine/ échoue
 // (« Module not found »). On maintient donc une copie versionnée sous
-// supabase/functions/_shared/engine/, identique octet pour octet à la source.
+// supabase/functions/push-game-state/_engine/, identique octet pour octet.
 //
 // Usage : `node tools/sync-edge-engine.mjs` après toute modification du moteur.
 // Le test tests/edgeEngineSync.test.js échoue si les copies ont dérivé.
@@ -13,7 +13,7 @@ import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(root, 'public', 'src', 'engine');
-const DST = join(root, 'supabase', 'functions', '_shared', 'engine');
+const DST = join(root, 'supabase', 'functions', 'push-game-state', '_engine');
 
 // Sous-ensemble du moteur atteignable depuis replayActions.js
 // (replayActions → gameEngine → constants). À étendre si l'arbre grandit.

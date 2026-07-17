@@ -21,6 +21,8 @@ test('le logo TM ramène à l\'accueil depuis une partie', async ({ page }) => {
   await expect(page.locator('#gameScreen')).toBeVisible();
 
   await page.locator('#homeLogoBtn').click();
+  // #259 — quitter une partie en cours demande désormais confirmation.
+  await page.locator('#appDialogOkBtn').click();
   await expect(page.locator('#setupScreen')).toBeVisible();
   await expect(page.locator('#gameScreen')).toBeHidden();
 });

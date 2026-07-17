@@ -250,6 +250,14 @@ registerMessages({
   "L'équipe bleue marque": 'The blue team scores',
   "L'équipe rouge marque": 'The red team scores',
   'Continuer': 'Continue',
+
+  // --- Confirmation d'abandon de partie (#259) ---
+  'Abandonner la partie ?': 'Abandon the match?',
+  'Une partie est en cours. Elle sera perdue si tu quittes.': 'A match is in progress. It will be lost if you leave.',
+  'Partie en ligne en cours : si tu quittes, ton adversaire gagne par forfait.':
+    'An online match is in progress: if you leave, your opponent wins by forfeit.',
+  'Abandonner': 'Abandon',
+  'Continuer la partie': 'Keep playing',
   'VICTOIRE': 'VICTORY',
   '← Accueil': '← Home',
   'Rejouer': 'Play again',

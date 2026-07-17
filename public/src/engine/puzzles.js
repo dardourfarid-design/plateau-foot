@@ -66,6 +66,80 @@ export const PUZZLES = Object.freeze([
     solution: [
       { type: 'pass', tokenId: 'b-a', passTo: [0, 2] }
     ]
+  },
+  {
+    id: 'diagonale-gagnante',
+    title: 'La diagonale gagnante',
+    hint: 'La cage n’est pas en face : la diagonale, elle, est ouverte.',
+    ruleset: 'decouverte',
+    maxMoves: 1,
+    turn: TEAMS.BLEU,
+    ball: { row: 2, col: 1 },
+    tokens: [
+      { id: 'b-a', team: TEAMS.BLEU, row: 3, col: 1, isGK: false },
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 2, isGK: true }
+    ],
+    solution: [
+      { type: 'pass', tokenId: 'b-a', passTo: [0, 3] } // diagonale (2,1)→(1,2)→(0,3)
+    ]
+  },
+  {
+    id: 'une-deux-gagnant',
+    title: 'Le une-deux gagnant',
+    hint: 'Le gardien bloque l’axe : sers un coéquipier, il conclura en coin.',
+    ruleset: 'decouverte',
+    maxMoves: 2,
+    turn: TEAMS.BLEU,
+    ball: { row: 4, col: 3 },
+    tokens: [
+      { id: 'b-a', team: TEAMS.BLEU, row: 5, col: 3, isGK: false },
+      { id: 'b-b', team: TEAMS.BLEU, row: 2, col: 2, isGK: false },
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true }
+    ],
+    solution: [
+      { type: 'pass', tokenId: 'b-a', passTo: [1, 3] }, // remise devant la cage
+      { type: 'pass', tokenId: 'b-b', passTo: [0, 2] }  // reprise dans le coin laissé libre
+    ]
+  },
+  {
+    id: 'angle-parfait',
+    title: 'L’angle parfait',
+    hint: 'Colle-toi au ballon, puis cherche le coin opposé au gardien.',
+    ruleset: 'decouverte',
+    maxMoves: 2,
+    turn: TEAMS.BLEU,
+    ball: { row: 3, col: 5 },
+    tokens: [
+      { id: 'b-a', team: TEAMS.BLEU, row: 5, col: 5, isGK: false },
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 4, isGK: true }
+    ],
+    solution: [
+      { type: 'move', tokenId: 'b-a', to: [4, 5] },
+      { type: 'pass', tokenId: 'b-a', passTo: [0, 2] } // longue diagonale (3,5)→(0,2)
+    ]
+  },
+  {
+    id: 'centre-et-reprise',
+    title: 'Centre et reprise',
+    hint: 'Ramène le ballon de l’aile vers l’axe, puis viens le pousser au fond.',
+    ruleset: 'decouverte',
+    maxMoves: 3,
+    turn: TEAMS.BLEU,
+    ball: { row: 2, col: 6 },
+    tokens: [
+      { id: 'b-a', team: TEAMS.BLEU, row: 3, col: 6, isGK: false },
+      { id: 'b-b', team: TEAMS.BLEU, row: 4, col: 2, isGK: false },
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 2, isGK: true }
+    ],
+    solution: [
+      { type: 'pass', tokenId: 'b-a', passTo: [2, 3] }, // centre de l'aile vers l'axe
+      { type: 'move', tokenId: 'b-b', to: [3, 2] },     // le second attaquant vient au contact
+      { type: 'pass', tokenId: 'b-b', passTo: [0, 3] }  // reprise plein axe, gardien excentré
+    ]
   }
 ]);
 

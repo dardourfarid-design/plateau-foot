@@ -6,10 +6,12 @@
 // Hermétique : pas d'accès réseau ni d'env (index.ts, lui, exige jsr + env).
 
 import { assert, assEq } from '../rewarded-ssv/test-asserts.ts';
+// Importe les copies RÉELLEMENT déployées (_shared/engine/), pas la source
+// public/src/engine/ : ce test valide donc exactement ce que Supabase embarque.
 // @ts-ignore — modules JS purs du moteur, sans types publiés.
-import { createGame, listLegalMoves, PHASES } from '../../../public/src/engine/gameEngine.js';
+import { createGame, listLegalMoves, PHASES } from '../_shared/engine/gameEngine.js';
 // @ts-ignore — idem.
-import { replayActions, MAX_ACTIONS_PER_PUSH } from '../../../public/src/engine/replayActions.js';
+import { replayActions, MAX_ACTIONS_PER_PUSH } from '../_shared/engine/replayActions.js';
 
 type Action = { fn: string; args: (number | string)[] };
 

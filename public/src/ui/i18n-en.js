@@ -250,6 +250,7 @@ registerMessages({
   "L'équipe bleue marque": 'The blue team scores',
   "L'équipe rouge marque": 'The red team scores',
   'Continuer': 'Continue',
+  'Coup refusé par le serveur — partie resynchronisée.': 'Move rejected by the server — game resynchronized.',
 
   // --- Confirmation d'abandon de partie (#259) ---
   'Abandonner la partie ?': 'Abandon the match?',

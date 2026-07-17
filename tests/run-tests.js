@@ -7,6 +7,7 @@ await import('./gameEngine.test.js');
 await import('./themeManager.test.js');
 await import('./ai.test.js');
 await import('./multiplayer-protocol.test.js');
+await import('./replayActions.test.js');
 await import('./playerIdentity.test.js');
 await import('./playerAvatar.test.js');
 await import('./powers.test.js');

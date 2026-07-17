@@ -46,7 +46,7 @@ export function initOverlays({
   els, getUser, getGameState, setGameState, getGameMode, getMyTeam,
   clearUndoSnapshot, render, maybeTriggerAiTurn, syncOnlineState,
   leaveOnlineSession, isTutorialActive, updateCoinDisplay, showCoinGain,
-  maybeShowInterstitial, refreshHomeBanner
+  maybeShowInterstitial, refreshHomeBanner, recordOnlineAction
 }) {
 
   function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -69,6 +69,9 @@ export function initOverlays({
   function hideGoalOverlayAndResume() {
     els.goalOverlay.classList.remove('show');
     setGameState(resetBallAfterGoal(getGameState()));
+    // #260 — la remise en jeu est journalisée pour le rejeu serveur (les deux
+    // clients la poussent : idempotente, autorisée hors tour côté serveur).
+    recordOnlineAction?.('resetBallAfterGoal', []);
     clearUndoSnapshot();
     render();
     syncOnlineState();

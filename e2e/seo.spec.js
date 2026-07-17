@@ -37,6 +37,27 @@ test("l'app démarre en anglais via /?lang=en (#183)", async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
+// #270 — hors landing, la section doublonne l'overlay Règles & FAQ : masquée.
+test('la section éditoriale disparaît hors landing et revient à la landing', async ({ page }) => {
+  await page.goto('/');
+  const about = page.locator('section.seo-about');
+  await expect(about).toBeVisible();
+
+  await page.locator('#goToSetupBtn').click();
+  await expect(page.locator('#configScreen')).toBeVisible();
+  await expect(about).toBeHidden();
+
+  await page.locator('#startBtn').click();
+  await expect(page.locator('#gameScreen')).toBeVisible();
+  await expect(about).toBeHidden();
+
+  // Retour accueil : la partie en cours demande confirmation (#259).
+  await page.locator('#homeLogoBtn').click();
+  await page.locator('#appDialogOkBtn').click();
+  await expect(page.locator('#setupScreen')).toBeVisible();
+  await expect(about).toBeVisible();
+});
+
 test('la FAQ visible se déplie et correspond au JSON-LD FAQPage', async ({ page }) => {
   await page.goto('/');
   const faq = page.locator('.seo-about details');

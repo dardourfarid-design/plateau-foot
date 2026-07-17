@@ -3215,6 +3215,16 @@ body{
    Bloc « à propos + règles + FAQ » sous l'app, au-dessus du footer légal.
    Discret (couleurs atténuées) mais VISIBLE : pas de display:none, Google
    dévalorise le texte caché. */
+
+/* #270 — la section n'a de sens que sous la LANDING : sur les autres écrans
+   (boutique, profil, configuration, partie) elle doublonne l'overlay
+   « Règles & FAQ » (#252). Tous ces écrans posent .hidden sur #setupScreen,
+   d'où ce sélecteur. Compatible SEO : au rendu initial (état crawlé par les
+   moteurs), la landing est affichée et la section reste visible — le
+   display:none ne s'applique qu'après une navigation utilisateur. Sans
+   support de :has() (navigateurs anciens), comportement d'avant conservé. */
+body:has(#setupScreen.hidden) .seo-about{ display:none; }
+
 .seo-about{
   max-width:720px;
   margin:0 auto;

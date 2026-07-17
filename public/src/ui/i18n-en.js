@@ -443,6 +443,7 @@ registerMessages({
 registerMessages({
   '🎯 {n} défi du jour à relever (+15 pièces chacun)': '🎯 {n} daily challenge to complete (+15 coins each)',
   '🎯 {n} défis du jour à relever (+15 pièces chacun)': '🎯 {n} daily challenges to complete (+15 coins each)',
+  '🎯 Connecte-toi pour tes défis du jour (+15 pièces chacun)': '🎯 Sign in for your daily challenges (+15 coins each)',
   'Accès complet à tous les kits actuels + 1 joueur Légendaire exclusif "Fondateur" introuvable nulle part ailleurs + badge doré permanent sur ton profil + ton nom dans les crédits du jeu.': 'Full access to all current kits + 1 exclusive Legendary "Founder" player found nowhere else + a permanent golden badge on your profile + your name in the game credits.',
   'Tous les kits Saison 1 débloqués pendant l\'abonnement + 1 joueur Rare offert + bonus XP +20% sur chaque partie. Annulable à tout moment.': 'All Season 1 kits unlocked while subscribed + 1 free Rare player + a +20% XP bonus on every match. Cancellable at any time.',
 });

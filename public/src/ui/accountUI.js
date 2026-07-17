@@ -66,9 +66,18 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
   async function refreshNotifications() {
     if (!getUser()) {
       if (els.profileNotifBadge) els.profileNotifBadge.style.display = 'none';
-      if (els.dailyHint) els.dailyHint.classList.add('hidden');
+      // Visiteur anonyme : les défis du jour n'existent que connecté. Plutôt
+      // que de ne rien montrer (le joueur ne peut pas deviner que la
+      // fonctionnalité existe), l'accueil invite à se connecter — le clic
+      // ouvre directement la connexion.
+      if (els.dailyHint) {
+        els.dailyHint.textContent = t('🎯 Connecte-toi pour tes défis du jour (+15 pièces chacun)');
+        els.dailyHint.style.cursor = 'pointer';
+        els.dailyHint.classList.remove('hidden');
+      }
       return;
     }
+    if (els.dailyHint) els.dailyHint.style.cursor = '';
     try {
       const [friendships, offers, challenges] = await Promise.all([
         fetchMyFriendships().catch(() => ({ pendingReceived: [] })),
@@ -331,6 +340,12 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
     els.accountBtn?.addEventListener('click', () => {
       renderAccountOverlayContent();
       els.accountOverlay.classList.add('show');
+    });
+
+    // L'invite « Connecte-toi pour tes défis du jour » de l'accueil mène à la
+    // connexion. Connecté, le rappel affiche les défis restants : rien à ouvrir.
+    els.dailyHint?.addEventListener('click', () => {
+      if (!getUser()) openAccountOverlay('signin');
     });
 
     els.accountCloseBtn?.addEventListener('click', () => {

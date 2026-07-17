@@ -58,6 +58,11 @@ jobs:
       # jsr:@supabase/supabase-js.
       - name: Tester rewarded-ssv
         run: deno test --allow-env --node-modules-dir=auto supabase/functions/rewarded-ssv/
+      # Verrouille la validation serveur des coups en ligne (#260) : rejeu
+      # moteur (liste blanche, tours, coups illégaux) via le même code que le
+      # client — prouve au passage que le moteur se résout sous Deno.
+      - name: Tester push-game-state
+        run: deno test --allow-env --node-modules-dir=auto supabase/functions/push-game-state/
 
   coverage:
     name: Couverture de code (c8)

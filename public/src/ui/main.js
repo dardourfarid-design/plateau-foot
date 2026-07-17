@@ -26,6 +26,7 @@ import { initMercato } from './mercatoUI.js';
 import { initAccount } from './accountUI.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { initOnline } from './onlineUI.js';
+import { recordOnlineAction } from '../services/multiplayerService.js';
 import { initOverlays } from './overlaysUI.js';
 import { initTutorial } from './tutorialUI.js';
 import { initFaq } from './faqUI.js';
@@ -660,6 +661,13 @@ function updatePowerButton() {
 
 // ---------- Interactions plateau ----------
 
+// #260 — journalise une action moteur pour validation serveur (parties en
+// ligne uniquement). Le journal est rejoué par l'Edge Function push-game-state
+// sur l'état autoritaire ; voir multiplayerService.recordOnlineAction.
+function recordIfOnline(fn, args = []) {
+  if (gameMode === 'online') recordOnlineAction(fn, args);
+}
+
 function handleCellClick(row, col) {
   if (gameState.gameOver || aiThinking) return;
   if (gameMode === 'online' && gameState.turn !== myTeam) return;
@@ -677,6 +685,7 @@ function handleCellClick(row, col) {
         undoSnapshot = gameState; // snapshot avant le premier geste de ce tour
       }
       gameState = selectToken(gameState, tok.id);
+      recordIfOnline('selectToken', [tok.id]);
       render();
       playSound('select'); // #209
       tutorialModule?.checkTutorialProgress('select-token', { tokenId: tok.id });
@@ -687,23 +696,29 @@ function handleCellClick(row, col) {
       const before = gameState;
       gameState = passBall(gameState, row, col);
       if (gameState !== before) {
+        recordIfOnline('passBall', [row, col]);
         handlePostActionEffects(before);
         return;
       }
       gameState = moveSelectedToken(gameState, row, col);
       if (gameState !== before) {
+        recordIfOnline('moveSelectedToken', [row, col]);
         handlePostActionEffects(before);
         return;
       }
       // Clic ailleurs sans coup valide -> désélection simple
       gameState = { ...gameState, selectedTokenId: null };
+      recordIfOnline('deselect');
       render();
     }
   } else if (gameState.phase === PHASES.MOVED_CAN_PASS) {
     const before = gameState;
     gameState = passBall(gameState, row, col);
-    if (gameState === before) {
+    if (gameState !== before) {
+      recordIfOnline('passBall', [row, col]);
+    } else {
       gameState = passTurn(gameState);
+      recordIfOnline('passTurn');
     }
     handlePostActionEffects(before);
   }
@@ -1165,6 +1180,7 @@ function handleEndTurnClick() {
   if (aiThinking) return;
   const before = gameState;
   gameState = passTurn(gameState);
+  if (gameState !== before) recordIfOnline('passTurn');
   handlePostActionEffects(before);
 }
 
@@ -1276,6 +1292,7 @@ function init() {
     maybeTriggerAiTurn,
     syncOnlineState: () => onlineModule?.syncOnlineStateIfNeeded(),
     leaveOnlineSession: () => onlineModule?.leaveOnlineSession(),
+    recordOnlineAction: (fn, args) => recordIfOnline(fn, args),
     isTutorialActive: () => tutorialModule?.isActive() ?? false,
     updateCoinDisplay: b => accountModule?.updateCoinDisplay(b),
     showCoinGain: n => accountModule?.showCoinGain(n),

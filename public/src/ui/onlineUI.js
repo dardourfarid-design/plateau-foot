@@ -16,8 +16,9 @@ import { TEAMS } from '../engine/constants.js';
 import { buildBoardGrid } from './boardRenderer.js';
 import {
   createGameSession, joinGameSession, pushGameState, subscribeToGameSession,
-  cancelGameSession
+  cancelGameSession, pushGameActions, clearOnlineActions, hasPendingOnlineActions
 } from '../services/multiplayerService.js';
+import { showToast } from './dialogs.js';
 
 /**
  * Initialise le mode en ligne et branche ses boutons.
@@ -74,7 +75,9 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
           render();
           return;
         }
-        // Mise à jour normale en cours de partie (coup de l'adversaire).
+        // Mise à jour normale en cours de partie (coup de l'adversaire) —
+        // sauf écho de nos propres coups quand le local a déjà avancé (#260).
+        if (hasPendingOnlineActions()) return;
         setGameState(newState);
         render();
       });
@@ -104,6 +107,7 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       render();
 
       unsubscribeFromSession = subscribeToGameSession(id, (newState) => {
+        if (hasPendingOnlineActions()) return; // écho de nos coups (#260)
         setGameState(newState);
         render();
       });
@@ -139,18 +143,53 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       unsubscribeFromSession = null;
     }
     onlineSessionId = null;
+    clearOnlineActions(); // le journal n'a de sens que pour la session quittée
   }
 
   /**
-   * Pousse l'état courant vers Supabase si une partie en ligne est active.
-   * Appelé après chaque coup local validé par le moteur, pour que l'adversaire
-   * le reçoive via son abonnement Realtime.
+   * Synchronise la partie en ligne après chaque coup local (#260) : envoie le
+   * JOURNAL D'ACTIONS à l'Edge Function push-game-state, qui les rejoue sur
+   * l'état autoritaire et retourne l'état résultant. Un coup refusé (422)
+   * resynchronise le client sur l'état serveur. Tant que la fonction n'est
+   * pas déployée, repli sur l'ancienne RPC (état complet, pré-migration 0039).
+   * Les envois sont sérialisés : jamais deux pushs entrelacés.
    */
-  async function syncOnlineStateIfNeeded() {
+  let legacyPush = false;
+  let syncChain = Promise.resolve();
+
+  function syncOnlineStateIfNeeded() {
+    if (getGameMode() !== 'online' || !onlineSessionId) return Promise.resolve();
+    syncChain = syncChain.then(doSync, doSync);
+    return syncChain;
+  }
+
+  async function doSync() {
     if (getGameMode() !== 'online' || !onlineSessionId) return;
+    if (legacyPush) {
+      clearOnlineActions(); // le journal ne sert à rien sur le chemin de repli
+      try { await pushGameState(onlineSessionId, getGameState()); }
+      catch (err) { console.error('Échec de synchronisation multijoueur :', err); }
+      return;
+    }
     try {
-      await pushGameState(onlineSessionId, getGameState());
+      const res = await pushGameActions(onlineSessionId);
+      if (res.rejected) {
+        // L'état serveur fait foi : on abandonne l'état local divergent.
+        clearOnlineActions();
+        if (res.state) { setGameState(res.state); render(); }
+        showToast(t('Coup refusé par le serveur — partie resynchronisée.'));
+        console.warn('Coup en ligne refusé :', res.reason);
+        return;
+      }
+      // Réconciliation : n'adopte l'écho serveur que si aucune action locale
+      // n'attend d'être validée (sinon on écraserait un coup plus récent).
+      if (res.state && !hasPendingOnlineActions()) { setGameState(res.state); render(); }
     } catch (err) {
+      if (err && err.code === 'FN_UNAVAILABLE') {
+        legacyPush = true;
+        console.warn('push-game-state indisponible : repli sur la RPC historique (pré-#260).');
+        return doSync();
+      }
       console.error('Échec de synchronisation multijoueur :', err);
     }
   }

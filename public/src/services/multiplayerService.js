@@ -76,6 +76,60 @@ export async function pushGameState(sessionId, gameState) {
   if (error) throw error;
 }
 
+// ---------- Journal d'actions & validation serveur (#260) ----------
+// Le client n'est plus cru sur parole : pendant une partie en ligne, chaque
+// action moteur est journalisée ici puis rejouée PAR LE SERVEUR (Edge Function
+// push-game-state) sur l'état autoritaire. pushGameState() ci-dessus reste le
+// chemin de repli tant que la fonction n'est pas déployée (avant migration 0039).
+
+let _actionQueue = [];
+
+/** Journalise une action moteur { fn, args } à faire valider par le serveur. */
+export function recordOnlineAction(fn, args = []) {
+  _actionQueue.push({ fn, args });
+}
+
+/** Vide le journal (fin de session, ou état serveur adopté après rejet). */
+export function clearOnlineActions() { _actionQueue = []; }
+
+/** Y a-t-il des actions locales pas encore validées par le serveur ? */
+export function hasPendingOnlineActions() { return _actionQueue.length > 0; }
+
+/**
+ * Envoie le journal à l'Edge Function push-game-state, qui rejoue les actions
+ * sur l'état autoritaire et retourne l'état résultant.
+ * @returns {{ state: object|null, rejected?: boolean, reason?: string }}
+ *  - rejected=true : coup refusé (422/409) — `state` est l'état serveur à adopter.
+ *  - erreur avec code 'FN_UNAVAILABLE' : fonction absente (repli RPC possible).
+ *  - autre erreur (réseau/5xx) : le journal est conservé pour retenter.
+ */
+export async function pushGameActions(sessionId) {
+  const client = requireClient();
+  if (_actionQueue.length === 0) return { state: null };
+  const actions = _actionQueue;
+  _actionQueue = [];
+  const { data, error } = await client.functions.invoke('push-game-state', {
+    body: { sessionId, actions }
+  });
+  if (error) {
+    const status = error.context?.status;
+    if (status === 422 || status === 409) {
+      let payload = null;
+      try { payload = await error.context.json(); } catch (_) { /* corps illisible */ }
+      return { rejected: true, state: payload?.state ?? null, reason: payload?.error };
+    }
+    if (status === 404 || error.name === 'FunctionsRelayError') {
+      _actionQueue = actions.concat(_actionQueue);
+      const e = new Error('push-game-state indisponible');
+      e.code = 'FN_UNAVAILABLE';
+      throw e;
+    }
+    _actionQueue = actions.concat(_actionQueue);
+    throw error;
+  }
+  return { state: data?.state ?? null };
+}
+
 /**
  * S'abonne aux mises à jour temps réel d'une session de partie.
  * `onUpdate` est appelé avec le nouveau game_state à chaque changement

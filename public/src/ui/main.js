@@ -49,7 +49,7 @@ function ensureEnglishDict() {
   }
   return _enDictPromise;
 }
-import { showToast, showAlert } from './dialogs.js';
+import { showToast, showAlert, showConfirm } from './dialogs.js';
 import { getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
@@ -1067,6 +1067,25 @@ function wireSetupScreen() {
   applyConfigToUI();
 }
 
+// #259 — garde-fou anti mis-clic : une partie en cours ne meurt jamais sans
+// confirmation. Pas de dialogue si la partie est absente ou finie, pendant le
+// tutoriel (le quitter est déjà un acte volontaire guidé) ou en puzzle (le
+// recommencer fait partie du jeu). En ligne, quitter vaut forfait : le message
+// le dit explicitement avant l'appel à leaveOnlineSession().
+async function confirmAbandonThen(proceed) {
+  const playing = !!gameState && !gameState.winner
+    && !els.gameScreen.classList.contains('hidden')
+    && !(tutorialModule?.isActive()) && !puzzleActive;
+  if (!playing) { proceed(); return; }
+  const ok = await showConfirm(
+    gameMode === 'online'
+      ? t('Partie en ligne en cours : si tu quittes, ton adversaire gagne par forfait.')
+      : t('Une partie est en cours. Elle sera perdue si tu quittes.'),
+    { title: t('Abandonner la partie ?'), okLabel: t('Abandonner'), cancelLabel: t('Continuer la partie') }
+  );
+  if (ok) proceed();
+}
+
 // #204/#205/#207 — persistance des réglages de partie entre les sessions.
 const CONFIG_KEY = 'tm_lastConfig';
 
@@ -1128,7 +1147,7 @@ function wireGameControls() {
   els.backToSetupFromEndBtn?.addEventListener('click', () => overlaysModule.backToSetup());
   els.cancelBtn.addEventListener('click', handleCancel);
   els.endTurnBtn.addEventListener('click', handleEndTurnClick);
-  els.restartBtn.addEventListener('click', () => overlaysModule.backToSetup());
+  els.restartBtn.addEventListener('click', () => confirmAbandonThen(() => overlaysModule.backToSetup()));
   els.continueBtn.addEventListener('click', () => overlaysModule.hideGoalOverlayAndResume());
   els.newGameBtn.addEventListener('click', () => overlaysModule.backToSetup());
   els.watchRewardedBtn?.addEventListener('click', handleWatchRewarded);
@@ -1400,8 +1419,8 @@ function init() {
   // Règles & FAQ (M11 #252) : overlay autonome, contenu cloné de .seo-about.
   initFaq();
   const homeLogo = document.getElementById('homeLogoBtn');
-  homeLogo?.addEventListener('click', () => overlaysModule.goToLanding());
-  homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); overlaysModule.goToLanding(); } });
+  homeLogo?.addEventListener('click', () => confirmAbandonThen(() => overlaysModule.goToLanding()));
+  homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); confirmAbandonThen(() => overlaysModule.goToLanding()); } });
   // La seance de tirs est un ecran plein : toute navigation vers un autre ecran
   // doit la masquer (sinon elle "resterait" affichee par-dessous).
   document.getElementById('shopBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
@@ -1431,6 +1450,9 @@ function installE2ETestSeam() {
     getState: () => gameState,
     setState: (patch) => { gameState = { ...gameState, ...patch }; return gameState; },
     applyPostEffects: (previous) => handlePostActionEffects(previous),
+    // #259 — permet de constater le message de forfait du dialogue d'abandon
+    // en mode en ligne sans monter deux clients + backend.
+    setGameMode: (m) => { gameMode = m; },
     TEAMS,
     PHASES,
   };

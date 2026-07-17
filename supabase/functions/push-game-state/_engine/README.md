@@ -26,3 +26,10 @@ Le test `tests/edgeEngineSync.test.js` (suite `node tests/run-tests.js`, donc CI
 
 Fichiers synchronisés (arbre atteignable depuis `replayActions.js`) :
 `constants.js`, `gameEngine.js`, `replayActions.js`.
+
+## Déploiement 100 % manuel (tableau de bord)
+
+Pour éviter de recréer ce dossier `_engine/` à la main, une version **mono-fichier**
+(moteur inliné, aucun import local) est générée dans
+`tools/generated/push-game-state.single.ts` : colle-la telle quelle comme
+`index.ts`. Régénérer : `node tools/bundle-edge-function.mjs`.

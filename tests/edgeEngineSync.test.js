@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { describe, test, expect } from './test-utils.js';
 import { ENGINE_FILES, readPair } from '../tools/sync-edge-engine.mjs';
+import { buildBundle, OUTPUT } from '../tools/bundle-edge-function.mjs';
 
 // #260 — l'Edge Function push-game-state importe le moteur depuis une copie
 // versionnée sous supabase/functions/push-game-state/_engine/ (dans le dossier
@@ -17,4 +19,16 @@ describe('copie moteur de l’Edge Function (_engine)', () => {
       expect(dst).toBe(src);    // et être identique octet pour octet
     });
   }
+});
+
+// Le bundle mono-fichier (déploiement manuel) doit rester le reflet exact des
+// sources : sinon on distribuerait un moteur périmé à coller dans le dashboard.
+// Correctif en cas d'échec : `node tools/bundle-edge-function.mjs`.
+describe('bundle mono-fichier de l’Edge Function', () => {
+  test('push-game-state.single.ts est à jour vis-à-vis des sources', () => {
+    let committed = null;
+    try { committed = readFileSync(OUTPUT, 'utf8'); } catch { /* absent = échec */ }
+    expect(committed).toBeTruthy();
+    expect(committed).toBe(buildBundle());
+  });
 });

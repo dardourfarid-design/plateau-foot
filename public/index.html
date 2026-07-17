@@ -1002,24 +1002,66 @@
   </div>
 </div>
 
-<!-- OVERLAY RÈGLES & FAQ (M11 #252) : accessible depuis la landing et en jeu.
-     Le corps (#faqBody) est cloné à l'ouverture depuis la section éditoriale
-     .seo-about ci-dessous (source unique, #181) — voir src/ui/faqUI.js. -->
+<!-- OVERLAY RÈGLES & FAQ (M11 #252 ; #270-bis) : accessible depuis la landing et
+     en jeu. Les règles et les questions fréquentes vivent DIRECTEMENT ici (et
+     nulle part ailleurs de visible) : présentes dans le HTML au chargement donc
+     indexables, mais visibles seulement à l'ouverture de l'overlay. La FAQ n'est
+     plus dupliquée en bas de la landing — voir la section .seo-about ci-dessous
+     (réduite au texte « à propos ») et le JSON-LD FAQPage du <head> (#182), qui
+     reste le miroir structuré des questions ci-dessous. -->
 <div class="overlay faq-overlay" id="faqOverlay" role="dialog" aria-modal="true" aria-labelledby="faqOverlayTitle">
   <div class="overlay-card faq-card">
     <div class="faq-card-head">
       <div class="overlay-title faq-title" id="faqOverlayTitle">Règles &amp; FAQ</div>
       <button class="topbar-link faq-close" id="faqCloseBtn">Fermer</button>
     </div>
-    <div class="faq-body" id="faqBody"></div>
+    <div class="faq-body" id="faqBody">
+      <h3>Les règles en bref</h3>
+      <ul>
+        <li>Plateau de 7×9 cases&nbsp;; 6 pions par équipe (1 gardien, 2 défenseurs, 3 attaquants).</li>
+        <li>À son tour&nbsp;: déplacer un pion d'une case, dans n'importe quelle direction.</li>
+        <li>Un pion adjacent au ballon peut le pousser en ligne droite, jusqu'au premier obstacle.</li>
+        <li>Le gardien ne se déplace que latéralement, sur sa ligne de cage.</li>
+        <li>Pas de capture&nbsp;: la partie se gagne aux buts, et la défense compte — un
+        pion couvre les cases voisines et coupe les lignes de passe adverses.</li>
+      </ul>
+
+      <h3>Questions fréquentes</h3>
+      <details>
+        <summary>Tactic Master est-il gratuit&nbsp;?</summary>
+        <p>Oui. Le jeu se joue gratuitement dans le navigateur, sans installation.
+        Une boutique optionnelle propose des thèmes de terrain et des packs de
+        joueurs à collectionner.</p>
+      </details>
+      <details>
+        <summary>Peut-on jouer à deux&nbsp;?</summary>
+        <p>Oui&nbsp;: face à face sur le même appareil, ou en ligne en partageant un
+        code de partie. Un mode contre l'ordinateur à trois niveaux de difficulté
+        est aussi disponible.</p>
+      </details>
+      <details>
+        <summary>Comment marque-t-on un but&nbsp;?</summary>
+        <p>En poussant le ballon dans la cage adverse, c'est-à-dire les trois cases
+        centrales de la ligne de fond. Le ballon se pousse en ligne droite avec un
+        pion adjacent et s'arrête au premier obstacle.</p>
+      </details>
+      <details>
+        <summary>Peut-on installer Tactic Master sur mobile&nbsp;?</summary>
+        <p>Oui. C'est une application web (PWA)&nbsp;: ouvrez le site dans votre
+        navigateur puis «&nbsp;Ajouter à l'écran d'accueil&nbsp;» sur iOS ou Android.
+        Les modes locaux fonctionnent même hors connexion.</p>
+      </details>
+    </div>
   </div>
 </div>
 
-<!-- === CONTENU ÉDITORIAL INDEXABLE (#181) =================================
-     Seul texte réellement lisible par les moteurs sur cette SPA : il porte les
-     requêtes cibles (« jeu de plateau de foot en ligne », règles, FAQ). Doit
-     rester VISIBLE (pas de display:none — texte caché dévalorisé par Google)
-     et SYNCHRONISÉ avec le bloc JSON-LD FAQPage du <head> (#182). -->
+<!-- === CONTENU ÉDITORIAL INDEXABLE (#181 ; #270-bis) =======================
+     Texte « à propos » visible sur la landing : il porte la requête cible
+     (« jeu de plateau de foot en ligne »). Reste VISIBLE (pas de display:none).
+     Les RÈGLES et la FAQ ne sont plus dupliquées ici — elles vivent dans
+     l'overlay #faqBody (présent dans le HTML, donc indexable) et dans le
+     JSON-LD FAQPage du <head> (#182), qui reste le miroir structuré des
+     questions. -->
 <section class="seo-about" aria-label="À propos de Tactic Master">
   <h2>Tactic Master, le jeu de plateau de foot en ligne</h2>
   <p>Tactic Master est un <strong>jeu de plateau de foot</strong> gratuit, jouable
@@ -1028,42 +1070,7 @@
   ligne droite, et on marque en l'envoyant dans la cage adverse. Aucun dé, aucun
   hasard&nbsp;: comme aux échecs ou aux dames, tout se joue au placement et à
   l'anticipation. Une partie dure environ cinq minutes.</p>
-
-  <h3>Les règles en bref</h3>
-  <ul>
-    <li>Plateau de 7×9 cases&nbsp;; 6 pions par équipe (1 gardien, 2 défenseurs, 3 attaquants).</li>
-    <li>À son tour&nbsp;: déplacer un pion d'une case, dans n'importe quelle direction.</li>
-    <li>Un pion adjacent au ballon peut le pousser en ligne droite, jusqu'au premier obstacle.</li>
-    <li>Le gardien ne se déplace que latéralement, sur sa ligne de cage.</li>
-    <li>Pas de capture&nbsp;: la partie se gagne aux buts, et la défense compte — un
-    pion couvre les cases voisines et coupe les lignes de passe adverses.</li>
-  </ul>
-
-  <h3>Questions fréquentes</h3>
-  <details>
-    <summary>Tactic Master est-il gratuit&nbsp;?</summary>
-    <p>Oui. Le jeu se joue gratuitement dans le navigateur, sans installation.
-    Une boutique optionnelle propose des thèmes de terrain et des packs de
-    joueurs à collectionner.</p>
-  </details>
-  <details>
-    <summary>Peut-on jouer à deux&nbsp;?</summary>
-    <p>Oui&nbsp;: face à face sur le même appareil, ou en ligne en partageant un
-    code de partie. Un mode contre l'ordinateur à trois niveaux de difficulté
-    est aussi disponible.</p>
-  </details>
-  <details>
-    <summary>Comment marque-t-on un but&nbsp;?</summary>
-    <p>En poussant le ballon dans la cage adverse, c'est-à-dire les trois cases
-    centrales de la ligne de fond. Le ballon se pousse en ligne droite avec un
-    pion adjacent et s'arrête au premier obstacle.</p>
-  </details>
-  <details>
-    <summary>Peut-on installer Tactic Master sur mobile&nbsp;?</summary>
-    <p>Oui. C'est une application web (PWA)&nbsp;: ouvrez le site dans votre
-    navigateur puis «&nbsp;Ajouter à l'écran d'accueil&nbsp;» sur iOS ou Android.
-    Les modes locaux fonctionnent même hors connexion.</p>
-  </details>
+  <p><button class="tutorial-link seo-faq-link" id="aboutFaqBtn" type="button">Voir toutes les règles et les questions fréquentes →</button></p>
 </section>
 
 <noscript>

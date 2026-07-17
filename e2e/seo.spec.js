@@ -58,14 +58,23 @@ test('la section éditoriale disparaît hors landing et revient à la landing', 
   await expect(about).toBeVisible();
 });
 
-test('la FAQ visible se déplie et correspond au JSON-LD FAQPage', async ({ page }) => {
+// #270-bis — les questions ne sont plus en dur sur la landing : elles vivent
+// dans l'overlay Règles & FAQ. On l'ouvre, on déplie une question, et on
+// vérifie que le JSON-LD reste le miroir des questions de l'overlay.
+test("l'overlay Règles & FAQ se déplie et correspond au JSON-LD FAQPage", async ({ page }) => {
   await page.goto('/');
-  const faq = page.locator('.seo-about details');
+
+  // Aucune question ne doit rester en dur dans la section éditoriale.
+  await expect(page.locator('.seo-about details')).toHaveCount(0);
+
+  await page.locator('#landingFaqBtn').click();
+  await expect(page.locator('#faqOverlay')).toHaveClass(/show/);
+  const faq = page.locator('#faqBody details');
   const first = faq.first();
   await first.locator('summary').click();
   await expect(first.locator('p')).toBeVisible();
 
-  // Le JSON-LD doit parser et contenir autant de questions que la FAQ visible.
+  // Le JSON-LD doit parser et contenir autant de questions que l'overlay.
   const graph = await page.evaluate(() => {
     const el = document.querySelector('script[type="application/ld+json"]');
     return JSON.parse(el.textContent)['@graph'];

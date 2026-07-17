@@ -72,6 +72,7 @@ registerMessages({
   // --- Overlay Règles & FAQ (M11 #252) — libellés propres à l'overlay ---
   'Règles & FAQ': 'Rules & FAQ',
   'Toutes les règles & FAQ →': 'All the rules & FAQ →',
+  'Voir toutes les règles et les questions fréquentes →': 'See all the rules and frequently asked questions →',
 
   // --- Section éditoriale (.seo-about, #181), clonée dans l'overlay FAQ ---
   // Clés normalisées (espaces simples : lookupEn tolère les retours à la

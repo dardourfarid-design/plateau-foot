@@ -13,13 +13,13 @@
 // pour fermer le chemin non validé.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-// Le moteur est importé depuis _shared/engine/ (copie versionnée sous
-// supabase/functions/, seule zone qu'embarque `supabase functions deploy`).
-// Un import vers public/src/engine/ échoue au déploiement : « Module not found »
-// (fichiers hors du bundle de la fonction). Les copies sont maintenues
-// identiques à la source par tools/sync-edge-engine.mjs et vérifiées par le
-// test tests/edgeEngineSync.test.js. Voir _shared/engine/README.md.
-import { replayActions, MAX_ACTIONS_PER_PUSH } from '../_shared/engine/replayActions.js';
+// Le moteur est importé depuis ./_engine/ — DANS le dossier de la fonction,
+// seule zone garantie embarquée au déploiement (CLI comme dashboard). Un import
+// vers ../_shared/ (dossier frère) OU vers public/src/engine/ échoue :
+// « Module not found » (hors du bundle de la fonction). Les copies sont
+// maintenues identiques à la source par tools/sync-edge-engine.mjs et vérifiées
+// par le test tests/edgeEngineSync.test.js. Voir ./_engine/README.md.
+import { replayActions, MAX_ACTIONS_PER_PUSH } from './_engine/replayActions.js';
 
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://tactic-master.vercel.app';
 

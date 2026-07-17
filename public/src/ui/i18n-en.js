@@ -60,6 +60,52 @@ registerMessages({
   'Une‑deux ! Déplace un pion pour ton mouvement bonus': 'One-two! Move a piece for your bonus move',
   'Relais ! Déplace un second pion': 'Relay! Move a second piece',
   'Comment jouer ? Lancer le tutoriel guidé →': 'How to play? Start the guided tutorial →',
+
+  // --- Cartes de modes du hero (M11 #253) ---
+  'Autres modes de jeu': 'Other game modes',
+  'Tirs au but': 'Penalty shootout',
+  'Duel de penaltys': 'Penalty duel',
+  'Mode, règles, IA': 'Mode, rules, AI',
+  'Puzzle du jour': 'Daily puzzle',
+  'Le défi quotidien': 'The daily challenge',
+
+  // --- Overlay Règles & FAQ (M11 #252) — libellés propres à l'overlay ---
+  'Règles & FAQ': 'Rules & FAQ',
+  'Toutes les règles & FAQ →': 'All the rules & FAQ →',
+
+  // --- Section éditoriale (.seo-about, #181), clonée dans l'overlay FAQ ---
+  // Clés normalisées (espaces simples : lookupEn tolère les retours à la
+  // ligne et espaces insécables du HTML). Le <strong> découpe le paragraphe
+  // d'intro en 3 nœuds texte, d'où les 3 fragments.
+  'Tactic Master, le jeu de plateau de foot en ligne': 'Tactic Master, the online football board game',
+  'Tactic Master est un': 'Tactic Master is a',
+  'jeu de plateau de foot': 'football board game',
+  "gratuit, jouable directement dans le navigateur. La prise en main est aussi simple que les dames : chaque tour, on déplace un pion d'une case, on pousse le ballon en ligne droite, et on marque en l'envoyant dans la cage adverse. Aucun dé, aucun hasard : comme aux échecs ou aux dames, tout se joue au placement et à l'anticipation. Une partie dure environ cinq minutes.":
+    'that is free and playable right in the browser. It picks up as easily as checkers: each turn, move a piece one square, push the ball in a straight line, and score by sending it into the opposing goal. No dice, no luck: as in chess or checkers, everything comes down to placement and anticipation. A match lasts about five minutes.',
+  'Les règles en bref': 'The rules in brief',
+  'Plateau de 7×9 cases ; 6 pions par équipe (1 gardien, 2 défenseurs, 3 attaquants).':
+    'A 7×9 board; 6 pieces per team (1 goalkeeper, 2 defenders, 3 forwards).',
+  "À son tour : déplacer un pion d'une case, dans n'importe quelle direction.":
+    'On your turn: move one piece one square, in any direction.',
+  "Un pion adjacent au ballon peut le pousser en ligne droite, jusqu'au premier obstacle.":
+    'A piece next to the ball can push it in a straight line, up to the first obstacle.',
+  'Le gardien ne se déplace que latéralement, sur sa ligne de cage.':
+    'The goalkeeper only moves sideways, along its goal line.',
+  'Pas de capture : la partie se gagne aux buts, et la défense compte — un pion couvre les cases voisines et coupe les lignes de passe adverses.':
+    'No captures: matches are won on goals, and defense matters — a piece covers the neighbouring squares and cuts opposing passing lanes.',
+  'Questions fréquentes': 'Frequently asked questions',
+  'Tactic Master est-il gratuit ?': 'Is Tactic Master free?',
+  'Oui. Le jeu se joue gratuitement dans le navigateur, sans installation. Une boutique optionnelle propose des thèmes de terrain et des packs de joueurs à collectionner.':
+    'Yes. The game is free to play in the browser, with nothing to install. An optional shop offers pitch themes and collectible player packs.',
+  'Peut-on jouer à deux ?': 'Can two people play?',
+  "Oui : face à face sur le même appareil, ou en ligne en partageant un code de partie. Un mode contre l'ordinateur à trois niveaux de difficulté est aussi disponible.":
+    'Yes: face to face on the same device, or online by sharing a match code. A mode against the computer with three difficulty levels is also available.',
+  'Comment marque-t-on un but ?': 'How do you score a goal?',
+  "En poussant le ballon dans la cage adverse, c'est-à-dire les trois cases centrales de la ligne de fond. Le ballon se pousse en ligne droite avec un pion adjacent et s'arrête au premier obstacle.":
+    'By pushing the ball into the opposing goal — the three central squares of the back line. The ball is pushed in a straight line by an adjacent piece and stops at the first obstacle.',
+  'Peut-on installer Tactic Master sur mobile ?': 'Can Tactic Master be installed on mobile?',
+  "Oui. C'est une application web (PWA) : ouvrez le site dans votre navigateur puis « Ajouter à l'écran d'accueil » sur iOS ou Android. Les modes locaux fonctionnent même hors connexion.":
+    'Yes. It is a web app (PWA): open the site in your browser, then "Add to Home Screen" on iOS or Android. Local modes even work offline.',
   'TERRAIN OFFICIEL · 7×9': 'OFFICIAL PITCH · 7×9',
   'Stratégie pure': 'Pure strategy',
   "Un pion, une case, dans n'importe quelle direction. 6 joueurs par équipe, un ballon à pousser.":

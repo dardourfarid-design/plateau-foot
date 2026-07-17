@@ -146,6 +146,7 @@
 <link rel="modulepreload" href="src/ui/accountUI.js">
 <link rel="modulepreload" href="src/ui/boardRenderer.js">
 <link rel="modulepreload" href="src/ui/dialogs.js">
+<link rel="modulepreload" href="src/ui/faqUI.js">
 <link rel="modulepreload" href="src/ui/i18n.js">
 <link rel="modulepreload" href="src/ui/mercatoUI.js">
 <link rel="modulepreload" href="src/ui/onlineUI.js">
@@ -324,10 +325,30 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3l7 5-7 5V3z" fill="currentColor"/></svg>
           Jouer
         </button>
-        <button class="btn cta-secondary" id="homeShootoutBtn">⚽ Tirs au but</button>
-        <button class="btn cta-secondary" id="goToSetupBtn">Personnaliser la partie</button>
-        <button class="btn cta-secondary" id="dailyPuzzleBtn">🧩 Puzzle du jour</button>
-        <button class="tutorial-link" id="startTutorialBtn">Comment jouer ? Lancer le tutoriel guidé →</button>
+        <!-- M11 #253 — un seul CTA dominant (« Jouer »), les modes secondaires
+             regroupés en cartes compactes. Les ids restent câblés dans
+             main.js / shootoutUI.js et ciblés par les e2e : ne pas renommer. -->
+        <div class="mode-cards" role="group" aria-label="Autres modes de jeu">
+          <button class="mode-card" id="homeShootoutBtn">
+            <span class="mode-card-icon" aria-hidden="true">⚽</span>
+            <span class="mode-card-name">Tirs au but</span>
+            <span class="mode-card-desc">Duel de penaltys</span>
+          </button>
+          <button class="mode-card" id="goToSetupBtn">
+            <span class="mode-card-icon" aria-hidden="true">⚙️</span>
+            <span class="mode-card-name">Personnaliser la partie</span>
+            <span class="mode-card-desc">Mode, règles, IA</span>
+          </button>
+          <button class="mode-card" id="dailyPuzzleBtn">
+            <span class="mode-card-icon" aria-hidden="true">🧩</span>
+            <span class="mode-card-name">Puzzle du jour</span>
+            <span class="mode-card-desc">Le défi quotidien</span>
+          </button>
+        </div>
+        <div class="hero-links">
+          <button class="tutorial-link" id="startTutorialBtn">Comment jouer ? Lancer le tutoriel guidé →</button>
+          <button class="tutorial-link" id="landingFaqBtn">Règles &amp; FAQ</button>
+        </div>
         <div id="dailyHint" class="hidden" style="margin-top:12px;font-size:14px;color:#C8841A;letter-spacing:.02em;"></div>
       </div>
 
@@ -631,6 +652,8 @@
           <li>Le gardien glisse uniquement sur sa ligne de cage.</li>
           <li>Premier arrivé au nombre de buts fixé gagne la partie.</li>
         </ul>
+        <!-- M11 #252 — accès en jeu à l'intégralité des règles et de la FAQ -->
+        <button class="topbar-link sidebar-faq-link" id="gameFaqBtn">Toutes les règles &amp; FAQ →</button>
       </div>
     </aside>
 
@@ -976,6 +999,19 @@
       <button class="btn account-submit" id="signOutBtn">Se déconnecter</button>
     </div>
     <button class="topbar-link account-close" id="accountCloseBtn">Fermer</button>
+  </div>
+</div>
+
+<!-- OVERLAY RÈGLES & FAQ (M11 #252) : accessible depuis la landing et en jeu.
+     Le corps (#faqBody) est cloné à l'ouverture depuis la section éditoriale
+     .seo-about ci-dessous (source unique, #181) — voir src/ui/faqUI.js. -->
+<div class="overlay faq-overlay" id="faqOverlay" role="dialog" aria-modal="true" aria-labelledby="faqOverlayTitle">
+  <div class="overlay-card faq-card">
+    <div class="faq-card-head">
+      <div class="overlay-title faq-title" id="faqOverlayTitle">Règles &amp; FAQ</div>
+      <button class="topbar-link faq-close" id="faqCloseBtn">Fermer</button>
+    </div>
+    <div class="faq-body" id="faqBody"></div>
   </div>
 </div>
 

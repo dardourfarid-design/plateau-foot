@@ -28,6 +28,7 @@ import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { initOnline } from './onlineUI.js';
 import { initOverlays } from './overlaysUI.js';
 import { initTutorial } from './tutorialUI.js';
+import { initFaq } from './faqUI.js';
 import { initLang, getLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
 
 // Dictionnaire anglais chargé à la demande (#158) : les joueurs FR (langue par
@@ -1396,6 +1397,8 @@ function init() {
     getCurrentUser: () => currentUser,
     promptSignIn: () => accountModule?.openAccountOverlay('signin')
   });
+  // Règles & FAQ (M11 #252) : overlay autonome, contenu cloné de .seo-about.
+  initFaq();
   const homeLogo = document.getElementById('homeLogoBtn');
   homeLogo?.addEventListener('click', () => overlaysModule.goToLanding());
   homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); overlaysModule.goToLanding(); } });

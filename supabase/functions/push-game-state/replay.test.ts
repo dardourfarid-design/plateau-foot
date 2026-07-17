@@ -12,11 +12,14 @@ import { createGame, listLegalMoves, PHASES } from '../../../public/src/engine/g
 import { replayActions, MAX_ACTIONS_PER_PUSH } from '../../../public/src/engine/replayActions.js';
 
 type Action = { fn: string; args: (number | string)[] };
-type ReplayResult = { state: { turn: string; phase: string } } | { error: string };
 
-// Rétrécissement du type union pour les assertions d'erreur.
-const errOf = (res: ReplayResult): string | undefined =>
-  'error' in res ? res.error : undefined;
+// replayActions vient d'un module JS non typé : Deno infère son retour comme
+// { state: object } | { error: string }. On reste volontairement souple ici
+// (le corps testé, lui, est vérifié par la suite Node) : on lit juste .error
+// et .state à travers un accès non typé pour éviter tout frottement TS.
+// deno-lint-ignore no-explicit-any
+const errOf = (res: any): string | undefined =>
+  (res && typeof res === 'object' && 'error' in res) ? res.error : undefined;
 
 const start = () => createGame({ goalsToWin: 3 }); // mêmes options que onlineUI
 
@@ -30,11 +33,11 @@ function firstLegalMoveActions(state: unknown): Action[] {
 
 Deno.test('un déplacement légal est rejoué (état différent, tour résolu)', () => {
   const s0 = start();
-  const res: ReplayResult = replayActions(s0, firstLegalMoveActions(s0), 'bleu');
+  // deno-lint-ignore no-explicit-any
+  const res: any = replayActions(s0, firstLegalMoveActions(s0), 'bleu');
   assert(!('error' in res), 'le journal légal ne doit pas être rejeté');
-  const state = (res as { state: { turn: string; phase: string } }).state;
-  assert(state !== s0, 'le rejeu doit produire un nouvel état');
-  assert(state.turn === 'rouge' || state.phase === PHASES.MOVED_CAN_PASS);
+  assert(res.state !== s0, 'le rejeu doit produire un nouvel état');
+  assert(res.state.turn === 'rouge' || res.state.phase === PHASES.MOVED_CAN_PASS);
 });
 
 Deno.test('téléportation rejetée (destination hors coups légaux)', () => {

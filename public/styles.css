@@ -718,6 +718,63 @@ body{
   margin-top:10px;
 }
 
+/* M11 #253 — cartes de modes : les entrées secondaires du hero (tirs au but,
+   personnaliser, puzzle) regroupées en grille compacte sous le CTA « Jouer ».
+   Un seul bouton dominant, une hiérarchie visuelle nette. */
+.mode-cards{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  width:100%;
+  margin-top:12px;
+}
+.mode-card{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  padding:12px 12px 10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(240,230,211,0.14);
+  border-radius:6px;
+  color:var(--craie);
+  font-family:inherit;
+  cursor:pointer;
+  text-align:left;
+  transition:transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.mode-card:hover{
+  transform:translateY(-2px);
+  border-color:var(--or);
+  background:rgba(232,160,48,0.08);
+}
+.mode-card:focus-visible{
+  outline:2px solid var(--or);
+  outline-offset:2px;
+  border-color:var(--or);
+}
+.mode-card-icon{ font-size:20px; line-height:1; }
+.mode-card-name{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800; font-size:15px; line-height:1.15;
+  letter-spacing:.06em; text-transform:uppercase;
+  margin-top:6px;
+}
+.mode-card-desc{ font-size:11px; color:var(--craie-att); letter-spacing:.02em; }
+
+/* Liens texte sous les cartes : tutoriel + Règles & FAQ côte à côte */
+.hero-links{
+  display:flex; align-items:center; justify-content:center;
+  gap:4px 22px; flex-wrap:wrap;
+}
+
+@media (max-width: 640px){
+  .mode-cards{ grid-template-columns:1fr; }
+  .mode-card{ flex-direction:row; align-items:center; gap:10px; padding:11px 14px; }
+  .mode-card-name{ margin-top:0; }
+  .mode-card-desc{ margin-left:auto; text-align:right; }
+}
+
 .setup-field{ width:100%; margin-bottom:20px; text-align:left; }
 /* #205 — bloc « Options avancées » repliable (divulgation progressive) */
 .advanced-options{
@@ -3194,3 +3251,50 @@ body{
   font-weight:600;
 }
 .seo-about details p{ margin:8px 0 4px; }
+
+/* ---------- OVERLAY RÈGLES & FAQ (M11 #252) ----------
+   Le corps .faq-body reçoit un clone du contenu de .seo-about : mêmes règles
+   typographiques, mais classe distincte (les e2e SEO comptent les <details>
+   de .seo-about et ne doivent matcher que l'original en bas de page). */
+.faq-card{
+  max-width:640px;
+  width:calc(100% - 32px);
+  max-height:82vh;
+  display:flex; flex-direction:column;
+  text-align:left;
+  padding:22px 26px 18px;
+}
+.faq-card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+.faq-title{ font-size:26px; margin:0; white-space:nowrap; }
+.faq-close{ flex-shrink:0; font-size:13px; }
+.faq-body{
+  overflow-y:auto;
+  padding-right:8px;
+  color:var(--craie-att);
+  font-size:14px;
+  line-height:1.7;
+}
+.faq-body h3{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700; font-size:17px;
+  text-transform:uppercase; letter-spacing:.02em;
+  color:var(--craie);
+  margin:20px 0 8px;
+}
+.faq-body > h3:first-child{ margin-top:2px; }
+.faq-body p{ margin:0 0 10px; }
+.faq-body ul{ margin:8px 0; padding-left:20px; }
+.faq-body li{ margin-bottom:4px; }
+.faq-body details{
+  border-bottom:1px solid rgba(240,230,211,0.08);
+  padding:8px 0;
+}
+.faq-body summary{ cursor:pointer; color:var(--craie); font-weight:600; }
+.faq-body details p{ margin:8px 0 4px; }
+
+/* Accès FAQ dans la barre latérale de jeu (sous le rappel des règles) */
+.sidebar-faq-link{ margin-top:10px; font-size:13px; }

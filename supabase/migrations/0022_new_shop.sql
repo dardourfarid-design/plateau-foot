@@ -34,7 +34,10 @@ insert into public.themes (id, name, description, price_cents, sort_order, confi
 
   ('volcan',
    'Volcan',
-   'Lave sous la surface — rouge et cendre, avant l'explosion.',
+   -- Apostrophe doublée : sans ça le littéral se ferme sur « l' » et toute la
+   -- migration échoue en 42601 (trouvé par le job de rejeu de #283 — la
+   -- chaîne n'avait jamais été rejouée de zéro depuis l'écriture de 0022).
+   'Lave sous la surface — rouge et cendre, avant l''explosion.',
    249, 23,
    '{"vertTerrain":"#1A0505","vertTerrainClair":"#260707","bleuEquipe":"#FF4500","rougeEquipe":"#8B0000","accent":"#FFA040"}'::jsonb),
 

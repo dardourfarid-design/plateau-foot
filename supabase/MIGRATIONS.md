@@ -78,6 +78,8 @@ plutôt que supposée.
 | 0038 | reapply_daily_challenges_rpc | rattrapage : RPC défis partie en dérive en prod |
 | 0039 | lock_update_game_session_state | verrou sur l'état de session (anti-triche #260) |
 | 0040 | fix_daily_challenges_ambiguous_user_id | correctif ambiguïté `user_id` (42702) |
+| 0041 | leaderboard_index | index de tri du classement + borne dure sur la vue (#282) |
+| 0042 | hot_path_indexes | index `user_passes(user_id, status)` — chemin de fin de partie (#284) |
 
 ## Points résolus (hygiène — #18)
 

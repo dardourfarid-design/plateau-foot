@@ -5,6 +5,13 @@
 // C'est l'UI (themeStore.js / l'écran de sélection) qui décide si un thème
 // est sélectionnable selon les achats du joueur.
 
+import { ensureThemeFonts } from './lazyFonts.js';
+
+// #309 — habillages qui utilisent une police hors du <head> (Fredoka).
+// À tenir à jour avec skins.css : y ajouter un habillage qui introduirait une
+// nouvelle famille, sinon il s'affichera dans la police de repli.
+const SKINS_NEEDING_THEME_FONTS = ['arcade-turf'];
+
 const CSS_VARS_MAP = {
   vertTerrain: '--vert-terrain',
   vertTerrainClair: '--vert-terrain-clair',
@@ -48,6 +55,10 @@ export function applySkin(skinId) {
     if (cls.indexOf('skin-') === 0) body.classList.remove(cls);
   });
   if (skinId) body.classList.add('skin-' + skinId);
+  // #309 — l'habillage « arcade-turf » est le seul à utiliser Fredoka, qui
+  // n'est plus dans le <head>. On la charge à l'application de l'habillage.
+  // Les autres habillages n'ont besoin d'aucune police supplémentaire.
+  if (SKINS_NEEDING_THEME_FONTS.includes(skinId)) ensureThemeFonts();
 }
 
 /**

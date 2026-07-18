@@ -148,7 +148,11 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800;900&family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<!-- #309 — 2 familles seulement sur le chemin critique. Anton, Archivo, Fredoka
+     et Space Mono ne servent qu'aux thèmes de tirs au but et à l'habillage
+     « arcade-turf » : elles sont chargées à la demande par src/ui/lazyFonts.js,
+     à l'ouverture de l'écran concerné. Ne pas les réintroduire ici. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="skins.css">
 
@@ -198,6 +202,7 @@
 <link rel="modulepreload" href="src/ui/powersUI.js">
 <link rel="modulepreload" href="src/ui/profileUI.js">
 <link rel="modulepreload" href="src/ui/shootoutUI.js">
+<link rel="modulepreload" href="src/ui/lazyFonts.js">
 <link rel="modulepreload" href="src/ui/shopUI.js">
 <link rel="modulepreload" href="src/ui/themeManager.js">
 <link rel="modulepreload" href="src/ui/tutorial.js">

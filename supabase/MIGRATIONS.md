@@ -80,6 +80,20 @@ plutôt que supposée.
 | 0040 | fix_daily_challenges_ambiguous_user_id | correctif ambiguïté `user_id` (42702) |
 | 0041 | leaderboard_index | index de tri du classement + borne dure sur la vue (#282) |
 | 0042 | hot_path_indexes | index `user_passes(user_id, status)` — chemin de fin de partie (#284) |
+| 0043 | fix_0039_revoke_public | **0039 n'avait rien fermé** : `revoke` sans `public` (#295) |
+
+> ⚠️ **Piège PostgreSQL, à connaître avant d'écrire un `revoke`.** PostgreSQL
+> accorde `EXECUTE` à `PUBLIC` par défaut à la création d'une fonction.
+> Révoquer sur `anon`/`authenticated` **sans** révoquer sur `public` ne ferme
+> rien : les rôles conservent l'exécution par héritage, et l'instruction passe
+> sans la moindre erreur. C'est ce qui a rendu `0039` inopérante pendant qu'on
+> la croyait appliquée. Toujours écrire :
+>
+> ```sql
+> revoke execute on function … from public, anon, authenticated;
+> ```
+>
+> C'est la forme employée par `0025`, `0026`, `0027`, `0031` et `0036`.
 
 ## Points résolus (hygiène — #18)
 

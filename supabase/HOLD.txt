@@ -1,0 +1,32 @@
+# Migrations RETENUES : à ne jamais appliquer automatiquement
+#
+# Une migration listée ici a une dépendance d'ordre de déploiement que la CI
+# ne peut pas vérifier toute seule. Tant que ce fichier contient au moins une
+# version, le job d'application de .github/workflows/supabase-migrations.yml
+# S'ARRÊTE : rien ne part en production.
+#
+# C'est volontairement brutal. Une migration retenue est, par définition, une
+# migration qui casse quelque chose si elle part au mauvais moment — mieux
+# vaut bloquer aussi les migrations inoffensives qui la suivent que de la
+# laisser passer.
+#
+# Pour libérer : retirer la ligne PAR UNE PR, après avoir constaté que la
+# condition est remplie. La PR est la trace de ce constat.
+#
+# Format : une version par ligne (les lignes vides et les # sont ignorés).
+
+# ---------------------------------------------------------------------------
+# 0039 — revoke de update_game_session_state (anti-triche #260).
+#
+# Constaté le 2026-07-18 : `has_function_privilege` renvoie true pour anon ET
+# authenticated → la migration n'est PAS appliquée en prod.
+#
+# Son en-tête impose l'ordre : l'Edge Function push-game-state doit être
+# déployée ET constatée fonctionnelle AVANT. Le client ne se replie sur la RPC
+# historique que si la fonction est absente (onlineUI.js:190) — appliquer 0039
+# sans la fonction déployée révoque la RPC sous les pieds du client et casse
+# le multijoueur en ligne.
+#
+# Libérer cette ligne UNIQUEMENT après avoir joué une partie en ligne
+# fonctionnant via l'Edge Function.
+0039

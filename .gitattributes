@@ -1,3 +1,2 @@
-# Les scripts de hook doivent conserver des fins de ligne LF : un CR final
-# casse le shebang (#!/bin/sh^M) et les comparaisons de chaînes sous /bin/sh.
-.githooks/** text eol=lf
+tools/generated/push-game-state.single.ts text eol=lf
+supabase/functions/push-game-state/_engine/*.js text eol=lf

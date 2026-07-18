@@ -1,0 +1,47 @@
+-- ============================================================
+-- TACTIC MASTER — Index des chemins chauds
+-- Issue #284 (épic scalabilité #281).
+--
+-- Résultat d'un audit table par table : croisement du DDL, des policies RLS
+-- et des requêtes réellement émises (client + Edge Functions + RPC). Un seul
+-- index manquait vraiment. Il est seul ici à dessein : un index inutile se
+-- paie à chaque écriture, et « au cas où » n'est pas une justification.
+--
+-- Tables vérifiées et DÉJÀ couvertes :
+--   • player_progress, user_currency, team_lineups, pass_reward_granted,
+--     user_kit_credits — `user_id` est clé primaire.
+--   • level_reward_claims — PK (user_id, reward_key), user_id en tête.
+--   • purchases — unique (user_id, theme_id), user_id en tête.
+--   • player_ownership, custom_players, daily_challenges, friendships,
+--     mercato_offers, currency_transactions, user_consents, rewarded_grants
+--     — index existants conformes aux requêtes constatées.
+--
+-- Écarté après vérification : un index sur game_sessions(host_user_id) /
+-- (guest_user_id). Ces colonnes ne servent JAMAIS à chercher une ligne — la
+-- session est toujours localisée par clé primaire d'abord, et host/guest ne
+-- sont lus qu'en contrôle d'autorisation sur cette ligne unique
+-- (0029:83, 0030:39, push-game-state/index.ts:89). Un index y serait du coût
+-- d'écriture pur, jamais emprunté par le planificateur.
+-- ============================================================
+
+-- ---------- user_passes : le seul manque réel ----------
+--
+-- La table n'avait d'index que sur stripe_subscription_id (0022), utile au
+-- seul webhook Stripe. Or elle est lue PAR user_id sur quatre chemins :
+--
+--   1. la policy RLS « lecture pass par propriétaire » (auth.uid() = user_id),
+--      évaluée à chaque lecture ;
+--   2. get_my_active_pass() (0022:141) — where user_id = auth.uid()
+--      and status = 'active' ;
+--   3. grant_pass_rare_reward() (0025:338) ;
+--   4. le bonus XP +20 % du Pass Saison dans record_game_result (0037:69),
+--      c'est-à-dire À CHAQUE FIN DE PARTIE.
+--
+-- Le chemin le plus chaud du jeu, sur une table qui grandit avec le nombre
+-- d'abonnés, sans index : chaque partie terminée déclenchait un parcours
+-- séquentiel complet de user_passes.
+--
+-- (user_id, status) couvre les quatre : les trois requêtes qui filtrent aussi
+-- sur status = 'active' l'évaluent depuis l'index, sans retour à la table.
+create index if not exists idx_user_passes_user_status
+  on public.user_passes (user_id, status);

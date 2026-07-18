@@ -4,12 +4,31 @@ Ce document est la **source de vérité** de l'ordre des migrations et de la
 procédure de déploiement. Objectif : pouvoir recréer la base **de zéro** de
 façon fiable (staging, nouveau contributeur, reprise après incident). Traçabilité : issue #17.
 
-## Comment appliquer (de zéro)
+## Comment appliquer
 
-Exécuter les fichiers de `supabase/migrations/` **dans l'ordre numérique
-croissant**, une seule fois, dans le SQL Editor du dashboard Supabase (ou via
-`supabase db push`). Toutes les migrations sont idempotentes (`create ... if not
-exists`, `create or replace`, `on conflict`) : un rejeu ne casse rien.
+**La CI est le seul chemin d'application** (#283). Le workflow
+`.github/workflows/supabase-migrations.yml` :
+
+1. sur toute **PR** touchant `supabase/migrations/`, rejoue la chaîne complète
+   depuis `0001` sur un Postgres local jetable — si une migration ne rejoue pas
+   proprement, la PR échoue ;
+2. sur **merge dans `main`**, applique les migrations en attente en production
+   (`supabase db push --linked`), après avoir loggé la liste de ce qui va bouger.
+
+> ⚠️ **Ne plus appliquer de migration à la main** — ni SQL Editor, ni
+> `supabase db push` depuis un poste. C'est ce qui a produit les dérives
+> rattrapées par `0038` et `0040`. Si une migration doit partir en urgence,
+> elle part par une PR.
+
+Secrets de dépôt requis pour le job d'application : `SUPABASE_ACCESS_TOKEN`,
+`SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
+
+### Recréer la base de zéro
+
+Toutes les migrations sont idempotentes (`create ... if not exists`,
+`create or replace`, `on conflict`) : un rejeu ne casse rien. Le job de rejeu
+de la CI fait exactement ça à chaque PR, ce qui garde cette propriété vérifiée
+plutôt que supposée.
 
 > ⚠️ Ne jamais éditer une migration déjà appliquée pour en changer le
 > **comportement** — ajouter une nouvelle migration à la place. Les corrections
@@ -55,6 +74,10 @@ exists`, `create or replace`, `on conflict`) : un rejeu ne casse rien.
 | 0034 | shootout_skins | thèmes tirs au but ⚠️ |
 | 0035 | advertising_consent | finalité RGPD publicité (épic pub) |
 | 0036 | rewarded_grants | crédit rewarded serveur (SSV) |
+| 0037 | momentum_bonus | bonus de momentum + bonus XP Pass Saison |
+| 0038 | reapply_daily_challenges_rpc | rattrapage : RPC défis partie en dérive en prod |
+| 0039 | lock_update_game_session_state | verrou sur l'état de session (anti-triche #260) |
+| 0040 | fix_daily_challenges_ambiguous_user_id | correctif ambiguïté `user_id` (42702) |
 
 ## Points résolus (hygiène — #18)
 
@@ -93,9 +116,11 @@ neuve.
       publique (`/rest/v1/themes`) : `stadium-night` et `arcade-turf` à
       `price_cents = 249`. Le rejeu canonique (0024 seul) est cohérent avec la
       prod.
-- [x] **Plus d'application manuelle** — l'intégration GitHub ↔ Supabase est en
-      place (#139, tuto `docs/supabase-branching.md`) : une PR touchant
-      `supabase/migrations/` rejoue la chaîne de zéro sur une base de
-      préversion (check « Supabase Preview »), et un merge sur `main` applique
-      automatiquement les migrations en prod. `supabase db push` manuel n'est
-      plus la procédure nominale.
+- [ ] ~~**Plus d'application manuelle**~~ — **cette case était cochée à tort**
+      (corrigé le 2026-07-18, #283). L'intégration GitHub ↔ Supabase est bien
+      *connectée* (#139), mais le check « Supabase Preview » est en `skipping`
+      sur les PR : le branching exige le plan **Pro**, qui n'est pas actif.
+      Rien ne s'appliquait automatiquement — d'où `0038` (RPC partie en dérive
+      en prod) et `0039` (restée en attente d'application manuelle).
+      Remplacé par le workflow `.github/workflows/supabase-migrations.yml`,
+      voir « Comment appliquer » en haut de ce document.

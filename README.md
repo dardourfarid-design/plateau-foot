@@ -69,8 +69,14 @@ Si tu changes de projet Supabase, mets à jour ces deux valeurs (Settings → AP
 → "Project URL" et clé "anon public", **pas** l'URL `/rest/v1/` ni la clé
 `service_role`).
 
-Les migrations SQL à exécuter (une seule fois, dans le SQL Editor de ton
-dashboard Supabase) sont dans `supabase/migrations/`, dans l'ordre numéroté :
+Les migrations SQL sont dans `supabase/migrations/`, dans l'ordre numéroté.
+Elles sont appliquées **par la CI, jamais à la main** (#283) : un merge sur
+`main` déclenche `.github/workflows/supabase-migrations.yml`, qui les rejoue
+d'abord de zéro sur une base jetable, puis applique celles en attente. Voir
+`supabase/MIGRATIONS.md`, qui reste la source de vérité de la chaîne.
+
+La liste ci-dessous est là pour comprendre **ce que fait** chaque migration,
+pas pour les exécuter une par une dans le SQL Editor :
 1. `0001_initial_schema.sql` — tables profiles/themes/purchases + RLS
 2. `0002_mock_payment_function.sql` — fonction d'achat simulé (à retirer le jour où Stripe est branché)
 3. `0003_new_themes.sql` — 4 thèmes supplémentaires (Nuit de stade, Rétro 8-bit, Jungle, Crépuscule)

@@ -27,7 +27,9 @@ describe('copie moteur de l’Edge Function (_engine)', () => {
 describe('bundle mono-fichier de l’Edge Function', () => {
   test('push-game-state.single.ts est à jour vis-à-vis des sources', () => {
     let committed = null;
-    try { committed = readFileSync(OUTPUT, 'utf8'); } catch { /* absent = échec */ }
+    // Normalise en LF : sur un checkout Windows (autocrlf) le fichier peut être
+    // en CRLF, alors que buildBundle() produit toujours du LF.
+    try { committed = readFileSync(OUTPUT, 'utf8').replace(/\r\n/g, '\n'); } catch { /* absent = échec */ }
     expect(committed).toBeTruthy();
     expect(committed).toBe(buildBundle());
   });

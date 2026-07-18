@@ -16,6 +16,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const FN = join(root, 'supabase', 'functions', 'push-game-state');
 export const OUTPUT = join(root, 'tools', 'generated', 'push-game-state.single.ts');
 
+// Sortie normalisée en LF quelle que soit la plateforme : sinon le bundle
+// (et son test de fraîcheur) diverge entre un checkout CRLF (Windows,
+// autocrlf) et l'en-tête écrit en LF dans ce script.
+const lf = (s) => s.replace(/\r\n/g, '\n');
+const read = (p) => lf(readFileSync(p, 'utf8'));
+
 // Retire les imports dont la source est LOCALE (commence par '.'), y compris
 // multi-lignes. Conserve les imports distants (jsr:, https:).
 function stripLocalImports(code) {
@@ -29,10 +35,10 @@ function stripAllImports(code) {
 }
 
 export function buildBundle() {
-  const constants = readFileSync(join(FN, '_engine', 'constants.js'), 'utf8');
-  const gameEngine = stripLocalImports(readFileSync(join(FN, '_engine', 'gameEngine.js'), 'utf8'));
-  const replayActions = stripLocalImports(readFileSync(join(FN, '_engine', 'replayActions.js'), 'utf8'));
-  const indexBody = stripAllImports(readFileSync(join(FN, 'index.ts'), 'utf8'));
+  const constants = read(join(FN, '_engine', 'constants.js'));
+  const gameEngine = stripLocalImports(read(join(FN, '_engine', 'gameEngine.js')));
+  const replayActions = stripLocalImports(read(join(FN, '_engine', 'replayActions.js')));
+  const indexBody = stripAllImports(read(join(FN, 'index.ts')));
 
   const header =
 `// ============================================================================

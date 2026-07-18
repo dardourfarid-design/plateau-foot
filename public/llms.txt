@@ -1,0 +1,78 @@
+# Tactic Master
+
+> Tactic Master est un jeu de plateau de football gratuit, jouable dans le
+> navigateur sans installation. On y déplace des pions comme aux dames et on
+> pousse un ballon jusqu'à la cage adverse. Aucun dé, aucun hasard : une partie
+> dure environ cinq minutes.
+
+Site : https://tactic-master.vercel.app/ (français) — https://tactic-master.vercel.app/en/ (anglais)
+Éditeur : Tactic Master. Prix : gratuit, avec une boutique cosmétique optionnelle.
+Plateformes : navigateur web, installable en PWA sur iOS et Android.
+
+## En bref
+
+- **Genre** : jeu de plateau tactique, mêlant la mécanique des dames et le but du football.
+- **Joueurs** : 1 à 2 (solo contre l'ordinateur, deux joueurs sur le même écran, ou en ligne).
+- **Durée d'une partie** : environ 5 minutes.
+- **Plateau** : 7 colonnes × 9 lignes.
+- **Pions** : 6 par équipe — 1 gardien, 2 défenseurs, 3 attaquants.
+- **Hasard** : aucun. Pas de dé, pas de tirage : information complète, comme aux échecs.
+- **Compte requis** : non, le jeu est jouable sans compte. Un compte sert au multijoueur en ligne, à la boutique, à l'équipe et aux amis.
+- **Hors connexion** : les modes locaux fonctionnent sans réseau une fois la page installée en PWA.
+
+## Règles
+
+1. À son tour, un joueur déplace **un** pion d'**une** case, dans n'importe quelle direction.
+2. Un pion adjacent au ballon peut le **pousser en ligne droite** ; le ballon glisse jusqu'au premier obstacle (pion ou bord du terrain).
+3. On marque en envoyant le ballon dans la cage adverse, c'est-à-dire les **trois cases centrales de la ligne de fond** du camp adverse.
+4. Le **gardien** ne se déplace que latéralement, sur sa ligne de cage.
+5. Il n'y a **aucune capture** : on ne prend pas les pions adverses. La partie se gagne aux buts.
+6. La défense se joue par le placement : un pion couvre les cases voisines et coupe les lignes de poussée adverses.
+
+## Modes de jeu
+
+- **Solo contre l'ordinateur** — trois niveaux de difficulté.
+- **Deux joueurs sur le même appareil** — en face à face, chacun son tour.
+- **En ligne** — en partageant un code de partie avec un adversaire.
+- **Puzzle du jour** — une situation à résoudre, renouvelée chaque jour.
+- **Séance de tirs au but** — un mode arcade court, visée et puissance.
+
+## Ce qui distingue Tactic Master
+
+- Des **dames** : même simplicité de tour (un pion, une case), mais on ne capture pas — l'objectif est de marquer, pas d'éliminer.
+- Des **échecs** : pas de pièces aux déplacements différenciés à mémoriser ; les règles tiennent en cinq lignes.
+- Du **baby-foot ou des jeux de foot d'arcade** : aucun réflexe ni timing n'entre en jeu, tout est au tour par tour.
+- Des **jeux de gestion de football** : on joue le match case par case, il n'y a ni transferts ni saison à gérer.
+
+## Questions fréquentes
+
+**Tactic Master est-il gratuit ?** Oui, entièrement jouable gratuitement dans le navigateur. Une boutique optionnelle propose des thèmes de terrain et des packs de joueurs à collectionner.
+
+**Faut-il installer quelque chose ?** Non. Le jeu s'ouvre dans le navigateur. Il peut être ajouté à l'écran d'accueil (PWA) sur iOS et Android si on le souhaite.
+
+**Peut-on jouer à deux ?** Oui : sur le même appareil, ou en ligne via un code de partie.
+
+**Y a-t-il une part de hasard ?** Non. Aucun dé, aucune carte : le résultat dépend uniquement du placement et de l'anticipation.
+
+**Faut-il créer un compte ?** Non pour jouer. Le compte sert au multijoueur en ligne, à la boutique, à l'équipe et aux amis.
+
+## Pages
+
+- [Accueil (français)](https://tactic-master.vercel.app/) : présentation, règles, FAQ et accès au jeu.
+- [Home (English)](https://tactic-master.vercel.app/en/) : English landing page with the rules and FAQ.
+- [Conditions d'utilisation et de vente](https://tactic-master.vercel.app/terms)
+- [Politique de confidentialité](https://tactic-master.vercel.app/privacy)
+
+---
+
+# Tactic Master (English summary)
+
+Tactic Master is a free football board game played in the browser. Pieces move
+one square at a time like in checkers; an adjacent piece pushes the ball in a
+straight line, and you score by sending it into the three central squares of the
+opponent's back line. A 7×9 board, 6 pieces per side (1 goalkeeper, 2 defenders,
+3 forwards), no captures, no dice, no luck. Matches last about five minutes.
+Play solo against the computer, two players on one device, or online with a game
+code. Free, no installation, installable as a PWA on iOS and Android.
+
+Dernière mise à jour : 2026-07-18.

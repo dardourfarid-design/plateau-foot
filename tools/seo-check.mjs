@@ -34,6 +34,36 @@ if (robots.includes(`Sitemap: ${DOMAIN}/sitemap.xml`)) {
   ko(`robots.txt ne déclare pas « Sitemap: ${DOMAIN}/sitemap.xml »`);
 }
 
+// --- GEO : crawlers génératifs & llms.txt ----------------------------------
+// Un « Disallow: / » sur l'un de ces agents nous retire des réponses de
+// ChatGPT/Claude/Perplexity/AI Overviews. Le garde-fou ne vérifie donc pas la
+// présence des lignes (le joker suffirait) mais l'absence de blocage.
+console.log('GEO');
+const AI_AGENTS = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot',
+  'PerplexityBot', 'Google-Extended', 'Applebot-Extended'];
+let aiBlocked = 0;
+for (const agent of AI_AGENTS) {
+  // Tous les blocs du robots.txt nommant cet agent (de sa ligne User-agent au
+  // groupe suivant) : il faut les inspecter TOUS, un « Disallow: / » ajouté
+  // plus bas dans le fichier annulerait un « Allow: / » écrit plus haut.
+  const blocks = [...robots.matchAll(
+    new RegExp(`^User-agent:[ \\t]*${agent}[ \\t]*$([\\s\\S]*?)(?=^User-agent:|^Sitemap:|$(?![\\s\\S]))`, 'gim')
+  )];
+  if (blocks.some(b => /^[ \t]*Disallow:[ \t]*\/[ \t]*$/im.test(b[1]))) {
+    ko(`robots.txt : ${agent} est bloqué — le site ne sera plus cité par ce moteur`);
+    aiBlocked++;
+  }
+}
+if (aiBlocked === 0) ok(`aucun crawler génératif bloqué (${AI_AGENTS.length} vérifiés)`);
+if (!existsSync(join(PUBLIC, 'llms.txt'))) {
+  ko('public/llms.txt absent — résumé structuré à destination des modèles');
+} else {
+  const llms = read('llms.txt');
+  if (!/^# /m.test(llms)) ko('llms.txt : pas de titre « # » (format llms.txt non respecté)');
+  else if (!llms.includes(DOMAIN)) ko('llms.txt : ne référence pas le domaine canonique');
+  else ok('llms.txt présent, titré et sur le domaine canonique');
+}
+
 // --- sitemap.xml ----------------------------------------------------------
 console.log('sitemap.xml');
 const sitemap = read('sitemap.xml');
@@ -84,7 +114,9 @@ if (!ld) {
   try {
     const graph = JSON.parse(ld[1])['@graph'] || [];
     const types = graph.map(n => n['@type']);
-    for (const t of ['WebSite', 'VideoGame', 'FAQPage']) {
+    // HowTo (GEO) : les règles pas à pas sont la forme la plus reprise par les
+    // moteurs génératifs quand on leur demande « comment jouer à… ».
+    for (const t of ['WebSite', 'VideoGame', 'FAQPage', 'HowTo', 'Organization']) {
       if (!types.includes(t)) ko(`JSON-LD : type ${t} absent du @graph (#182)`);
     }
     if (types.includes('FAQPage')) {

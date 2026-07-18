@@ -21,6 +21,12 @@
 --        chemin non validé est fermé.
 -- ============================================================
 
+-- ⚠️ CES DEUX LIGNES SONT INOPÉRANTES — voir 0043 et #295.
+-- Il manque `public` dans la liste : PostgreSQL accorde EXECUTE à PUBLIC par
+-- défaut à la création d'une fonction, et anon/authenticated conservent donc
+-- l'exécution par héritage. Le revoke passe sans erreur et ne ferme rien.
+-- La migration est conservée telle quelle (elle est appliquée en prod) ; le
+-- correctif vit dans 0043_fix_0039_revoke_public.sql.
 revoke execute on function public.update_game_session_state(uuid, jsonb) from anon;
 revoke execute on function public.update_game_session_state(uuid, jsonb) from authenticated;
 -- Le service role (Edge Functions) conserve l'exécution — et pourrait à terme

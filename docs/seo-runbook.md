@@ -2,6 +2,9 @@
 
 > Référence : épic #176. Domaine canonique actuel : **`https://tactic-master.vercel.app`**
 > (décision « domaine custom » toujours ouverte, voir #179).
+>
+> Volet **GEO** (être cité par ChatGPT / Perplexity / AI Overviews) :
+> voir `docs/geo-runbook.md`.
 
 ## Où le domaine est écrit en dur (à changer ENSEMBLE le jour J)
 
@@ -9,7 +12,8 @@
 |---|---|
 | `public/index.html` | `<link rel="canonical">`, `og:url`, `og:image`, `twitter:image`, JSON-LD `url`, `data-domain` Plausible |
 | `public/sitemap.xml` | les 3 `<loc>` |
-| `public/robots.txt` | ligne `Sitemap:` |
+| `public/robots.txt` | ligne `Sitemap:` + l'URL de `llms.txt` en commentaire |
+| `public/llms.txt` | en-tête « Site : », section « Pages » (GEO, voir `geo-runbook.md`) |
 | `public/terms.html` | `<link rel="canonical">` |
 | `public/privacy.html` | `<link rel="canonical">` |
 | `public/en/index.html` | canonical, hreflang ×3, `og:url`/`og:image` ×2, JSON-LD (#183) |

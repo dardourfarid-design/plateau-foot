@@ -3251,6 +3251,20 @@ body:has(#setupScreen.hidden) .seo-about{ display:none; }
 .seo-about p{ margin:0 0 10px; }
 .seo-about ul{ margin:8px 0; padding-left:20px; }
 .seo-about li{ margin-bottom:4px; }
+
+/* Fiche de faits (GEO) : deux colonnes sur large, empilé sur mobile. */
+.seo-facts{
+  display:grid;
+  grid-template-columns:max-content 1fr;
+  gap:6px 14px;
+  margin:14px 0 4px;
+}
+.seo-facts dt{ font-weight:700; color:var(--craie); }
+.seo-facts dd{ margin:0; }
+@media (max-width:480px){
+  .seo-facts{ grid-template-columns:1fr; gap:2px; }
+  .seo-facts dd{ margin:0 0 8px; }
+}
 .seo-about details{
   border-bottom:1px solid rgba(240,230,211,0.08);
   padding:8px 0;

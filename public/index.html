@@ -43,7 +43,15 @@
       "@id": "https://tactic-master.vercel.app/#website",
       "url": "https://tactic-master.vercel.app/",
       "name": "Tactic Master",
-      "inLanguage": "fr"
+      "inLanguage": "fr",
+      "publisher": { "@id": "https://tactic-master.vercel.app/#org" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://tactic-master.vercel.app/#org",
+      "name": "Tactic Master",
+      "url": "https://tactic-master.vercel.app/",
+      "logo": "https://tactic-master.vercel.app/icons/icon-512.png"
     },
     {
       "@type": "VideoGame",
@@ -59,9 +67,27 @@
       "applicationCategory": "GameApplication",
       "playMode": ["SinglePlayer", "MultiPlayer"],
       "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
-      "author": { "@type": "Organization", "name": "Tactic Master" },
-      "publisher": { "@type": "Organization", "name": "Tactic Master" },
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      "author": { "@id": "https://tactic-master.vercel.app/#org" },
+      "publisher": { "@id": "https://tactic-master.vercel.app/#org" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "isAccessibleForFree": true,
+      "gameItem": { "@type": "Thing", "name": "Ballon", "description": "Un unique ballon, poussé en ligne droite par un pion adjacent." },
+      "keywords": "jeu de plateau de foot, jeu de foot en ligne gratuit, jeu de stratégie sans hasard, alternative aux dames",
+      "about": "Jeu de plateau tactique où l'on pousse un ballon jusqu'à la cage adverse sur un plateau de 7×9 cases, avec 6 pions par équipe et aucune capture."
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://tactic-master.vercel.app/#regles",
+      "name": "Comment jouer à Tactic Master",
+      "description": "Les règles complètes de Tactic Master : déplacer un pion, pousser le ballon, marquer dans la cage adverse.",
+      "inLanguage": "fr",
+      "totalTime": "PT1M",
+      "step": [
+        { "@type": "HowToStep", "position": 1, "name": "Déplacer un pion", "text": "À son tour, déplacer un seul pion d'une seule case, dans n'importe quelle direction. Chaque équipe compte 6 pions : 1 gardien, 2 défenseurs, 3 attaquants, sur un plateau de 7 colonnes sur 9 lignes." },
+        { "@type": "HowToStep", "position": 2, "name": "Pousser le ballon", "text": "Un pion placé sur une case adjacente au ballon peut le pousser en ligne droite. Le ballon glisse jusqu'au premier obstacle : un autre pion ou le bord du terrain." },
+        { "@type": "HowToStep", "position": 3, "name": "Marquer un but", "text": "Envoyer le ballon dans la cage adverse, c'est-à-dire les trois cases centrales de la ligne de fond du camp adverse. Le gardien, qui ne se déplace que latéralement sur sa ligne de cage, est le dernier rempart." },
+        { "@type": "HowToStep", "position": 4, "name": "Défendre par le placement", "text": "Il n'y a aucune capture : on ne prend jamais un pion adverse. La défense consiste à placer ses pions pour couvrir les cases voisines et couper les lignes de poussée de l'adversaire." }
+      ]
     },
     {
       "@type": "FAQPage",
@@ -86,6 +112,21 @@
           "@type": "Question",
           "name": "Peut-on installer Tactic Master sur mobile ?",
           "acceptedAnswer": { "@type": "Answer", "text": "Oui. C'est une application web (PWA) : ouvrez le site dans votre navigateur puis « Ajouter à l'écran d'accueil » sur iOS ou Android. Les modes locaux fonctionnent même hors connexion." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quelle est la différence avec les dames ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Le tour est aussi simple qu'aux dames — un pion, une case — mais on ne capture jamais de pion adverse. L'objectif n'est pas d'éliminer l'adversaire mais de pousser le ballon dans sa cage, et un gardien limité aux déplacements latéraux garde la ligne de but." }
+        },
+        {
+          "@type": "Question",
+          "name": "Y a-t-il une part de hasard ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Aucune. Il n'y a ni dé, ni carte, ni tirage : comme aux échecs ou aux dames, les deux joueurs voient tout le plateau et le résultat ne dépend que du placement et de l'anticipation." }
+        },
+        {
+          "@type": "Question",
+          "name": "Faut-il créer un compte pour jouer ?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Non, le jeu est jouable sans compte. Un compte sert au multijoueur en ligne, à la boutique, à la gestion de son équipe et aux amis." }
         }
       ]
     }
@@ -1051,6 +1092,24 @@
         navigateur puis «&nbsp;Ajouter à l'écran d'accueil&nbsp;» sur iOS ou Android.
         Les modes locaux fonctionnent même hors connexion.</p>
       </details>
+      <details>
+        <summary>Quelle est la différence avec les dames&nbsp;?</summary>
+        <p>Le tour est aussi simple qu'aux dames — un pion, une case — mais on ne
+        capture jamais de pion adverse. L'objectif n'est pas d'éliminer
+        l'adversaire mais de pousser le ballon dans sa cage, et un gardien limité
+        aux déplacements latéraux garde la ligne de but.</p>
+      </details>
+      <details>
+        <summary>Y a-t-il une part de hasard&nbsp;?</summary>
+        <p>Aucune. Il n'y a ni dé, ni carte, ni tirage&nbsp;: comme aux échecs ou aux
+        dames, les deux joueurs voient tout le plateau et le résultat ne dépend
+        que du placement et de l'anticipation.</p>
+      </details>
+      <details>
+        <summary>Faut-il créer un compte pour jouer&nbsp;?</summary>
+        <p>Non, le jeu est jouable sans compte. Un compte sert au multijoueur en
+        ligne, à la boutique, à la gestion de son équipe et aux amis.</p>
+      </details>
     </div>
   </div>
 </div>
@@ -1070,6 +1129,21 @@
   ligne droite, et on marque en l'envoyant dans la cage adverse. Aucun dé, aucun
   hasard&nbsp;: comme aux échecs ou aux dames, tout se joue au placement et à
   l'anticipation. Une partie dure environ cinq minutes.</p>
+
+  <!-- Fiche de faits (GEO) : les moteurs génératifs citent en priorité des
+       énoncés courts, autonomes et chiffrés. Chaque ligne doit rester vraie
+       isolément, hors de son contexte — c'est sous cette forme qu'elle sera
+       reprise dans une réponse d'assistant. Miroir de public/llms.txt : les
+       deux se mettent à jour ensemble. -->
+  <dl class="seo-facts">
+    <dt>Plateau</dt><dd>7 colonnes × 9 lignes.</dd>
+    <dt>Pions</dt><dd>6 par équipe : 1 gardien, 2 défenseurs, 3 attaquants.</dd>
+    <dt>Joueurs</dt><dd>1 à 2 — solo contre l'ordinateur, à deux sur le même écran, ou en ligne.</dd>
+    <dt>Durée d'une partie</dt><dd>environ 5 minutes.</dd>
+    <dt>Hasard</dt><dd>aucun : ni dé, ni carte, information complète comme aux échecs.</dd>
+    <dt>Prix</dt><dd>gratuit, sans installation ; boutique cosmétique optionnelle.</dd>
+  </dl>
+
   <p><button class="tutorial-link seo-faq-link" id="aboutFaqBtn" type="button">Voir toutes les règles et les questions fréquentes →</button></p>
 </section>
 

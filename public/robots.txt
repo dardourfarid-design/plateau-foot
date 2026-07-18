@@ -1,4 +1,44 @@
 User-agent: *
 Allow: /
 
+# --- Moteurs génératifs (GEO) --------------------------------------------
+# Ces agents sont déjà couverts par le « User-agent: * » ci-dessus ; ils sont
+# listés explicitement parce que plusieurs d'entre eux (Google-Extended,
+# Applebot-Extended) sont des agents « de consentement » que certains
+# outils d'audit considèrent comme refusés tant qu'aucune ligne ne les nomme.
+# Le but est d'être citable par ChatGPT, Claude, Perplexity et les AI Overviews.
+# Retirer un agent d'ici = accepter de disparaître de ses réponses.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
 Sitemap: https://tactic-master.vercel.app/sitemap.xml
+
+# Résumé structuré du site à destination des modèles de langage (llms.txt) :
+# https://tactic-master.vercel.app/llms.txt

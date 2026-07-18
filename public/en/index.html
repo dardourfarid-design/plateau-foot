@@ -50,7 +50,24 @@
       "numberOfPlayers": { "@type": "QuantitativeValue", "minValue": 1, "maxValue": 2 },
       "author": { "@type": "Organization", "name": "Tactic Master" },
       "publisher": { "@type": "Organization", "name": "Tactic Master" },
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "isAccessibleForFree": true,
+      "keywords": "football board game, free online football game, strategy game without luck, checkers alternative",
+      "about": "Tactical board game where you push a ball into the opponent's goal on a 7×9 board, with 6 pieces per side and no captures."
+    },
+    {
+      "@type": "HowTo",
+      "@id": "https://tactic-master.vercel.app/en/#rules",
+      "name": "How to play Tactic Master",
+      "description": "The full rules of Tactic Master: move a piece, push the ball, score in the opponent's goal.",
+      "inLanguage": "en",
+      "totalTime": "PT1M",
+      "step": [
+        { "@type": "HowToStep", "position": 1, "name": "Move a piece", "text": "On your turn, move a single piece one single square, in any direction. Each team has 6 pieces: 1 goalkeeper, 2 defenders and 3 forwards, on a board of 7 columns by 9 rows." },
+        { "@type": "HowToStep", "position": 2, "name": "Push the ball", "text": "A piece standing on a square adjacent to the ball can push it in a straight line. The ball slides until it meets the first obstacle: another piece or the edge of the pitch." },
+        { "@type": "HowToStep", "position": 3, "name": "Score a goal", "text": "Send the ball into the opponent's goal, that is the three central squares of their back line. The goalkeeper, who only moves sideways along the goal line, is the last line of defence." },
+        { "@type": "HowToStep", "position": 4, "name": "Defend by positioning", "text": "There are no captures: you never take an opposing piece. Defending means placing your pieces to cover neighbouring squares and cut the opponent's pushing lanes." }
+      ]
     },
     {
       "@type": "FAQPage",
@@ -75,6 +92,21 @@
           "@type": "Question",
           "name": "Can you install Tactic Master on mobile?",
           "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is a web app (PWA): open the site in your browser then choose “Add to Home Screen” on iOS or Android. Local modes even work offline." }
+        },
+        {
+          "@type": "Question",
+          "name": "How is it different from checkers?",
+          "acceptedAnswer": { "@type": "Answer", "text": "A turn is as simple as in checkers — one piece, one square — but you never capture an opposing piece. The goal is not to eliminate your opponent but to push the ball into their goal, and a goalkeeper restricted to sideways moves guards the goal line." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there any luck involved?",
+          "acceptedAnswer": { "@type": "Answer", "text": "None. There are no dice, no cards and no draws: like chess or checkers, both players see the whole board and the result depends only on positioning and anticipation." }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you need an account to play?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No, the game is playable without an account. An account is used for online multiplayer, the shop, managing your team and friends." }
         }
       ]
     }
@@ -120,6 +152,16 @@
   opponent's goal. No dice, no luck — like chess or checkers, everything comes
   down to positioning and anticipation. A match takes about five minutes.</p>
 
+  <!-- Fact sheet (GEO) : miroir EN de la <dl class="seo-facts"> de l'accueil. -->
+  <dl class="seo-facts">
+    <dt>Board</dt><dd>7 columns × 9 rows.</dd>
+    <dt>Pieces</dt><dd>6 per team: 1 goalkeeper, 2 defenders, 3 forwards.</dd>
+    <dt>Players</dt><dd>1 to 2 — solo vs the computer, two on one screen, or online.</dd>
+    <dt>Match length</dt><dd>about 5 minutes.</dd>
+    <dt>Luck</dt><dd>none: no dice, no cards, full information like chess.</dd>
+    <dt>Price</dt><dd>free, no installation; optional cosmetic shop.</dd>
+  </dl>
+
   <h3>The rules in short</h3>
   <ul>
     <li>A 7×9 board; 6 pieces per team (1 goalkeeper, 2 defenders, 3 forwards).</li>
@@ -151,6 +193,24 @@
     <summary>Can you install Tactic Master on mobile?</summary>
     <p>Yes. It is a web app (PWA): open the site in your browser then choose
     “Add to Home Screen” on iOS or Android. Local modes even work offline.</p>
+  </details>
+  <details>
+    <summary>How is it different from checkers?</summary>
+    <p>A turn is as simple as in checkers — one piece, one square — but you never
+    capture an opposing piece. The goal is not to eliminate your opponent but to
+    push the ball into their goal, and a goalkeeper restricted to sideways moves
+    guards the goal line.</p>
+  </details>
+  <details>
+    <summary>Is there any luck involved?</summary>
+    <p>None. There are no dice, no cards and no draws: like chess or checkers,
+    both players see the whole board and the result depends only on positioning
+    and anticipation.</p>
+  </details>
+  <details>
+    <summary>Do you need an account to play?</summary>
+    <p>No, the game is playable without an account. An account is used for online
+    multiplayer, the shop, managing your team and friends.</p>
   </details>
 </section>
 

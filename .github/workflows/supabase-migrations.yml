@@ -50,8 +50,11 @@ jobs:
       - name: Démarrer une base locale jetable
         run: supabase start -x studio,imgproxy,logflare,vector,edge-runtime
 
+      # Sans --debug : la CLI dumpe sinon tout le protocole PG, ce qui noie
+      # l'erreur utile sous des mégaoctets de trafic wire. En cas d'échec, le
+      # message SQL (fichier, instruction, SQLSTATE) est déjà explicite.
       - name: Rejouer toutes les migrations depuis 0001
-        run: supabase db reset --debug
+        run: supabase db reset
 
       - name: Arrêter la base locale
         if: always()

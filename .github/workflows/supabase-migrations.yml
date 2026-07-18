@@ -26,6 +26,15 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/config.toml'
+      # HOLD.txt déclenche aussi : libérer une migration retenue est
+      # précisément le moment où il faut appliquer. Sans ce chemin, la PR de
+      # libération ne lançait rien et les migrations restaient en attente
+      # jusqu'au prochain commit touchant supabase/migrations/ — un blocage
+      # silencieux, exactement ce que ce workflow existe pour supprimer.
+      - 'supabase/HOLD.txt'
+      # Le workflow lui-même : une correction de sa logique d'application doit
+      # pouvoir être éprouvée sans attendre une migration.
+      - '.github/workflows/supabase-migrations.yml'
 
 # Deux applications concurrentes sur la même base sont un moyen sûr de la
 # laisser dans un état incohérent : on sérialise.
@@ -107,6 +116,7 @@ jobs:
           fi
 
       - name: Lier le projet de production
+        id: lier
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -131,8 +141,13 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: supabase db push --linked
 
+      # Conditionné à la réussite du LIEN, pas à `always()`. Avec `always()`,
+      # un arrêt volontaire sur HOLD.txt faisait quand même tourner cette étape
+      # alors que le projet n'avait jamais été lié : elle échouait à son tour et
+      # le run affichait DEUX erreurs, donnant à un blocage délibéré l'allure
+      # d'une panne. Un garde-fou doit se lire comme un refus, pas comme un bug.
       - name: État final de la chaîne
-        if: always()
+        if: always() && steps.lier.outcome == 'success'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}

@@ -21,6 +21,7 @@ import { t } from './i18n.js';
 import { showToast, showAlert } from './dialogs.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { fetchMyPurchases } from '../services/supabaseClient.js';
+import { ensureThemeFonts } from './lazyFonts.js';
 
 // #228 — adversaire de la séance amicale, mémorisé d'une séance à l'autre.
 // 'cpu' = ordinateur (avec niveau), 'human' = 2 joueurs sur le même écran.
@@ -272,6 +273,10 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     };
     if (els.shootoutTitle) els.shootoutTitle.textContent = t(title);
     hideAllScreensForShootout();
+    // #309 — les polices des 4 thèmes de tirs au but ne sont plus dans le <head>
+    // de l'accueil : on les demande ici, à l'ouverture de l'écran qui les
+    // utilise. Idempotent, et volontairement AVANT applyPkTheme().
+    ensureThemeFonts();
     els.shootoutScreen.classList.remove('hidden');
     renderHouseAds(); // #231
     applyPkTheme(getStoredPkTheme());

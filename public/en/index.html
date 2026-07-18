@@ -118,7 +118,11 @@
 <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- #309 — identique au <head> français : 2 familles seulement. Les polices
+     d'habillage sont chargées à la demande par src/ui/lazyFonts.js. La graisse
+     400 de Barlow Condensed manquait ici, ce qui dégradait silencieusement
+     quelques libellés en anglais. -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <style>
 .en-landing{ max-width:720px; margin:0 auto; padding:48px 20px 0; text-align:center; }

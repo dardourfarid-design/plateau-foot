@@ -23,6 +23,7 @@ await import('./abTest.test.js');
 await import('./tutorial.test.js');
 await import('./ai-powers.test.js');
 await import('./matchSummary.test.js');
+await import('./shareResult.test.js');
 await import('./puzzles.test.js');
 await import('./houseAds.test.js');
 

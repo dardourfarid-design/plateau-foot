@@ -11,6 +11,7 @@ import { t } from './i18n.js';
 import { TEAMS } from '../engine/constants.js';
 import { resetBallAfterGoal } from '../engine/gameEngine.js';
 import { buildMatchSummary } from './matchSummary.js';
+import { shareResult } from './shareResult.js';
 import * as adService from '../services/ads/adService.js';
 import { recordMatchEnd } from '../services/ads/interstitialFrequency.js';
 import { recordGameResult } from '../services/progressService.js';
@@ -50,6 +51,30 @@ export function initOverlays({
 }) {
 
   function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  // Dernier bilan calculé, mémorisé pour le bouton de partage (#111) : le
+  // clic arrive après showEndOverlay(), et l'état de jeu peut déjà avoir été
+  // remplacé (remise en jeu, nouvelle partie).
+  let lastSummary = null;
+
+  // Partage du résultat (#111). Le libellé sert d'accusé de réception : sans
+  // retour visible, un repli presse-papiers passe pour un bouton mort.
+  async function handleShareResult() {
+    const btn = els.shareResultBtn;
+    if (!btn || !lastSummary) return;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    const outcome = await shareResult(lastSummary);
+    if (outcome === 'copied') btn.textContent = t('Lien copié !');
+    else if (outcome === 'failed') btn.textContent = t('Partage indisponible');
+    // 'shared' et 'cancelled' : la feuille de partage du système a déjà donné
+    // le retour visuel, on ne rajoute rien par-dessus.
+    if (outcome === 'copied' || outcome === 'failed') {
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2200);
+    } else {
+      btn.disabled = false;
+    }
+  }
 
   function showGoalOverlay(scoringTeam) {
     const gameState = getGameState();
@@ -97,9 +122,11 @@ export function initOverlays({
     // Carte-bilan de fin (#211) : buts + meilleure action (momentum) + pouvoirs.
     // Contre l'IA ou en ligne, du point de vue du JOUEUR (myTeam) ; en local
     // 2 joueurs (écran partagé), du point de vue du vainqueur.
+    const povTeam = (getGameMode() === 'local') ? winningTeam : myTeam;
+    const summary = buildMatchSummary(gameState, povTeam);
+    lastSummary = summary;
+
     if (els.endStatsRow) {
-      const povTeam = (getGameMode() === 'local') ? winningTeam : myTeam;
-      const summary = buildMatchSummary(gameState, povTeam);
       const stats = [
         `<div class="end-stat"><span class="end-stat-val">${summary.myGoals}</span><span class="end-stat-lbl">${t('Buts marqués')}</span></div>`,
         `<div class="end-stat"><span class="end-stat-val">${summary.oppGoals}</span><span class="end-stat-lbl">${t('Buts encaissés')}</span></div>`
@@ -188,6 +215,8 @@ export function initOverlays({
     els.setupScreen?.classList.remove('hidden');
     refreshHomeBanner();
   }
+
+  els.shareResultBtn?.addEventListener('click', handleShareResult);
 
   return { showGoalOverlay, hideGoalOverlayAndResume, showEndOverlay, backToSetup, goToLanding };
 }

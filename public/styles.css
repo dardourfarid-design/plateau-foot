@@ -2155,6 +2155,21 @@ body{
 }
 
 /* Stats de fin (colonne buts/victoire) */
+/* Bouton de partage du résultat (#111). Volontairement secondaire : il ne doit
+   pas concurrencer « Rejouer », qui reste l'action principale de fin de partie. */
+.share-result-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border-color: rgba(200,132,26,0.45);
+  color: var(--or);
+}
+.share-result-btn:hover:not(:disabled) {
+  border-color: var(--or);
+  background: rgba(200,132,26,0.1);
+}
+.share-result-btn:disabled { opacity:.75; cursor:default; }
+
 .end-stats-row {
   display:flex;
   gap:12px;

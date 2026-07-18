@@ -16,17 +16,15 @@
 # Format : une version par ligne (les lignes vides et les # sont ignorés).
 
 # ---------------------------------------------------------------------------
+# Aucune migration retenue actuellement.
+#
+# Historique :
+#
 # 0039 — revoke de update_game_session_state (anti-triche #260).
-#
-# Constaté le 2026-07-18 : `has_function_privilege` renvoie true pour anon ET
-# authenticated → la migration n'est PAS appliquée en prod.
-#
-# Son en-tête impose l'ordre : l'Edge Function push-game-state doit être
-# déployée ET constatée fonctionnelle AVANT. Le client ne se replie sur la RPC
-# historique que si la fonction est absente (onlineUI.js:190) — appliquer 0039
-# sans la fonction déployée révoque la RPC sous les pieds du client et casse
-# le multijoueur en ligne.
-#
-# Libérer cette ligne UNIQUEMENT après avoir joué une partie en ligne
-# fonctionnant via l'Edge Function.
-0039
+#   Retenue le 2026-07-18 : `has_function_privilege` renvoyait true pour anon
+#   ET authenticated → la migration n'était pas appliquée en prod, et son
+#   en-tête impose que l'Edge Function push-game-state soit déployée avant
+#   (le client ne se replie sur la RPC historique que si la fonction est
+#   absente, onlineUI.js:190).
+#   LIBÉRÉE le 2026-07-18, PR #294 : Edge Function déployée et partie en ligne
+#   constatée fonctionnelle. Le merge de cette PR est la trace du constat.

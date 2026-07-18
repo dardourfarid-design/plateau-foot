@@ -192,6 +192,7 @@
 <link rel="modulepreload" href="src/ui/mercatoUI.js">
 <link rel="modulepreload" href="src/ui/onlineUI.js">
 <link rel="modulepreload" href="src/ui/overlaysUI.js">
+<link rel="modulepreload" href="src/ui/shareResult.js">
 <link rel="modulepreload" href="src/ui/playerAvatar.js">
 <link rel="modulepreload" href="src/ui/playerIdentity.js">
 <link rel="modulepreload" href="src/ui/powersUI.js">
@@ -964,6 +965,14 @@
          le client. Épic pub, PR E (#30). -->
     <button class="btn primary hidden" id="watchRewardedBtn" style="margin-top:14px;">
       🎬 Regarder une pub → +10 pièces
+    </button>
+
+    <!-- Partage du résultat (#111). Toujours visible : c'est la seule boucle
+         d'acquisition automatique du jeu. Le libellé passe à un accusé de
+         réception ("Lien copié !") après un repli presse-papiers. -->
+    <button class="btn share-result-btn" id="shareResultBtn" style="margin-top:14px;">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M11 5.5a2 2 0 100-4 2 2 0 000 4zM5 10a2 2 0 100-4 2 2 0 000 4zM11 14.5a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" stroke-width="1.5"/><path d="M6.7 9l3.6 2M10.3 5L6.7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Partager le résultat
     </button>
 
     <div class="btn-row" style="justify-content:center; gap:10px; margin-top:18px;">

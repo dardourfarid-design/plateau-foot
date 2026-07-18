@@ -12,7 +12,14 @@ node_modules/
 *.log
 
 # Outillage local Claude Code (launch.json de preview, worktrees…)
-.claude/
+# NB : « .claude/* » et non « .claude/ » — Git ne descend pas dans un dossier
+# exclu, donc la ré-inclusion ci-dessous ne fonctionnerait pas avec la forme
+# répertoire.
+.claude/*
+# …sauf les définitions d'agents, qui sont du contenu de projet à partager :
+# les instructions qu'elles portent (règles à vérifier, interdits) ont autant
+# de valeur que la documentation.
+!.claude/agents/
 
 # Rapports de couverture (c8) — générés en CI
 /coverage/

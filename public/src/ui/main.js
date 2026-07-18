@@ -233,6 +233,7 @@ function cacheDomRefs() {
   els.endSub = document.getElementById('endSub');
   els.newGameBtn = document.getElementById('newGameBtn');
   els.watchRewardedBtn = document.getElementById('watchRewardedBtn');
+  els.shareResultBtn = document.getElementById('shareResultBtn');
   els.shopBtn = document.getElementById('shopBtn');
   els.purchaseToast = document.getElementById('purchaseToast');
   els.purchaseToastIcon = document.getElementById('purchaseToastIcon');

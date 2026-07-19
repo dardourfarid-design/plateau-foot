@@ -43,6 +43,35 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  # Ce qui part en production, c'est dist/ (minifié), pas public/. Sans ce job,
+  # une casse introduite par la minification passerait toute la CI au vert et
+  # n'apparaîtrait qu'en prod. Même suite E2E, servie depuis le build.
+  e2e-dist:
+    name: E2E sur le build de production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Installer les dépendances
+        run: npm install
+      - name: Construire dist/
+        run: npm run build
+      - name: Installer le navigateur Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Lancer les tests E2E contre dist/
+        env:
+          TM_E2E_DIR: dist
+        run: npx playwright test
+      - name: Publier le rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-dist
+          path: playwright-report/
+          retention-days: 7
+
   edge:
     name: Tests Edge Functions (Deno)
     runs-on: ubuntu-latest

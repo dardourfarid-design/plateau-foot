@@ -24,6 +24,10 @@
 // `body` est du HTML (h2/h3, p, ul, ol). Pas de <h1> : il est généré depuis
 // `title`, et il ne doit y en avoir qu'un par page.
 
+import {
+  STRATEGIES_POUR_GAGNER, BATTRE_IA_DIFFICILE, JOUER_A_DEUX, DAMES_ET_FOOTBALL
+} from './strategies.mjs';
+
 export const ARTICLES = [
   {
     slug: 'regles-du-jeu',
@@ -158,5 +162,37 @@ départagée à égalité, une séance de tirs au but tranche.</p>
 jamais toucher au ballon, la partie ne s'enlise pas. Au bout de huit tours sans la
 moindre passe, le ballon est automatiquement remis au centre.</p>
 `
+  },
+  {
+    slug: 'strategies-pour-gagner',
+    title: '5 stratégies pour gagner tes premières parties',
+    description:
+      'Cinq principes concrets pour arrêter de perdre à Tactic Master : dosage des passes, diagonales laissées ouvertes par la couverture, jeu par les ailes.',
+    date: '2026-07-17',
+    body: STRATEGIES_POUR_GAGNER
+  },
+  {
+    slug: 'battre-lia-difficile',
+    title: "Comment battre l'IA en difficulté maximale",
+    description:
+      "L'IA difficile de Tactic Master anticipe un tour à l'avance, mais son évaluation ignore sa propre défense. Voici comment exploiter ses angles morts.",
+    date: '2026-07-16',
+    body: BATTRE_IA_DIFFICILE
+  },
+  {
+    slug: 'jouer-a-deux',
+    title: 'Jouer à deux, sur un écran ou en ligne',
+    description:
+      'Les deux façons de jouer à deux à Tactic Master : face à face sur le même appareil, ou à distance en partageant un code de partie entre joueurs.',
+    date: '2026-07-15',
+    body: JOUER_A_DEUX
+  },
+  {
+    slug: 'dames-et-football',
+    title: "Dames et football : d'où vient Tactic Master",
+    description:
+      "Pourquoi un jeu de foot sans hasard, sans dé et sans capture : les partis pris de conception de Tactic Master, et ce qu'ils changent au jeu.",
+    date: '2026-07-14',
+    body: DAMES_ET_FOOTBALL
   }
 ];

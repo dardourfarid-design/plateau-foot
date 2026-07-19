@@ -175,7 +175,11 @@ async function updateSitemap() {
   const block = `${MARK_START}\n${entries}\n${MARK_END}`;
 
   if (xml.includes(MARK_START)) {
-    xml = xml.replace(new RegExp(`${MARK_START}[\\s\\S]*?${MARK_END}`), block);
+    // Les marqueurs contiennent des parenthèses et des points : sans échappement,
+    // ils sont lus comme des groupes de capture et le remplacement échoue en
+    // silence — le sitemap gardait alors ses anciennes entrées.
+    const rx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    xml = xml.replace(new RegExp(`${rx(MARK_START)}[\\s\\S]*?${rx(MARK_END)}`), block);
   } else {
     xml = xml.replace('</urlset>', `${block}\n</urlset>`);
   }

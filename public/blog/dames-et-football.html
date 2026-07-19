@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- FICHIER GÉNÉRÉ par tools/build-blog.mjs — ne pas éditer à la main.
+     Le contenu se modifie dans content/blog/articles.mjs. -->
+<title>Dames et football : d'où vient Tactic Master — Tactic Master</title>
+<meta name="description" content="Pourquoi un jeu de foot sans hasard, sans dé et sans capture : les partis pris de conception de Tactic Master, et ce qu'ils changent au jeu.">
+<link rel="canonical" href="https://tactic-master.vercel.app/blog/dames-et-football">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Tactic Master">
+<meta property="og:title" content="Dames et football : d'où vient Tactic Master — Tactic Master">
+<meta property="og:description" content="Pourquoi un jeu de foot sans hasard, sans dé et sans capture : les partis pris de conception de Tactic Master, et ce qu'ils changent au jeu.">
+<meta property="og:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<meta property="og:url" content="https://tactic-master.vercel.app/blog/dames-et-football">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dames et football : d'où vient Tactic Master — Tactic Master">
+<meta name="twitter:description" content="Pourquoi un jeu de foot sans hasard, sans dé et sans capture : les partis pris de conception de Tactic Master, et ce qu'ils changent au jeu.">
+<meta name="twitter:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/blog/blog.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Dames et football : d'où vient Tactic Master","description":"Pourquoi un jeu de foot sans hasard, sans dé et sans capture : les partis pris de conception de Tactic Master, et ce qu'ils changent au jeu.","datePublished":"2026-07-14","dateModified":"2026-07-14","image":"https://tactic-master.vercel.app/og-image.jpg","author":{"@type":"Organization","name":"Tactic Master"},"publisher":{"@type":"Organization","name":"Tactic Master"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://tactic-master.vercel.app/blog/dames-et-football"}}</script>
+</head>
+<body>
+<header class="blog-top">
+  <a class="blog-home" href="/">← Tactic Master</a>
+</header>
+<main class="blog-article">
+  <p class="blog-date"><time datetime="2026-07-14">14 juillet 2026</time></p>
+  <h1>Dames et football : d'où vient Tactic Master</h1>
+<p>Tactic Master a l'apparence d'un jeu de football et la mécanique d'un jeu
+abstrait. Ce n'est pas un accident de conception : c'est le point de départ. Voici
+ce que ce choix implique, et ce qu'il coûte.</p>
+
+<h2>Le football sans le hasard</h2>
+
+<p>La plupart des jeux de société inspirés du football cherchent à simuler
+l'incertitude du sport réel : un dé pour un tir, une carte pour un tacle, une
+statistique pour un joueur. L'idée se défend — le football réel est incertain.</p>
+
+<p>Tactic Master prend le parti inverse. <strong>Aucun dé, aucune carte, aucun
+tirage.</strong> Deux joueurs qui jouent les mêmes coups obtiennent exactement le
+même résultat. Si tu perds, ce n'est jamais parce que le jeu en a décidé ainsi.</p>
+
+<p>C'est un déplacement du plaisir : on ne joue pas pour voir ce qui va se passer,
+on joue pour comprendre ce qui est déjà en train de se passer. Le même plaisir
+qu'aux dames ou aux échecs, avec le vocabulaire du football.</p>
+
+<h2>Pourquoi les dames plutôt que les échecs</h2>
+
+<p>Aux échecs, chaque pièce a ses propres règles de déplacement. Il faut les
+apprendre avant de pouvoir jouer, ce qui est une barrière réelle.</p>
+
+<p>Aux dames, tous les pions sont identiques et se déplacent pareil. La règle tient
+en une phrase, et la profondeur vient entièrement de la <em>position</em>, pas de
+la mémorisation.</p>
+
+<p>C'est ce modèle qui a été retenu. Tous les pions de champ sont interchangeables
+et se déplacent d'une case dans n'importe quelle direction. Un joueur peut
+commencer une partie trente secondes après avoir découvert le jeu.</p>
+
+<h2>Le renoncement principal : pas de capture</h2>
+
+<p>C'est la décision la plus lourde de conséquences, et celle qui surprend le plus.
+Aux dames, l'objectif est de prendre les pièces adverses. Ici, <strong>on ne prend
+jamais rien</strong> : aucun pion ne quitte jamais le terrain.</p>
+
+<p>Cela pose un problème évident. Si les pions ne peuvent pas être éliminés et si
+seuls les buts comptent, à quoi servent les pions adverses ? Sans réponse à cette
+question, le jeu se réduirait à une course au ballon, et la défense n'existerait
+pas.</p>
+
+<p>La réponse est double :</p>
+
+<ul>
+  <li>Un pion <strong>bloque physiquement</strong> les trajectoires : le ballon
+      s'arrête au premier pion rencontré, quel que soit son camp.</li>
+  <li>Un pion de champ <strong>couvre les quatre cases orthogonalement
+      adjacentes</strong> : une passe adverse ne peut ni s'y arrêter, ni les
+      traverser.</li>
+</ul>
+
+<p>Autrement dit, on ne détruit pas l'adversaire : on lui prend de l'espace. Défendre
+consiste à réduire le nombre de trajectoires disponibles, jusqu'à ce qu'il n'en
+reste plus aucune vers la cage.</p>
+
+<h2>Pourquoi la couverture est orthogonale et pas diagonale</h2>
+
+<p>Ce détail décide de la respirabilité du jeu tout entier.</p>
+
+<p>Si un pion couvrait aussi ses diagonales, il contrôlerait huit cases au lieu de
+quatre. Sur un plateau de sept cases de large, six pions par camp suffiraient à
+saturer l'espace, et plus aucune passe longue ne passerait. Le jeu se figerait.</p>
+
+<p>En limitant la couverture aux quatre directions droites, <strong>les diagonales
+restent ouvertes</strong>. Elles deviennent l'espace d'expression tactique : les
+lignes que la défense ne peut pas fermer par simple présence, et où se jouent la
+plupart des actions décisives.</p>
+
+<h2>Le ballon dont on choisit la course</h2>
+
+<p>Dernier parti pris, moins visible mais essentiel : quand tu pousses le ballon,
+tu choisis où il s'arrête sur la trajectoire. Il aurait été plus simple de le
+faire filer jusqu'au premier obstacle.</p>
+
+<p>Ce choix crée toute la tension du jeu. Envoyer le ballon loin, c'est progresser
+mais l'abandonner ; le garder court, c'est le contrôler sans avancer. Chaque passe
+est un arbitrage entre le terrain gagné et le contrôle conservé. C'est de là que
+vient la sensation de football, bien plus que du vocabulaire.</p>
+
+<h2>Ce que le jeu n'essaie pas d'être</h2>
+
+<p>Il n'y a ni hors-jeu, ni fautes, ni cartons, ni fatigue, ni météo. Ajouter ces
+éléments rendrait le jeu plus ressemblant et beaucoup moins jouable.</p>
+
+<p>Le pari est que la sensation de football ne vient pas de l'exhaustivité de la
+simulation, mais d'une poignée de gestes justes : ouvrir un angle, tenir une ligne,
+doser une passe. Le reste est du décor — assumé comme tel.</p>
+
+<h2>Le problème que pose un jeu sans hasard</h2>
+
+<p>Retirer le hasard a un coût rarement mentionné : <strong>le meilleur joueur gagne
+toujours</strong>. Aux dames comme aux échecs, un débutant face à un joueur
+expérimenté ne gagne jamais par accident. Il n'y a pas de mauvais dé pour égaliser
+les chances.</p>
+
+<p>C'est pour ça que le jeu propose trois paliers de règles plutôt qu'un seul.
+Le palier Découverte désactive la couverture défensive : les passes traversent
+tout, et l'on apprend le déplacement et le dosage sans se faire punir par une règle
+qu'on n'a pas encore comprise. Le palier Classique la réactive. Le palier Expert
+ajoute les centres depuis l'aile et le point de penalty.</p>
+
+<p>La progression ne passe donc pas par la puissance des pièces, mais par la
+quantité de règles en jeu. Un joueur ne devient pas plus fort parce qu'il a
+débloqué quelque chose : il devient plus fort parce qu'il voit plus de choses sur
+le plateau.</p>
+
+<h2>Cinq minutes, et pourquoi c'est un choix</h2>
+
+<p>Une partie dure environ cinq minutes. Ce n'est pas une limite technique, c'est un
+paramètre : le nombre de buts à atteindre se règle avant de jouer.</p>
+
+<p>Le format court change la nature des erreurs. Sur une partie d'une heure, une
+faute se rattrape. Sur cinq minutes, une passe mal dosée coûte souvent la
+rencontre — et c'est précisément ce qui pousse à rejouer immédiatement plutôt qu'à
+refermer l'onglet. La revanche est à portée de clic, ce qu'un jeu de plateau
+physique ne peut pas offrir.</p>
+
+<h2>Ce qui reste ouvert</h2>
+
+<p>Le jeu n'est pas figé. La règle de couverture, les centres et le point de penalty
+sont arrivés après coup, en réponse à un défaut constaté : sans eux, les parties se
+résumaient à une course au ballon, et la position ne comptait pas assez.</p>
+
+<p>C'est le propre d'un jeu abstrait : chaque règle ajoutée doit gagner sa place en
+supprimant un problème réel, pas en ajoutant du contenu. Une règle qui rendrait le
+jeu plus riche mais moins lisible ne vaudrait pas la peine.</p>
+
+<aside class="blog-cta">
+  <p>Tactic Master est gratuit et se joue directement dans le navigateur, sans
+     installation ni compte.</p>
+  <a class="btn primary" href="/?utm_source=blog">Jouer une partie</a>
+</aside>
+</main>
+<footer class="blog-foot">
+  <a href="/blog">Tous les articles</a> &nbsp;·&nbsp;
+  <a href="/terms">Conditions</a> &nbsp;·&nbsp;
+  <a href="/privacy">Confidentialité</a>
+  <p>© 2026 Tactic Master</p>
+</footer>
+</body>
+</html>

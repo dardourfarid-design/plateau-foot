@@ -23,3 +23,6 @@ node_modules/
 
 # Rapports de couverture (c8) — générés en CI
 /coverage/
+
+# Sortie du build de production (tools/build.mjs) — jamais commitée
+/dist/

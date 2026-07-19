@@ -66,7 +66,12 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
   ],
   webServer: {
-    command: 'node tools/static-server.mjs public 8080',
+    // TM_E2E_DIR=dist rejoue toute la suite contre la sortie MINIFIÉE, celle
+    // qui part réellement en production. Sans ce commutateur, les E2E ne
+    // testeraient que les sources : une casse introduite par la minification
+    // n'apparaîtrait qu'en prod. Voir tools/build.mjs et le job « E2E sur le
+    // build de production » de ci.yml.
+    command: `node tools/static-server.mjs ${process.env.TM_E2E_DIR || 'public'} 8080`,
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000

@@ -67,6 +67,14 @@ import {
   sendFriendRequest, respondFriendRequest, cancelFriendRequest, fetchMyFriendships,
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
 } from '../services/mercatoService.js';
+import { initRouter } from './router.js';
+
+// #310 — routeur par hash. Déclaré ici et démarré en fin d'initialisation :
+// c'est lui qui rend le bouton Retour du navigateur utilisable.
+let router = null;
+
+/** Écrit la route courante sans rien afficher (l'UI a déjà changé d'écran). */
+function markRoute(screen) { router?.go(screen); }
 
 const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
 const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
@@ -500,6 +508,7 @@ function startGame(goalsToWin) {
   els.setupScreen.classList.add('hidden');
   els.configScreen.classList.add('hidden');
   els.gameScreen.classList.remove('hidden');
+  markRoute('partie');
   buildBoardGrid(els.boardGrid, handleCellClick);
   loadMyLineupForGame().then(render); // rendu initial sans lineup, puis re-rendu dès qu'elle arrive
   render();
@@ -1068,6 +1077,7 @@ function wireSetupScreen() {
   els.goToSetupBtn.addEventListener('click', () => {
     els.setupScreen.classList.add('hidden');
     els.configScreen.classList.remove('hidden');
+    markRoute('jouer');
   });
 
   // #210 — Puzzle du jour, démarrage direct depuis l'accueil.
@@ -1076,6 +1086,7 @@ function wireSetupScreen() {
   els.configBackBtn.addEventListener('click', () => {
     els.configScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');
+    markRoute('accueil');
   });
 
   // Restaure les derniers réglages et les reflète dans l'écran de config.
@@ -1443,6 +1454,48 @@ function init() {
   // doit la masquer (sinon elle "resterait" affichee par-dessous).
   document.getElementById('shopBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
   document.getElementById('profileBtn')?.addEventListener('click', () => els.shootoutScreen?.classList.add('hidden'));
+
+  // ---------- #310 : routeur par hash ----------
+  // Les écrans restent affichés par les modules existants ; le routeur ne fait
+  // qu'écrire l'URL (markRoute) et rejouer la navigation au Retour du
+  // navigateur. Aucune décision d'affichage ne lui appartient.
+  els.shopBtn?.addEventListener('click', () => markRoute('boutique'));
+  els.profileBtn?.addEventListener('click', () => markRoute('profil'));
+  // Ce bouton n'est pas dans `els` : shootoutUI le câble par getElementById.
+  document.getElementById('homeShootoutBtn')?.addEventListener('click', () => markRoute('tirs-au-but'));
+  homeLogo?.addEventListener('click', () => markRoute('accueil'));
+
+  router = initRouter({
+    confirmLeaveGame: () => new Promise(resolve => {
+      // confirmAbandonThen n'appelle son callback que si l'on confirme ; on
+      // résout donc à false après coup si rien ne s'est passé.
+      let confirmed = false;
+      confirmAbandonThen(() => { confirmed = true; resolve(true); })
+        .then(() => { if (!confirmed) resolve(false); });
+    }),
+    onNavigate: screen => {
+      switch (screen) {
+        case 'jouer':
+          overlaysModule?.goToLanding();
+          els.setupScreen?.classList.add('hidden');
+          els.configScreen?.classList.remove('hidden');
+          break;
+        case 'boutique': els.shopBtn?.click(); break;
+        case 'profil': els.profileBtn?.click(); break;
+        case 'tirs-au-but': shootoutModule?.openShootout(); break;
+        // Une partie ne se restaure pas depuis une URL : son état n'est nulle
+        // part dans le lien. On retombe sur l'accueil plutôt que d'afficher un
+        // plateau vide, et on corrige l'URL pour qu'elle dise la vérité.
+        case 'partie':
+        case 'accueil':
+        default:
+          overlaysModule?.goToLanding();
+          if (screen === 'partie') router?.go('accueil', { replace: true });
+          break;
+      }
+    }
+  });
+  router.start();
   registerServiceWorker();
   handlePaymentReturn();
   installE2ETestSeam();

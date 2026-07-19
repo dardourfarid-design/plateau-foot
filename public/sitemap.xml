@@ -26,4 +26,18 @@
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
+  <!-- blog:début (généré par tools/build-blog.mjs) -->
+  <url>
+    <loc>https://tactic-master.vercel.app/blog</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://tactic-master.vercel.app/blog/regles-du-jeu</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <!-- blog:fin -->
 </urlset>

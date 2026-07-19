@@ -25,6 +25,7 @@ await import('./ai-powers.test.js');
 await import('./matchSummary.test.js');
 await import('./shareResult.test.js');
 await import('./lazyFonts.test.js');
+await import('./blog.test.js');
 await import('./puzzles.test.js');
 await import('./houseAds.test.js');
 

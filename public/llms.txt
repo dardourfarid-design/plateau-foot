@@ -5,7 +5,7 @@
 > pousse un ballon jusqu'à la cage adverse. Aucun dé, aucun hasard : une partie
 > dure environ cinq minutes.
 
-Site : https://tactic-master.vercel.app/ (français) — https://tactic-master.vercel.app/en/ (anglais)
+Site : https://tactic-master.vercel.app/ (français) — https://tactic-master.vercel.app/en (anglais)
 Éditeur : Tactic Master. Prix : gratuit, avec une boutique cosmétique optionnelle.
 Plateformes : navigateur web, installable en PWA sur iOS et Android.
 
@@ -59,7 +59,7 @@ Plateformes : navigateur web, installable en PWA sur iOS et Android.
 ## Pages
 
 - [Accueil (français)](https://tactic-master.vercel.app/) : présentation, règles, FAQ et accès au jeu.
-- [Home (English)](https://tactic-master.vercel.app/en/) : English landing page with the rules and FAQ.
+- [Home (English)](https://tactic-master.vercel.app/en) : English landing page with the rules and FAQ.
 - [Conditions d'utilisation et de vente](https://tactic-master.vercel.app/terms)
 - [Politique de confidentialité](https://tactic-master.vercel.app/privacy)
 

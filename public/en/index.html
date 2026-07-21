@@ -10,9 +10,9 @@
      L'app elle-même reste servie sur / — le CTA renvoie vers /?lang=en, qui
      démarre l'interface en anglais (src/ui/i18n.js). Le contenu éditorial
      ci-dessous est le miroir EN de la section .seo-about de l'accueil. -->
-<link rel="canonical" href="https://tactic-master.vercel.app/en/">
+<link rel="canonical" href="https://tactic-master.vercel.app/en">
 <link rel="alternate" hreflang="fr" href="https://tactic-master.vercel.app/">
-<link rel="alternate" hreflang="en" href="https://tactic-master.vercel.app/en/">
+<link rel="alternate" hreflang="en" href="https://tactic-master.vercel.app/en">
 <link rel="alternate" hreflang="x-default" href="https://tactic-master.vercel.app/">
 
 <meta property="og:type" content="website">
@@ -21,7 +21,7 @@
 <meta property="og:locale:alternate" content="fr_FR">
 <meta property="og:title" content="Tactic Master — Football board game online">
 <meta property="og:description" content="A board as simple as checkers, a ball that moves like in football. 5-minute matches, free in your browser.">
-<meta property="og:url" content="https://tactic-master.vercel.app/en/">
+<meta property="og:url" content="https://tactic-master.vercel.app/en">
 <meta property="og:image" content="https://tactic-master.vercel.app/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -36,9 +36,9 @@
   "@graph": [
     {
       "@type": "VideoGame",
-      "@id": "https://tactic-master.vercel.app/en/#game",
+      "@id": "https://tactic-master.vercel.app/en#game",
       "name": "Tactic Master",
-      "url": "https://tactic-master.vercel.app/en/",
+      "url": "https://tactic-master.vercel.app/en",
       "image": "https://tactic-master.vercel.app/og-image.jpg",
       "description": "Tactical board game blending checkers and football: push the ball into the opponent's goal. Solo, vs AI or online. 5-minute matches.",
       "inLanguage": "en",
@@ -57,7 +57,7 @@
     },
     {
       "@type": "HowTo",
-      "@id": "https://tactic-master.vercel.app/en/#rules",
+      "@id": "https://tactic-master.vercel.app/en#rules",
       "name": "How to play Tactic Master",
       "description": "The full rules of Tactic Master: move a piece, push the ball, score in the opponent's goal.",
       "inLanguage": "en",
@@ -71,7 +71,7 @@
     },
     {
       "@type": "FAQPage",
-      "@id": "https://tactic-master.vercel.app/en/#faq",
+      "@id": "https://tactic-master.vercel.app/en#faq",
       "mainEntity": [
         {
           "@type": "Question",
@@ -132,6 +132,15 @@
 /* La section éditoriale réutilise .seo-about (styles.css) mais alignée à gauche. */
 .en-landing + .seo-about{ text-align:left; }
 </style>
+
+<!-- Analytics (Plausible) : MÊME bloc que l'accueil FR, et c'est le but.
+     Sans ce tag, cette page ne remontait AUCUNE visite : tout le trafic
+     anglophone (le marché que vise le jalon Acquisition) était invisible
+     dans Plausible, y compris les visiteurs venus de Reddit ou Product Hunt.
+     data-domain est celui du site, pas celui de la page : /en et / partagent
+     la même propriété Plausible et se distinguent par leur chemin. -->
+<script src="/plausible-init.js"></script>
+<script defer data-domain="tactic-master.vercel.app" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
 

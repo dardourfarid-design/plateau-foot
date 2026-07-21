@@ -72,17 +72,26 @@ if (locs.length === 0) ko('sitemap.xml : aucune <loc> trouvée');
 for (const loc of locs) {
   if (!loc.startsWith(DOMAIN)) ko(`sitemap : ${loc} n'est pas sur le domaine canonique`);
   if (loc.endsWith('.html')) ko(`sitemap : ${loc} — URLs .html interdites (cleanUrls les redirige en 308)`);
+  // Symétrique de la règle .html ci-dessus, et tout aussi contraignante :
+  // vercel.json a trailingSlash:false, donc /en/ répond 308 alors que /en
+  // répond 200. Cette règle manquait — c'est par elle que /en/ avait pu
+  // entrer dans le sitemap ET dans les canonical/hreflang des deux landings.
+  if (loc !== `${DOMAIN}/` && loc.endsWith('/')) {
+    ko(`sitemap : ${loc} — barre finale interdite (trailingSlash:false la redirige en 308)`);
+  }
 }
 if (!/<lastmod>/.test(sitemap)) ko('sitemap : aucune balise <lastmod>');
 
 // Chaque URL du sitemap doit correspondre à un fichier réel, indexable,
 // avec title + meta description + canonical strictement égal à la <loc>.
 for (const loc of locs) {
-  let path = loc.slice(DOMAIN.length).replace(/^\//, '');
-  if (path === '' ) path = 'index.html';
-  else if (path.endsWith('/')) path += 'index.html';
-  else path += '.html';
-  if (!existsSync(join(PUBLIC, path))) { ko(`sitemap : ${loc} → public/${path} introuvable`); continue; }
+  const rel = loc.slice(DOMAIN.length).replace(/^\//, '').replace(/\/$/, '');
+  // cleanUrls résout une URL propre de DEUX façons : /en peut être servi par
+  // public/en.html OU par public/en/index.html. Ne tester que la première
+  // rejetait /en alors que la page existe bien — il faut essayer les deux.
+  const candidates = rel === '' ? ['index.html'] : [`${rel}.html`, `${rel}/index.html`];
+  const path = candidates.find(c => existsSync(join(PUBLIC, c)));
+  if (!path) { ko(`sitemap : ${loc} → aucun de public/${candidates.join(' ni public/')} n'existe`); continue; }
   const html = read(path);
   if (/<meta[^>]+name="robots"[^>]+noindex/i.test(html)) ko(`${path} est noindex mais listé dans le sitemap`);
   if (!/<title>[^<]+<\/title>/.test(html)) ko(`${path} : <title> manquant`);

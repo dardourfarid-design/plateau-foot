@@ -162,13 +162,19 @@
      balises, le navigateur découvre les imports en cascade (main.js doit
      être téléchargé et parsé avant de voir gameEngine.js, etc.). La liste
      couvre tous les imports statiques de src/ui/main.js — à maintenir si
-     un nouveau module est ajouté au graphe de boot. i18n-en.js est exclu
-     volontairement (chargé à la demande, issue #158). -->
+     un nouveau module est ajouté au graphe de boot.
+
+     EXCLUS VOLONTAIREMENT parce que chargés à la demande : i18n-en.js
+     (#158) et les écrans boutique / profil / mercato / avatars / tirs au
+     but (#324). Précharger un module qu'on vient de rendre dynamique
+     annulerait exactement le gain recherché : la liste ci-dessous doit
+     rester le miroir du graphe d'imports STATIQUES de main.js.
+     Contrôle : node tools/check-modulepreload.mjs -->
 <link rel="modulepreload" href="src/engine/ai.js">
 <link rel="modulepreload" href="src/engine/constants.js">
 <link rel="modulepreload" href="src/engine/gameEngine.js">
-<link rel="modulepreload" href="src/engine/penaltyShootoutV2.js">
 <link rel="modulepreload" href="src/engine/powers.js">
+<link rel="modulepreload" href="src/engine/puzzles.js">
 <link rel="modulepreload" href="src/services/ads/abTest.js">
 <link rel="modulepreload" href="src/services/ads/adAnalytics.js">
 <link rel="modulepreload" href="src/services/ads/adProvider.js">
@@ -189,13 +195,15 @@
 <link rel="modulepreload" href="src/services/payment/stripePaymentProvider.js">
 <link rel="modulepreload" href="src/services/playerCollectionService.js">
 <link rel="modulepreload" href="src/services/progressService.js">
+<link rel="modulepreload" href="src/services/soundService.js">
 <link rel="modulepreload" href="src/services/supabaseClient.js">
 <link rel="modulepreload" href="src/ui/accountUI.js">
 <link rel="modulepreload" href="src/ui/boardRenderer.js">
 <link rel="modulepreload" href="src/ui/dialogs.js">
 <link rel="modulepreload" href="src/ui/faqUI.js">
 <link rel="modulepreload" href="src/ui/i18n.js">
-<link rel="modulepreload" href="src/ui/mercatoUI.js">
+<link rel="modulepreload" href="src/ui/lazyScreen.js">
+<link rel="modulepreload" href="src/ui/matchSummary.js">
 <link rel="modulepreload" href="src/ui/onlineUI.js">
 <link rel="modulepreload" href="src/ui/overlaysUI.js">
 <link rel="modulepreload" href="src/ui/router.js">
@@ -203,13 +211,9 @@
 <link rel="modulepreload" href="src/ui/domRefs.js">
 <link rel="modulepreload" href="src/ui/settingsUI.js">
 <link rel="modulepreload" href="src/ui/shareResult.js">
-<link rel="modulepreload" href="src/ui/playerAvatar.js">
 <link rel="modulepreload" href="src/ui/playerIdentity.js">
 <link rel="modulepreload" href="src/ui/powersUI.js">
-<link rel="modulepreload" href="src/ui/profileUI.js">
-<link rel="modulepreload" href="src/ui/shootoutUI.js">
 <link rel="modulepreload" href="src/ui/lazyFonts.js">
-<link rel="modulepreload" href="src/ui/shopUI.js">
 <link rel="modulepreload" href="src/ui/themeManager.js">
 <link rel="modulepreload" href="src/ui/tutorial.js">
 <link rel="modulepreload" href="src/ui/tutorialUI.js">

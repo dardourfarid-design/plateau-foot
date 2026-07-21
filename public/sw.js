@@ -21,7 +21,7 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v28'; // v28 : découpage de main.js (#311) — dailyPuzzleUI, domRefs, settingsUI
+const CACHE_NAME = 'tactic-master-v29'; // v29 : écrans à la demande (#324) — + lazyScreen.js
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -75,6 +75,7 @@ const STATIC_ASSETS = [
   './src/ui/faqUI.js',
   './src/ui/i18n.js',
   './src/ui/lazyFonts.js',
+  './src/ui/lazyScreen.js',
   './src/ui/i18n-en.js',
   './src/ui/main.js',
   './src/ui/mercatoUI.js',

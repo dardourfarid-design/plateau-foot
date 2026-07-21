@@ -12,16 +12,12 @@ import {
 import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
 import { setSoundEnabled, playSound, vibrate } from '../services/soundService.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
-import { initShootout } from './shootoutUI.js';
 import {
   POWER_LABELS, canActivatePower, confirmRelaisAfterPass, expireWallIfNeeded
 } from '../engine/powers.js';
 import { initPowers } from './powersUI.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
-import { initShop } from './shopUI.js';
-import { initProfile, toOwnedShape } from './profileUI.js';
-import { initMercato } from './mercatoUI.js';
 import { initAccount } from './accountUI.js';
 import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { initOnline } from './onlineUI.js';
@@ -49,6 +45,40 @@ function ensureEnglishDict() {
   }
   return _enDictPromise;
 }
+
+// Écrans chargés à la demande (#324) : le mécanisme et son pourquoi sont dans
+// lazyScreen.js. Ici on ne fait que déclarer QUELS écrans sont différés.
+function lazy(btn, load) {
+  return lazyScreen(btn, load, err => {
+    console.error('Écran non chargé :', err);
+    showToast(t('Chargement impossible. Vérifie ta connexion et réessaie.'));
+  });
+}
+
+// Séance de tirs au but. Contrairement à la boutique et au profil, elle a deux
+// points d'entrée qui ne sont PAS un clic : la fin d'un match nul (départage)
+// et la route #tirs-au-but. D'où un ensure() explicite, réutilisable.
+let _shootoutPromise = null;
+function ensureShootout() {
+  if (!_shootoutPromise) {
+    _shootoutPromise = import('./shootoutUI.js')
+      .then(m => {
+        shootoutModule = m.initShootout({
+          els,
+          getCurrentUser: () => currentUser,
+          promptSignIn: () => accountModule?.openAccountOverlay('signin')
+        });
+        return shootoutModule;
+      })
+      .catch(err => {
+        _shootoutPromise = null; // permet de retenter
+        console.error('Séance de tirs au but non chargée :', err);
+        return null;
+      });
+  }
+  return _shootoutPromise;
+}
+
 import { showToast, showAlert, showConfirm } from './dialogs.js';
 import { getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
@@ -59,7 +89,6 @@ import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog
 import { fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { getMyFounderStatus } from '../services/passService.js';
 import { resolveLineup } from './playerIdentity.js';
-import { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } from './playerAvatar.js';
 import { fetchMyCustomPlayers, createCustomPlayer, CUSTOM_PLAYER_SLOT_THEME_ID, claimLevelRewards, purchasePlayer } from '../services/customPlayerService.js';
 import { getCurrencyBalance } from '../services/currencyService.js';
 import {
@@ -67,6 +96,7 @@ import {
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
 } from '../services/mercatoService.js';
 import { initRouter } from './router.js';
+import { lazyScreen } from './lazyScreen.js';
 import { initDailyPuzzle } from './dailyPuzzleUI.js';
 import { cacheDomRefs } from './domRefs.js';
 import { initSettings } from './settingsUI.js';
@@ -577,7 +607,10 @@ function handlePostActionEffects(previousState) {
     if (gameState.isDraw) {
       // #221 : on ANNONCE le departage, sinon la seance surgit sans explication.
       showToast(t('Égalité — départage aux tirs au but'));
-      setTimeout(() => shootoutModule?.startShootoutDepartage(), 450);
+      // Départage : second point d'entrée de la séance, sans clic — d'où le
+      // ensureShootout() explicite (#324). Le chargement démarre tout de suite,
+      // la temporisation de 450 ms le couvre presque toujours.
+      setTimeout(() => { ensureShootout().then(m => m?.startShootoutDepartage()); }, 450);
     } else {
       setTimeout(() => overlaysModule.showEndOverlay(gameState.winner), 350);
     }
@@ -965,7 +998,7 @@ function handleEndTurnClick() {
 // quelques éléments transverses dont il a besoin (compte, navigation
 // d'écran), sans dupliquer aucun état.
 function wireShop() {
-  initShop({
+  lazy(els.shopBtn, () => import('./shopUI.js').then(m => m.initShop({
     els,
     getCurrentUser: () => currentUser,
     updateCoinDisplay: balance => accountModule?.updateCoinDisplay(balance),
@@ -990,7 +1023,7 @@ function wireShop() {
         els.setupScreen.classList.remove('hidden');
       }
     }
-  });
+  })));
 }
 
 
@@ -1101,9 +1134,18 @@ function init() {
   });
   wireGameControls();
   wireShop();
-  // Initialisation des modules profil et mercato — même pattern que initShop() :
-  // chaque module reçoit ses dépendances explicitement et retourne les
-  // fonctions que main.js doit orchestrer (notamment les loaders d'onglets).
+  // Profil + mercato + avatars : chargés au premier clic sur « Mon profil »
+  // (#324). Les trois partent ensemble parce qu'ils ne servent qu'à cet écran
+  // et sont interdépendants — le mercato est un onglet du profil et reçoit
+  // profileModule.loadTeamPanel, profileUI dessine les avatars.
+  lazy(els.profileBtn, async () => {
+  const [profileMod, mercatoMod, avatarMod] = await Promise.all([
+    import('./profileUI.js'), import('./mercatoUI.js'), import('./playerAvatar.js')
+  ]);
+  const { initProfile, toOwnedShape } = profileMod;
+  const { initMercato } = mercatoMod;
+  const { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } = avatarMod;
+
   const profileModule = initProfile({
     els,
     getCurrentUser: () => currentUser,
@@ -1151,9 +1193,12 @@ function init() {
 
   // switchProfileTab reste dans main.js : c'est de l'orchestration pure
   // entre deux modules (profileUI et mercatoUI), pas de la logique d'un
-  // domaine en particulier.
+  // domaine en particulier. Le câblage des onglets se fait ici, donc APRÈS le
+  // chargement — les onglets ne sont de toute façon atteignables qu'une fois
+  // l'écran profil ouvert, ce qui suppose les deux modules chargés.
   els.profileTabs?.querySelectorAll('.profile-tab').forEach(tab => {
     tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab, profileModule, mercatoModule));
+  });
   });
   // Pouvoirs de pion : module extrait (#21, lot 6). Le mode ciblage lui
   // appartient ; l'état de partie reste dans main.js (get/set injectés).
@@ -1197,12 +1242,9 @@ function init() {
     },
     refreshFounderBadge: () => profileModuleRef?.refreshFounderBadge()
   });
-  // Tirs au but : module extrait (#21), même pattern d'injection que initShop().
-  shootoutModule = initShootout({
-    els,
-    getCurrentUser: () => currentUser,
-    promptSignIn: () => accountModule?.openAccountOverlay('signin')
-  });
+  // Tirs au but : chargé au premier clic (#324). Le module câble lui-même
+  // homeShootoutBtn dans son init(), donc l'amorçage rejoue le clic.
+  lazy(document.getElementById('homeShootoutBtn'), ensureShootout);
   // Règles & FAQ (M11 #252) : overlay autonome, contenu cloné de .seo-about.
   initFaq();
   const homeLogo = document.getElementById('homeLogoBtn');
@@ -1240,7 +1282,8 @@ function init() {
           break;
         case 'boutique': els.shopBtn?.click(); break;
         case 'profil': els.profileBtn?.click(); break;
-        case 'tirs-au-but': shootoutModule?.openShootout(); break;
+        // Lien profond #tirs-au-but : troisième entrée sans clic (#324).
+        case 'tirs-au-but': ensureShootout().then(m => m?.openShootout()); break;
         // Une partie ne se restaure pas depuis une URL : son état n'est nulle
         // part dans le lien. On retombe sur l'accueil plutôt que d'afficher un
         // plateau vide, et on corrige l'URL pour qu'elle dise la vérité.
@@ -1363,11 +1406,24 @@ function onLanguageChanged() {
  * workers, ou si le fichier est inaccessible — ne doit jamais bloquer le
  * chargement normal du jeu.
  */
+// Enregistré APRÈS l'événement load, jamais pendant (#324). L'installation du
+// service worker déclenche `cache.addAll()` sur 66 fichiers : lancée depuis
+// init() (DOMContentLoaded), elle doublait le nombre de requêtes en vol au pire
+// moment, en concurrence avec les modules de la page et les scripts publicitaires.
+// C'est le visiteur de PREMIÈRE visite qui payait — précisément celui qui n'a
+// pas encore de cache à y gagner. Décaler ne retire rien au hors-ligne : le
+// cache sera prêt bien avant la visite suivante.
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.register('./sw.js').catch(err => {
+  const go = () => navigator.serviceWorker.register('./sw.js').catch(err => {
     console.error('Service worker non enregistré :', err);
   });
+  const afterLoad = () => {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout: 3000 });
+    else setTimeout(go, 1000);
+  };
+  if (document.readyState === 'complete') afterLoad();
+  else window.addEventListener('load', afterLoad, { once: true });
 }
 
 

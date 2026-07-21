@@ -25,7 +25,7 @@
 // (#329) : sans nouvelle version de cache, un joueur déjà venu garderait les
 // anciens avatars, le cache étant indexé par URL et les noms de fichiers étant
 // inchangés.
-const CACHE_NAME = 'tactic-master-v30'; // v30 : nouveaux avatars de la séance (#329)
+const CACHE_NAME = 'tactic-master-v31'; // v31 : tutoriel/puzzle à la demande (#324) — + themeStorage.js
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -96,6 +96,7 @@ const STATIC_ASSETS = [
   './src/ui/settingsUI.js',
   './src/ui/shopUI.js',
   './src/ui/themeManager.js',
+  './src/ui/themeStorage.js',
   './src/ui/tutorial.js',
   './src/ui/tutorialUI.js'
 ];

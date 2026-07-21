@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- FICHIER GÉNÉRÉ par tools/build-blog.mjs — ne pas éditer à la main.
+     Le contenu se modifie dans content/blog/articles.mjs. -->
+<title>Comment battre l'IA en difficulté maximale — Tactic Master</title>
+<meta name="description" content="L'IA difficile de Tactic Master anticipe un tour à l'avance, mais son évaluation ignore sa propre défense. Voici comment exploiter ses angles morts.">
+<link rel="canonical" href="https://tactic-master.vercel.app/blog/battre-lia-difficile">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Tactic Master">
+<meta property="og:title" content="Comment battre l'IA en difficulté maximale — Tactic Master">
+<meta property="og:description" content="L'IA difficile de Tactic Master anticipe un tour à l'avance, mais son évaluation ignore sa propre défense. Voici comment exploiter ses angles morts.">
+<meta property="og:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<meta property="og:url" content="https://tactic-master.vercel.app/blog/battre-lia-difficile">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Comment battre l'IA en difficulté maximale — Tactic Master">
+<meta name="twitter:description" content="L'IA difficile de Tactic Master anticipe un tour à l'avance, mais son évaluation ignore sa propre défense. Voici comment exploiter ses angles morts.">
+<meta name="twitter:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/blog/blog.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Comment battre l'IA en difficulté maximale","description":"L'IA difficile de Tactic Master anticipe un tour à l'avance, mais son évaluation ignore sa propre défense. Voici comment exploiter ses angles morts.","datePublished":"2026-07-16","dateModified":"2026-07-16","image":"https://tactic-master.vercel.app/og-image.jpg","author":{"@type":"Organization","name":"Tactic Master"},"publisher":{"@type":"Organization","name":"Tactic Master"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://tactic-master.vercel.app/blog/battre-lia-difficile"}}</script>
+</head>
+<body>
+<header class="blog-top">
+  <a class="blog-home" href="/">← Tactic Master</a>
+</header>
+<main class="blog-article">
+  <p class="blog-date"><time datetime="2026-07-16">16 juillet 2026</time></p>
+  <h1>Comment battre l'IA en difficulté maximale</h1>
+<p>L'IA difficile de Tactic Master n'est pas un moteur d'échecs. Elle a une
+méthode précise, et donc des angles morts précis. Voici comment elle décide
+réellement, et ce que tu peux en faire.</p>
+
+<h2>Comment elle raisonne</h2>
+
+<p>À chaque tour, elle procède ainsi :</p>
+
+<ol>
+  <li>Si un coup lui fait marquer immédiatement, elle le joue. Sans hésitation,
+      sans rien examiner d'autre.</li>
+  <li>Sinon, elle évalue chacun de ses coups possibles, puis regarde
+      <strong>un tour plus loin</strong> : pour chaque coup, elle échantillonne
+      tes réponses possibles et retient la pire pour elle.</li>
+  <li>Elle choisit le coup dont la pire suite reste la meilleure.</li>
+</ol>
+
+<p>C'est une recherche à deux niveaux. Suffisant pour punir toute erreur grossière,
+et pour te prendre le ballon si tu le laisses traîner.</p>
+
+<h2>Son angle mort principal : elle ne valorise que deux choses</h2>
+
+<p>Voilà l'information utile. Sa fonction d'évaluation ne tient compte que de
+<strong>l'écart de buts</strong>, très largement dominant, et de la
+<strong>distance du ballon à ta cage</strong>, avec un poids faible.</p>
+
+<p>C'est tout. Elle n'attribue <em>aucune</em> valeur à la position de ses propres
+pions, à sa structure défensive, ni aux zones qu'elle couvre.</p>
+
+<p>Conséquence directe et exploitable : <strong>elle démantèle volontiers sa propre
+défense pour rapprocher le ballon de ta cage.</strong> Elle avancera un défenseur
+qui tenait un axe, simplement parce que le coup gagne un dixième de point de
+proximité.</p>
+
+<p>La contre-stratégie tient en une phrase : <strong>laisse-la venir</strong>. Plus
+elle pousse, plus elle se découvre. Une défense patiente, qui garde ses pions sur
+les axes plutôt que de courir après le ballon, la met en difficulté toute seule.</p>
+
+<h2>Son deuxième angle mort : elle ne regarde pas toutes tes réponses</h2>
+
+<p>Pour rester rapide, elle plafonne le nombre de tes ripostes examinées, et les
+tire au hasard quand il y en a trop.</p>
+
+<p>Autrement dit : <strong>plus la position est ouverte, plus elle est susceptible
+de rater ta meilleure réponse.</strong> Dans une position fermée avec peu de coups
+légaux, elle voit tout. Dans une position aérée où tu disposes de trente
+possibilités, il y a de fortes chances qu'elle n'ait pas examiné celle que tu
+prépares.</p>
+
+<p>Joue donc large. Garde les lignes ouvertes. C'est exactement l'inverse de ce
+qu'on ferait contre un moteur d'échecs, et c'est ce qui marche ici.</p>
+
+<h2>Le piège du coup gagnant immédiat</h2>
+
+<p>Elle prend toujours un but immédiat quand il est disponible. Cette priorité est
+absolue et ne se discute pas — donc elle est prévisible.</p>
+
+<p>Vérifie systématiquement, avant de valider ton coup, si tu ne viens pas de lui
+ouvrir une trajectoire vers ta cage. Elle ne la manquera jamais. À l'inverse, tant
+qu'aucune trajectoire directe n'existe, elle revient à son évaluation myope, et
+redevient exploitable.</p>
+
+<h2>Ce que les niveaux inférieurs changent</h2>
+
+<p>Pour situer, si tu veux t'entraîner progressivement :</p>
+
+<ul>
+  <li><strong>Facile</strong> joue de façon largement aléatoire, avec une
+      préférence pour les coups qui rapprochent le ballon. Elle ne pousse jamais
+      le ballon de plus de deux cases, et n'utilise jamais de pouvoir.</li>
+  <li><strong>Moyen</strong> évalue tous ses coups, garde les 30 % meilleurs et en
+      tire un au hasard. Solide, mais elle ne regarde jamais ta réponse : elle ne
+      voit donc pas les pièges à un coup.</li>
+  <li><strong>Difficile</strong> ajoute la recherche d'un tour supplémentaire
+      décrite plus haut.</li>
+</ul>
+
+<p>Le saut de difficulté réel se situe entre Moyen et Difficile : c'est le moment
+où tendre un piège en un coup cesse de fonctionner.</p>
+
+<h2>En résumé</h2>
+
+<ul>
+  <li>Défends en plaçant, pas en poursuivant : elle se découvrira d'elle-même.</li>
+  <li>Garde la position ouverte : elle échantillonne, elle ratera des réponses.</li>
+  <li>Ne lui laisse jamais une trajectoire directe : c'est sa seule certitude.</li>
+</ul>
+
+<h2>Comment elle utilise ses pouvoirs</h2>
+
+<p>Si les joueurs à pouvoirs sont activés, l'IA s'en sert — sauf au niveau Facile,
+qui n'en déclenche jamais aucun. Ses règles de déclenchement sont simples, donc
+prévisibles :</p>
+
+<ul>
+  <li><strong>Tir Puissant</strong> : dès qu'elle est au contact du ballon et qu'un
+      tir devient possible à travers un pion.</li>
+  <li><strong>Relais</strong> : quand elle est au contact du ballon et qu'une passe
+      le rapproche de ta cage.</li>
+  <li><strong>Repli adverse</strong> : pour repousser un de tes pions qui conteste
+      le ballon.</li>
+  <li><strong>Sprint</strong> : quand aucun de ses pions n'est encore à côté du
+      ballon — c'est son geste pour rattraper une situation.</li>
+</ul>
+
+<p>Retiens surtout le dernier : <strong>si aucun de ses pions n'est au contact du
+ballon, attends-toi à un Sprint.</strong> Un pion qui semblait à deux cases de
+distance peut arriver au contact dans le même tour. Compte cette portée quand tu
+crois avoir mis le ballon à l'abri.</p>
+
+<h2>Une partie contre elle n'est jamais deux fois la même</h2>
+
+<p>Un détail qui a son importance si tu veux t'entraîner sur une position : ni le
+niveau Moyen ni le niveau Difficile ne sont totalement déterministes. Le premier
+tire au sort parmi ses meilleurs coups, le second échantillonne tes réponses au
+hasard.</p>
+
+<p>Rejouer exactement la même ouverture ne produira donc pas exactement la même
+partie. C'est délibéré — une IA parfaitement prévisible devient un puzzle à
+mémoriser plutôt qu'un adversaire. Mais ça veut aussi dire qu'un piège qui a
+fonctionné une fois n'est pas garanti la suivante.</p>
+
+<aside class="blog-cta">
+  <p>Tactic Master est gratuit et se joue directement dans le navigateur, sans
+     installation ni compte.</p>
+  <a class="btn primary" href="/?utm_source=blog">Jouer une partie</a>
+</aside>
+</main>
+<footer class="blog-foot">
+  <a href="/blog">Tous les articles</a> &nbsp;·&nbsp;
+  <a href="/terms">Conditions</a> &nbsp;·&nbsp;
+  <a href="/privacy">Confidentialité</a>
+  <p>© 2026 Tactic Master</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,162 @@
+/* =====================================================================
+   BLOG (#300)
+   ---------------------------------------------------------------------
+   Chargé UNIQUEMENT par les pages /blog/*. Volontairement séparé de
+   styles.css : le blog est du contenu de lecture, pas de l'interface de
+   jeu, et il n'a aucune raison d'alourdir le chemin critique de l'app —
+   ni l'inverse.
+
+   Réutilise les variables de styles.css (--craie, --or, --noir…) : la
+   direction artistique reste celle du jeu, seule la mise en page change.
+   ===================================================================== */
+
+.blog-top {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 0;
+}
+.blog-home {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--or);
+  text-decoration: none;
+}
+.blog-home:hover { text-decoration: underline; }
+
+.blog-index,
+.blog-article {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+  color: var(--craie);
+}
+
+.blog-index h1,
+.blog-article h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: clamp(30px, 6vw, 42px);
+  line-height: 1.08;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+}
+
+.blog-date {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--craie-att);
+  margin: 0 0 6px;
+}
+
+.blog-intro {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--craie-att);
+  margin-bottom: 36px;
+}
+
+/* --- Corps d'article ------------------------------------------------ */
+/* Mesure de ligne volontairement courte : c'est du texte long, il doit se
+   lire, pas se parcourir. */
+
+.blog-article h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  text-transform: uppercase;
+  margin: 40px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(240, 230, 211, 0.12);
+}
+.blog-article h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  margin: 28px 0 10px;
+}
+.blog-article p,
+.blog-article li {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.blog-article p { margin: 0 0 16px; }
+.blog-article ul,
+.blog-article ol { margin: 0 0 18px; padding-left: 22px; }
+.blog-article li { margin-bottom: 8px; }
+.blog-article strong { color: #fff; }
+.blog-article em { color: var(--craie-att); }
+
+/* --- Index : cartes -------------------------------------------------- */
+
+.blog-list { list-style: none; margin: 0; padding: 0; }
+.blog-card { margin-bottom: 14px; }
+.blog-card a {
+  display: block;
+  padding: 20px 22px;
+  border: 1px solid rgba(240, 230, 211, 0.12);
+  border-radius: 8px;
+  background: rgba(240, 230, 211, 0.03);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s, background .15s;
+}
+.blog-card a:hover {
+  border-color: rgba(200, 132, 26, 0.5);
+  background: rgba(200, 132, 26, 0.06);
+}
+.blog-card h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.blog-excerpt {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--craie-att);
+  margin: 0 0 10px;
+}
+.blog-more {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--or);
+}
+
+/* --- Appel à l'action ------------------------------------------------ */
+
+.blog-cta {
+  margin-top: 48px;
+  padding: 26px 24px;
+  border: 1px solid rgba(200, 132, 26, 0.35);
+  border-radius: 10px;
+  background: rgba(200, 132, 26, 0.06);
+  text-align: center;
+}
+.blog-cta p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  color: var(--craie);
+}
+
+/* --- Pied de page ---------------------------------------------------- */
+
+.blog-foot {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--craie-att);
+  opacity: .75;
+}
+.blog-foot a { color: inherit; }
+.blog-foot p { margin: 10px 0 0; }

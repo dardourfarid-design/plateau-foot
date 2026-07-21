@@ -48,7 +48,12 @@ function ensureEnglishDict() {
 
 // Écrans chargés à la demande (#324) : le mécanisme et son pourquoi sont dans
 // lazyScreen.js. Ici on ne fait que déclarer QUELS écrans sont différés.
+// Les loaders sont mémorisés pour que le seam E2E puisse tous les forcer
+// (voir installE2ETestSeam) : plusieurs specs s'appuient sur des hooks posés
+// par ces modules, et les tenir à jour à la main serait une dette garantie.
+const _lazyLoaders = [];
 function lazy(btn, load) {
+  _lazyLoaders.push(load);
   return lazyScreen(btn, load, err => {
     console.error('Écran non chargé :', err);
     showToast(t('Chargement impossible. Vérifie ta connexion et réessaie.'));
@@ -1318,6 +1323,12 @@ function init() {
 // n'est en jeu — l'état local d'une partie hors-ligne n'a aucune valeur.
 function installE2ETestSeam() {
   if (!window.__TM_E2E__) return;
+  // #324 : sous ce drapeau UNIQUEMENT, on charge tout de suite les écrans
+  // différés. Plusieurs specs attendent des hooks posés par leur init()
+  // (window.__tmMercatoTest, par exemple) juste après page.goto('/') — les
+  // faire tous cliquer d'abord rendrait les tests plus fragiles que le code
+  // qu'ils protègent. En production le drapeau est absent : rien ne change.
+  Promise.all(_lazyLoaders.map(load => load())).catch(() => {});
   window.__tmTest = {
     getState: () => gameState,
     setState: (patch) => { gameState = { ...gameState, ...patch }; return gameState; },

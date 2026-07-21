@@ -21,7 +21,7 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v27'; // v27 : routeur par hash (#310)
+const CACHE_NAME = 'tactic-master-v28'; // v28 : découpage de main.js (#311) — dailyPuzzleUI, domRefs, settingsUI
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -69,7 +69,9 @@ const STATIC_ASSETS = [
   './src/services/supabaseClient.js',
   './src/ui/accountUI.js',
   './src/ui/boardRenderer.js',
+  './src/ui/dailyPuzzleUI.js',
   './src/ui/dialogs.js',
+  './src/ui/domRefs.js',
   './src/ui/faqUI.js',
   './src/ui/i18n.js',
   './src/ui/lazyFonts.js',
@@ -86,6 +88,7 @@ const STATIC_ASSETS = [
   './src/ui/powersUI.js',
   './src/ui/profileUI.js',
   './src/ui/shootoutUI.js',
+  './src/ui/settingsUI.js',
   './src/ui/shopUI.js',
   './src/ui/themeManager.js',
   './src/ui/tutorial.js',

@@ -19,11 +19,9 @@ import { initPowers } from './powersUI.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { initAccount } from './accountUI.js';
-import { checkoutTheme } from '../services/payment/paymentProvider.js';
 import { initOnline } from './onlineUI.js';
 import { recordOnlineAction } from '../services/multiplayerService.js';
 import { initOverlays } from './overlaysUI.js';
-import { initTutorial } from './tutorialUI.js';
 import { initFaq } from './faqUI.js';
 import { initLang, getLang, t, applyTranslations, onLangChange, mountLangToggle, startAutoTranslate } from './i18n.js';
 
@@ -102,7 +100,7 @@ import {
 } from '../services/mercatoService.js';
 import { initRouter } from './router.js';
 import { lazyScreen } from './lazyScreen.js';
-import { initDailyPuzzle } from './dailyPuzzleUI.js';
+import { loadSavedThemeId, loadSavedThemeConfig, saveActiveTheme } from './themeStorage.js';
 import { cacheDomRefs } from './domRefs.js';
 import { initSettings } from './settingsUI.js';
 
@@ -112,49 +110,6 @@ let router = null;
 
 /** Écrit la route courante sans rien afficher (l'UI a déjà changé d'écran). */
 function markRoute(screen) { router?.go(screen); }
-
-const ACTIVE_THEME_STORAGE_KEY = 'plateau-foot:active-theme';
-const ACTIVE_THEME_CONFIG_STORAGE_KEY = 'plateau-foot:active-theme-config';
-
-// Thèmes retirés du catalogue (désactivés en base ou supprimés du catalogue
-// de secours hors-ligne) mais qui peuvent rester mémorisés dans le
-// localStorage d'un joueur qui les avait sélectionnés avant leur retrait.
-// Sans ce garde-fou, ce joueur continuerait à voir l'ancien thème appliqué
-// indéfiniment au chargement, même si la boutique ne le propose plus —
-// c'est exactement ce qui s'est produit avec "neige" (vert-terrain
-// quasi-blanc, confondu avec un plateau vide/bug d'affichage).
-const RETIRED_THEME_IDS = ['neige'];
-
-function loadSavedThemeId() {
-  try {
-    const savedId = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
-    if (!savedId || RETIRED_THEME_IDS.includes(savedId)) return DEFAULT_THEME_ID;
-    return savedId;
-  } catch (err) {
-    return DEFAULT_THEME_ID;
-  }
-}
-
-function loadSavedThemeConfig() {
-  try {
-    const savedId = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
-    if (savedId && RETIRED_THEME_IDS.includes(savedId)) return null; // retombe sur le défaut CSS
-    const raw = window.localStorage.getItem(ACTIVE_THEME_CONFIG_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (err) {
-    return null;
-  }
-}
-
-function saveActiveTheme(themeId, config) {
-  try {
-    window.localStorage.setItem(ACTIVE_THEME_STORAGE_KEY, themeId);
-    window.localStorage.setItem(ACTIVE_THEME_CONFIG_STORAGE_KEY, JSON.stringify(config));
-  } catch (err) {
-    // Pas grave si on ne peut pas persister : l'app reste fonctionnelle,
-    // juste sans mémorisation du thème entre deux visites.
-  }
-}
 
 // ---------- État applicatif ----------
 
@@ -891,8 +846,10 @@ function wireSetupScreen() {
     markRoute('jouer');
   });
 
-  // #210 — Puzzle du jour, démarrage direct depuis l'accueil.
-  els.dailyPuzzleBtn?.addEventListener('click', () => puzzleModule.startPuzzle());
+  // #210 — Puzzle du jour, démarrage direct depuis l'accueil. Le bouton est
+  // câblé dans le chargement paresseux (#324, lot 2), pas ici : contrairement
+  // aux autres écrans, dailyPuzzleUI ne câble pas son propre bouton, donc c'est
+  // à l'amorçage de poser l'écouteur avant de rejouer le clic.
 
   els.configBackBtn.addEventListener('click', () => {
     els.configScreen.classList.add('hidden');
@@ -1111,9 +1068,12 @@ function init() {
     refreshHomeBanner
   });
 
-  // Puzzle du jour : module extrait (#311). Il possède son propre état ; main.js
-  // ne fait que lui fournir les leviers qui touchent à la partie en cours.
-  puzzleModule = initDailyPuzzle({
+  // Puzzle du jour : chargé au premier clic (#324, lot 2). Il possède son
+  // propre état ; main.js ne fait que lui fournir les leviers qui touchent à
+  // la partie en cours. `puzzleModule?.isPuzzleActive()` est déjà en chaînage
+  // optionnel côté flux de jeu, et son no-op est correct avant chargement.
+  lazy(els.dailyPuzzleBtn, () => import('./dailyPuzzleUI.js').then(m => {
+  puzzleModule = m.initDailyPuzzle({
     els,
     getGameState: () => gameState,
     setGameState: s => { gameState = s; },
@@ -1125,6 +1085,8 @@ function init() {
     render,
     goToLanding: () => overlaysModule.goToLanding()
   });
+  els.dailyPuzzleBtn.addEventListener('click', () => puzzleModule.startPuzzle());
+  }));
 
   // Multijoueur en ligne : module extrait (#21, lot 4). La session Realtime
   // est la propriété du module ; gameState et myTeam restent dans main.js.
@@ -1144,12 +1106,18 @@ function init() {
   // et sont interdépendants — le mercato est un onglet du profil et reçoit
   // profileModule.loadTeamPanel, profileUI dessine les avatars.
   lazy(els.profileBtn, async () => {
-  const [profileMod, mercatoMod, avatarMod] = await Promise.all([
-    import('./profileUI.js'), import('./mercatoUI.js'), import('./playerAvatar.js')
+  // paymentProvider part avec eux : `checkoutTheme` n'était importé
+  // statiquement que pour être injecté ici, et aucun autre module du graphe de
+  // boot ne l'importe (shopUI et shootoutUI sont eux-mêmes différés). Il entraîne
+  // stripePaymentProvider hors du chemin critique.
+  const [profileMod, mercatoMod, avatarMod, paiementMod] = await Promise.all([
+    import('./profileUI.js'), import('./mercatoUI.js'), import('./playerAvatar.js'),
+    import('../services/payment/paymentProvider.js')
   ]);
   const { initProfile, toOwnedShape } = profileMod;
   const { initMercato } = mercatoMod;
   const { renderAvatarSvg, hashSeedToAvatar, AVATAR_COLORS } = avatarMod;
+  const { checkoutTheme } = paiementMod;
 
   const profileModule = initProfile({
     els,
@@ -1225,10 +1193,17 @@ function init() {
     refreshAdsForSession,
     refreshHomeBanner
   });
-  // Tutoriel guidé : module extrait (#21, lot 3). Le flux de jeu le consulte
-  // via isActive()/checkTutorialProgress() ; l'état de partie reste dans
-  // main.js (get/set injectés).
-  tutorialModule = initTutorial({
+  // Tutoriel guidé : chargé au premier clic sur « Lancer le tutoriel guidé »
+  // (#324, lot 2). Le module câble lui-même startTutorialBtn dans son init(),
+  // donc l'amorçage rejoue le clic — même motif que la boutique.
+  //
+  // Le flux de jeu le consulte via `tutorialModule?.isActive()` et
+  // `?.checkTutorialProgress(...)`. Ces appels sont DÉJÀ en chaînage optionnel,
+  // et leur no-op est la bonne réponse tant que le module n'est pas chargé :
+  // un tutoriel jamais démarré n'est pas actif, et il n'a aucune étape à
+  // valider. Aucun de ces sites d'appel n'a eu besoin d'être touché.
+  lazy(els.startTutorialBtn, () => import('./tutorialUI.js').then(m => {
+  tutorialModule = m.initTutorial({
     els,
     getUser: () => currentUser,
     getGameState: () => gameState,
@@ -1247,6 +1222,7 @@ function init() {
     },
     refreshFounderBadge: () => profileModuleRef?.refreshFounderBadge()
   });
+  }));
   // Tirs au but : chargé au premier clic (#324). Le module câble lui-même
   // homeShootoutBtn dans son init(), donc l'amorçage rejoue le clic.
   lazy(document.getElementById('homeShootoutBtn'), ensureShootout);

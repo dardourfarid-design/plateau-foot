@@ -28,6 +28,7 @@ await import('./lazyFonts.test.js');
 await import('./blog.test.js');
 await import('./router.test.js');
 await import('./moduleSize.test.js');
+await import('./cssBuild.test.js');
 await import('./puzzles.test.js');
 await import('./houseAds.test.js');
 

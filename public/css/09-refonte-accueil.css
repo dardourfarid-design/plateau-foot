@@ -1,0 +1,487 @@
+/* =====================================================================
+   REFONTE ACCUEIL ET PLATEAU (SPRINTS D2/D3)
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ========== SPRINT D2 — SETUP SCREEN & TOPBAR ========== */
+
+/* --- Topbar redesign --- */
+.topbar-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.topbar-badge{ flex-shrink:0; border-radius:3px; }
+.topbar-account{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+}
+.topbar-shop-btn{
+  background: rgba(200,132,26,0.1);
+  border: 1px solid rgba(200,132,26,0.25);
+  color: var(--ambre);
+  padding: 6px 12px;
+  border-radius:3px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.topbar-shop-btn:hover{
+  background: rgba(200,132,26,0.18);
+  color: var(--or);
+}
+.topbar-link{ display:flex; align-items:center; gap:5px; }
+
+/* --- Hero : bandeau saison --- */
+.hero-season-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  margin-bottom:14px;
+}
+.hero-season-dot{
+  width:6px; height:6px;
+  border-radius:50%;
+  background: var(--ambre);
+  flex-shrink:0;
+}
+
+/* --- Logo : liseré ambre sous le mot MASTER --- */
+.logo-title{ position:relative; }
+.logo-title-underline{
+  display:block; /* span depuis le passage du titre en h1 (#181) */
+  width:64px;
+  height:2px;
+  background: var(--ambre);
+  margin:6px 0 16px;
+}
+@media(max-width:760px){ .logo-title-underline{ margin:4px auto 12px; } }
+
+/* --- Stats hero : bandeau 3 colonnes façon pub --- */
+.hero-stats-row{
+  display:flex;
+  align-items:center;
+  gap:0;
+  margin-bottom:24px;
+  border-top:1px solid rgba(200,132,26,0.2);
+  border-bottom:1px solid rgba(200,132,26,0.2);
+  padding: 10px 0;
+}
+.hero-stat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  text-align:center;
+}
+.hero-stat-value{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900;
+  font-size:22px;
+  color: var(--craie);
+  line-height:1;
+}
+.hero-stat-label{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+}
+.hero-stat-sep{
+  width:1px;
+  height:32px;
+  background: rgba(200,132,26,0.25);
+  flex-shrink:0;
+}
+
+/* --- CTA : icône intégrée --- */
+.cta-main{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+.config-start-btn{
+  width:100%;
+  padding:14px;
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+/* --- Preview plateau : ornements coins japonais --- */
+.setup-preview{ position:relative; }
+.preview-corner{
+  position:absolute;
+  width:18px; height:18px;
+  pointer-events:none;
+  z-index:2;
+}
+.preview-corner-tl{
+  top:-6px; left:-6px;
+  border-top:2px solid var(--ambre);
+  border-left:2px solid var(--ambre);
+}
+.preview-corner-br{
+  bottom:-6px; right:-6px;
+  border-bottom:2px solid var(--ambre);
+  border-right:2px solid var(--ambre);
+}
+.preview-field-label{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color: rgba(200,132,26,0.5);
+  text-align:center;
+  margin-top:10px;
+}
+
+/* --- Pions de preview : numéro de maillot --- */
+.preview-token{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.preview-token.bleu{
+  background: radial-gradient(circle at 33% 28%, var(--bleu-equipe-clair) 0%, var(--bleu-equipe) 55%, #142E5A 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), 0 3px 8px rgba(0,0,0,0.5);
+}
+.preview-token.rouge{
+  background: radial-gradient(circle at 33% 28%, var(--rouge-equipe-clair) 0%, var(--rouge-equipe) 55%, #6A1510 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), 0 3px 8px rgba(0,0,0,0.5);
+}
+.preview-token::after{
+  content: attr(data-num);
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:12px;
+  font-weight:900;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  line-height:1;
+}
+
+/* --- Feature cards : icône SVG au lieu d'emoji --- */
+.feature-icon-wrap{
+  color: var(--ambre);
+  margin-bottom:12px;
+  display:block;
+}
+.feature-card{
+  border-top: 2px solid rgba(200,132,26,0.15);
+}
+.feature-card:hover{ border-top-color: rgba(200,132,26,0.5); }
+.feature-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:16px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+/* --- Setup options : avec icône --- */
+.setup-options-icon .setup-option{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:14px 8px;
+  font-size:12px;
+}
+.setup-option-icon{ opacity:.7; }
+.setup-option.active .setup-option-icon{ opacity:1; }
+.setup-option-stars{
+  font-size:11px;
+  color: var(--ambre);
+  margin-right:3px;
+}
+.setup-option.active .setup-option-stars{ color: var(--noir); }
+
+/* --- Goals : grand chiffre centré --- */
+.setup-options-goals .setup-option{ padding:10px 6px; }
+.goal-val{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  display:block;
+}
+
+/* ========== SPRINT D3 — ANIMATIONS PLATEAU ========== */
+
+/* --- Transitions entre écrans --- */
+/* IMPORTANT : on n'utilise QUE opacity (pas de transform) pour éviter de
+   créer un stacking context résiduel après l'animation (la valeur `both`
+   + un transform identité persistant absorbait les clics de la topbar). */
+.setup-screen, .config-screen, .game-layout, .profile-screen, .shop-layout {
+  animation: screen-enter 0.3s ease forwards;
+}
+@keyframes screen-enter {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+
+/* --- Hover pions : soulèvement + intensification ombre --- */
+.token:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.22),
+              inset 0 0 0 1px rgba(0,0,0,0.3),
+              0 8px 18px rgba(0,0,0,0.65);
+}
+.token.selected {
+  transform: scale(1.12) translateY(-2px);
+  box-shadow: 0 0 0 3px var(--craie), 0 8px 20px rgba(0,0,0,0.65);
+}
+
+/* --- Turn banner : pulsation sur l'équipe active --- */
+.turn-banner { transition: color 0.3s ease; }
+.turn-banner.active-bleu  { animation: pulse-bleu 2s ease-in-out infinite; }
+.turn-banner.active-rouge { animation: pulse-rouge 2s ease-in-out infinite; }
+
+@keyframes pulse-bleu {
+  0%,100% { color: var(--bleu-equipe-clair); opacity:1; }
+  50%      { color: #A8CCEE; opacity:0.75; }
+}
+@keyframes pulse-rouge {
+  0%,100% { color: var(--rouge-equipe-clair); opacity:1; }
+  50%      { color: #EDA090; opacity:0.75; }
+}
+
+/* --- Score : flash quand un but est marqué --- */
+.score-num.goal-flash {
+  animation: score-bump 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes score-bump {
+  0%   { transform: scale(1); color: var(--craie); }
+  40%  { transform: scale(1.5); color: var(--or); }
+  100% { transform: scale(1); color: var(--craie); }
+}
+
+/* --- Overlay BUT : fond dynamique + lignes de vitesse --- */
+.goal-overlay-bg.show {
+  background: rgba(8,6,4,0.92);
+}
+
+.goal-card {
+  position:relative;
+  overflow:hidden;
+  min-width:280px;
+  border: 1px solid rgba(200,132,26,0.35);
+  padding: 32px 36px 28px;
+}
+.goal-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at 50% 40%, rgba(200,132,26,0.12) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+/* Lignes de vitesse façon manga — tournent autour du centre */
+.goal-speedlines {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.goal-sl {
+  position:absolute;
+  top:50%; left:50%;
+  width:200%; height:1px;
+  background: linear-gradient(90deg, transparent 30%, rgba(200,132,26,0.2), transparent 70%);
+  transform-origin: 0 50%;
+}
+.goal-sl:nth-child(1)  { transform: rotate(0deg)   translateX(-50%); }
+.goal-sl:nth-child(2)  { transform: rotate(22.5deg) translateX(-50%); }
+.goal-sl:nth-child(3)  { transform: rotate(45deg)   translateX(-50%); }
+.goal-sl:nth-child(4)  { transform: rotate(67.5deg) translateX(-50%); }
+.goal-sl:nth-child(5)  { transform: rotate(90deg)   translateX(-50%); }
+.goal-sl:nth-child(6)  { transform: rotate(112.5deg)translateX(-50%); }
+.goal-sl:nth-child(7)  { transform: rotate(135deg)  translateX(-50%); }
+.goal-sl:nth-child(8)  { transform: rotate(157.5deg)translateX(-50%); }
+
+/* Animation d'entrée des lignes */
+.goal-overlay-bg.show .goal-speedlines {
+  animation: speedlines-spin 6s linear infinite;
+}
+@keyframes speedlines-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Tampon japonais "GOAL" */
+.goal-jp-tag {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  border: 1px solid var(--ambre);
+  border-radius:2px;
+  padding: 3px 8px;
+  display:inline-block;
+  margin-bottom:10px;
+  position:relative;
+}
+
+/* Titre BUT : animation entrée */
+.goal-overlay-bg.show .overlay-title {
+  animation: goal-title-in 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.05s both;
+}
+@keyframes goal-title-in {
+  from { transform: scale(0.6); opacity:0; }
+  to   { transform: scale(1);   opacity:1; }
+}
+
+/* Score flash dans l'overlay */
+.goal-score-flash {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:48px;
+  font-weight:900;
+  letter-spacing:.04em;
+  color: var(--or);
+  margin: 8px 0 16px;
+  line-height:1;
+}
+.goal-overlay-bg.show .goal-score-flash {
+  animation: score-flash-in 0.5s ease 0.2s both;
+}
+@keyframes score-flash-in {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* Bouton Continuer dans l'overlay */
+.goal-continue-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-top:4px;
+}
+
+/* --- Overlay FIN DE PARTIE --- */
+.end-card {
+  border: 1px solid rgba(200,132,26,0.3);
+  padding: 32px 36px 28px;
+  text-align:center;
+  min-width:300px;
+}
+.overlay.show .end-card {
+  animation: end-card-in 0.5s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes end-card-in {
+  from { transform: scale(0.85) translateY(20px); opacity:0; }
+  to   { transform: scale(1) translateY(0); opacity:1; }
+}
+
+/* Trophée : couleur selon l'équipe gagnante, animation entrée */
+.end-trophy {
+  display:flex;
+  justify-content:center;
+  margin-bottom:12px;
+  color: var(--or);
+}
+.overlay.show .end-trophy svg {
+  animation: trophy-drop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+}
+@keyframes trophy-drop {
+  from { transform: translateY(-20px) scale(0.7); opacity:0; }
+  to   { transform: translateY(0) scale(1); opacity:1; }
+}
+.end-trophy.bleu  { color: var(--bleu-equipe-clair); }
+.end-trophy.rouge { color: var(--rouge-equipe-clair); }
+
+.end-score-display {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:28px;
+  font-weight:800;
+  color: var(--craie);
+  margin: 4px 0 14px;
+}
+
+/* Stats de fin (colonne buts/victoire) */
+/* Bouton de partage du résultat (#111). Volontairement secondaire : il ne doit
+   pas concurrencer « Rejouer », qui reste l'action principale de fin de partie. */
+.share-result-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border-color: rgba(200,132,26,0.45);
+  color: var(--or);
+}
+.share-result-btn:hover:not(:disabled) {
+  border-color: var(--or);
+  background: rgba(200,132,26,0.1);
+}
+.share-result-btn:disabled { opacity:.75; cursor:default; }
+
+.end-stats-row {
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  margin-bottom:4px;
+}
+.end-stat {
+  background: rgba(240,230,211,0.05);
+  border: 1px solid rgba(240,230,211,0.1);
+  border-radius:4px;
+  padding: 8px 14px;
+  text-align:center;
+}
+.end-stat-val {
+  display:block;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:22px;
+  font-weight:900;
+  color: var(--or);
+  line-height:1;
+}
+.end-stat-lbl {
+  display:block;
+  font-size:9px;
+  font-family:'Barlow Condensed', sans-serif;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+  margin-top:3px;
+}
+
+/* --- Ballon : micro-rotation au hover sur une cellule où il se trouve --- */
+.cell:has(.ball):hover .ball {
+  animation: ball-spin 1.2s linear infinite;
+}
+@keyframes ball-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Pion sélectionnable : subtle pulse invitation --- */
+.token.selectable:not(.selected):not(:hover) {
+  animation: token-invite 2.5s ease-in-out infinite;
+}
+@keyframes token-invite {
+  0%,100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.55); }
+  50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.55), 0 0 0 2px rgba(240,230,211,0.15); }
+}

@@ -1,0 +1,299 @@
+/* =====================================================================
+   MULTIJOUEUR, TUTORIEL ET COMPTE
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- MULTIJOUEUR EN LIGNE ---------- */
+
+.online-divider{
+  text-align:center;
+  font-size:12px;
+  color: var(--craie-att);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  margin: 10px 0 18px;
+  position:relative;
+}
+.online-divider::before, .online-divider::after{
+  content:'';
+  position:absolute;
+  top:50%;
+  width:38%;
+  height:1px;
+  background: rgba(245,242,232,0.12);
+}
+.online-divider::before{ left:0; }
+.online-divider::after{ right:0; }
+
+.join-code-row{
+  display:flex;
+  gap:8px;
+}
+
+.join-code-input{
+  text-transform:uppercase;
+  letter-spacing:0.15em;
+  text-align:center;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  margin-bottom:0;
+  flex:1;
+}
+
+.online-error{
+  min-height:16px;
+  font-size:12px;
+  color: var(--rouge-equipe-clair);
+  margin: 8px 0 0;
+}
+
+.waiting-card{
+  text-align:center;
+  align-items:center;
+  display:flex;
+  flex-direction:column;
+}
+
+.invite-code-display{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:48px;
+  letter-spacing:0.12em;
+  color: var(--terre-vif);
+  margin: 18px 0 14px;
+  padding: 14px 28px;
+  background: var(--nuit);
+  border-radius:6px;
+  border: 1px dashed rgba(224,143,79,0.4);
+}
+
+.waiting-text{
+  font-size:13px;
+  color: var(--craie-att);
+  max-width:280px;
+  margin: 0 0 20px;
+}
+
+.waiting-spinner{
+  width:28px; height:28px;
+  border-radius:50%;
+  border: 3px solid rgba(245,242,232,0.15);
+  border-top-color: var(--terre-vif);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin{
+  to{ transform: rotate(360deg); }
+}
+
+/* ---------- TUTORIEL GUIDÉ ---------- */
+
+.tutorial-link{
+  display:block;
+  margin-top:14px;
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-size:13px;
+  text-decoration: underline;
+  text-decoration-color: rgba(245,242,232,0.25);
+  cursor:pointer;
+  padding:4px 0;
+}
+.tutorial-link:hover{ color: var(--craie); }
+
+.tutorial-veil{
+  position:fixed; inset:0;
+  background: rgba(11,20,30,0.55);
+  z-index:40;
+  pointer-events:none;
+}
+
+/* L'élément actuellement visé par le tutoriel passe au-dessus du voile et
+   reçoit un halo, pour qu'il ressorte clairement sans masque SVG complexe. */
+.tutorial-spotlight{
+  position:relative;
+  z-index:41;
+  box-shadow: 0 0 0 6px rgba(244,211,94,0.35), 0 0 30px 10px rgba(244,211,94,0.25);
+  border-radius:50%;
+  animation: tutorial-pulse 1.4s ease-in-out infinite;
+}
+
+/* Variante pour les panneaux rectangulaires (profil, boutique) visités par
+   le tutoriel : même halo, coins simplement arrondis. */
+.tutorial-spotlight-rect{
+  border-radius:12px;
+}
+
+@keyframes tutorial-pulse{
+  0%,100%{ box-shadow: 0 0 0 6px rgba(244,211,94,0.35), 0 0 30px 10px rgba(244,211,94,0.25); }
+  50%{ box-shadow: 0 0 0 10px rgba(244,211,94,0.5), 0 0 40px 16px rgba(244,211,94,0.35); }
+}
+
+.tutorial-bubble{
+  position:fixed;
+  z-index:42;
+  max-width:300px;
+  background: var(--nuit-clair);
+  border: 1px solid rgba(244,211,94,0.4);
+  border-radius:6px;
+  padding:16px 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  left:50%;
+  bottom:24px;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 859px){
+  .tutorial-bubble{
+    left:10px;
+    right:10px;
+    bottom:10px;
+    max-width:none;
+    width:auto;
+    transform:none;
+    padding:12px 14px;
+  }
+  .tutorial-text{ font-size:13px; margin-bottom:10px; }
+  .tutorial-progress{ margin-bottom:6px; }
+}
+
+.tutorial-progress{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color: var(--terre-vif);
+  margin-bottom:8px;
+}
+
+.tutorial-text{
+  font-size:14px;
+  line-height:1.5;
+  color: var(--craie);
+  margin:0 0 14px;
+}
+
+.tutorial-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.tutorial-skip{
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-size:12px;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:0;
+  white-space:nowrap;
+}
+.tutorial-skip:hover{ color: var(--craie); }
+
+.tutorial-next{ flex-shrink:0; padding:8px 16px; font-size:12px; }
+
+@media (min-width: 860px){
+  .tutorial-bubble{
+    left:auto;
+    right:32px;
+    bottom:auto;
+    top:50%;
+    transform: translateY(-50%);
+  }
+}
+
+/* ---------- COMPTE / AUTH ---------- */
+
+.account-card{ max-width: 360px; text-align:left; }
+.account-title{ font-size:28px; text-align:left; }
+.account-sub{ text-align:left; min-height:14px; }
+.account-sub:not(:empty){ color: var(--rouge-equipe-clair); }
+#accountEmailDisplay{ text-align:left; color: var(--craie-att); margin-bottom:4px; }
+
+.auth-input{
+  width:100%;
+  background: var(--nuit);
+  border: 1px solid rgba(245,242,232,0.16);
+  border-radius:4px;
+  padding: 11px 12px;
+  color: var(--craie);
+  font-family:'Space Grotesk', sans-serif;
+  font-size:14px;
+  margin-bottom:10px;
+}
+.auth-input:focus{ outline:2px solid var(--terre-vif); outline-offset:1px; }
+.auth-input::placeholder{ color: var(--craie-att); }
+
+.account-required-note{
+  font-size:12px;
+  color: var(--craie-att);
+  margin: -2px 0 14px;
+}
+
+.consent-block{
+  background: var(--nuit);
+  border-radius:4px;
+  padding: 12px 14px;
+  margin-bottom:16px;
+}
+
+.consent-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:12px;
+  cursor:pointer;
+}
+.consent-row:last-of-type{ margin-bottom:8px; }
+
+.consent-row input[type="checkbox"]{
+  flex-shrink:0;
+  width:16px;
+  height:16px;
+  margin-top:2px;
+  accent-color: var(--terre-vif);
+  cursor:pointer;
+}
+
+.consent-row span{
+  font-size:12px;
+  line-height:1.5;
+  color: var(--craie-att);
+}
+
+.consent-legal-link{
+  margin:0;
+  font-size:11px;
+}
+.consent-legal-link a{
+  color: var(--terre-vif);
+  text-decoration:underline;
+}
+
+.account-submit{ width:100%; margin-top:4px; }
+.account-switch{ display:block; margin: 14px auto 0; text-align:center; width:100%; }
+.account-close{ display:block; margin: 18px auto 0; text-align:center; width:100%; }
+
+.account-privacy-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin: 18px 0;
+  padding: 14px 0;
+  border-top: 1px solid rgba(245,242,232,0.1);
+  border-bottom: 1px solid rgba(245,242,232,0.1);
+}
+.account-privacy-actions .topbar-link{
+  text-align:left;
+  padding:4px 0;
+}
+.account-danger{ color: var(--rouge-equipe-clair) !important; }

@@ -34,6 +34,11 @@ const OUT = path.join(ROOT, 'dist');
 // temps de build pour rien.
 const SKIP_MINIFY = [path.join('vendor', '')];
 
+// public/css/ est la SOURCE de styles.css (#312), pas un actif servi : aucune
+// page ne le référence. Sans cette exclusion, dist/ embarquerait 13 fichiers
+// morts et le build minifierait deux fois la même CSS.
+const SKIP_DIRS = ['css'];
+
 function shouldSkip(rel) {
   return SKIP_MINIFY.some(prefix => rel.startsWith(prefix));
 }
@@ -47,6 +52,7 @@ async function walk(dir, rel = '') {
     const to = path.join(OUT, relPath);
 
     if (entry.isDirectory()) {
+      if (rel === '' && SKIP_DIRS.includes(entry.name)) continue;
       await mkdir(to, { recursive: true });
       await walk(from, relPath);
       continue;

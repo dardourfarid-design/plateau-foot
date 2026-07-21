@@ -10,7 +10,6 @@ import {
   applyMove, PHASES
 } from '../engine/gameEngine.js';
 import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
-import { getDailyPuzzle } from '../engine/puzzles.js';
 import { setSoundEnabled, playSound, vibrate } from '../services/soundService.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import { initShootout } from './shootoutUI.js';
@@ -68,6 +67,9 @@ import {
   createMercatoOffer, respondMercatoOffer, cancelMercatoOffer, fetchMyMercatoOffers, fetchFriendCollection
 } from '../services/mercatoService.js';
 import { initRouter } from './router.js';
+import { initDailyPuzzle } from './dailyPuzzleUI.js';
+import { cacheDomRefs } from './domRefs.js';
+import { initSettings } from './settingsUI.js';
 
 // #310 — routeur par hash. Déclaré ici et démarré en fin d'initialisation :
 // c'est lui qui rend le bouton Retour du navigateur utilisable.
@@ -137,17 +139,17 @@ let selectedGoals = 3;            // buts pour gagner (#204 : promu au scope mod
 let hintsOn = true;               // #207 : conseils contextuels en jeu (desactivables)
 let soundOn = false;              // #209 : sons & vibrations (opt-in, off par defaut)
 let aiThinking = false;
-// #210 — mode « puzzle du jour » : partie solo scriptée à objectif (marquer en
-// <= N coups). puzzleActive court-circuite l'IA et le passage de tour à l'adversaire.
-let puzzleActive = false;
-let currentPuzzle = null;
-let puzzleMoves = 0;
+// #210 — mode « puzzle du jour ». L'état vit dans dailyPuzzleUI.js (#311) ;
+// on l'interroge via puzzleModule.isPuzzleActive(), qui court-circuite l'IA et
+// le passage de tour à l'adversaire.
 const AI_TEAM = TEAMS.ROUGE; // l'IA joue toujours Rouge ; l'humain joue toujours Bleu en mode IA
 
 // État multijoueur : myTeam est l'équipe contrôlée par CE navigateur ;
 // l'autre équipe n'est jouable qu'en recevant les mises à jour de l'adversaire.
 // La session en ligne (id + abonnement Realtime) vit dans onlineUI.js.
 let onlineModule = null;     // { syncOnlineStateIfNeeded, leaveOnlineSession } — voir onlineUI.js
+let settingsModule = null;   // { saveLastConfig, restoreLastConfig, applyConfigToUI } — voir settingsUI.js
+let puzzleModule = null;     // { startPuzzle, handlePuzzleProgress, updatePuzzleHint, isPuzzleActive, exitPuzzle } — voir dailyPuzzleUI.js
 let overlaysModule = null;   // { showGoalOverlay, hideGoalOverlayAndResume, showEndOverlay, backToSetup, goToLanding } — voir overlaysUI.js
 
 // Identité des joueurs fictifs alignés (résolue une fois par partie, pas
@@ -174,168 +176,7 @@ let screenBeforeShop = 'setup';
 
 const els = {};
 
-function cacheDomRefs() {
-  els.setupScreen = document.getElementById('setupScreen');
-  els.configScreen = document.getElementById('configScreen');
-  els.goToSetupBtn = document.getElementById('goToSetupBtn');
-  els.configBackBtn = document.getElementById('configBackBtn');
-  els.gameScreen = document.getElementById('gameScreen');
-  els.boardGrid = document.getElementById('boardGrid');
-  els.scoreBleu = document.getElementById('scoreBleu');
-  els.scoreRouge = document.getElementById('scoreRouge');
-  els.goalScoreFlash = document.getElementById('goalScoreFlash');
-  els.endStatsRow = document.getElementById('endStatsRow');
-  els.backToSetupFromEndBtn = document.getElementById('backToSetupFromEndBtn');
-  els.sidebarScoreBleu = document.getElementById('sidebarScoreBleu');
-  els.sidebarScoreRouge = document.getElementById('sidebarScoreRouge');
-  els.sidebarTurn = document.getElementById('sidebarTurn');
-  els.sidebarRules = document.getElementById('sidebarRules');
-  els.rulesPalierBadge = document.getElementById('rulesPalierBadge');
-  els.turnBanner = document.getElementById('turnBanner');
-  els.hintBar = document.getElementById('hintBar');
-  els.cancelBtn = document.getElementById('cancelBtn');
-  els.endTurnBtn = document.getElementById('endTurnBtn');
-  els.activatePowerBtn = document.getElementById('activatePowerBtn');
-  els.powerTargetOverlay = document.getElementById('powerTargetOverlay');
-  els.powerTargetList = document.getElementById('powerTargetList');
-  els.cancelPowerTargetBtn = document.getElementById('cancelPowerTargetBtn');
-  els.restartBtn = document.getElementById('restartBtn');
-  els.startBtn = document.getElementById('startBtn');
-  els.goalOptions = document.getElementById('goalOptions');
-  els.modeOptions = document.getElementById('modeOptions');
-  els.aiDifficultyField = document.getElementById('aiDifficultyField');
-  els.aiDifficultyOptions = document.getElementById('aiDifficultyOptions');
-  els.rulesetOptions = document.getElementById('rulesetOptions');
-  els.rulesetHint = document.getElementById('rulesetHint');
-  els.variantOptions = document.getElementById('variantOptions');
-  els.powersOptions = document.getElementById('powersOptions');
-  els.formatOptions = document.getElementById('formatOptions');
-  els.hintsOptions = document.getElementById('hintsOptions');
-  els.soundOptions = document.getElementById('soundOptions');
-  els.advancedOptions = document.getElementById('advancedOptions');
-  els.quickPlayBtn = document.getElementById('quickPlayBtn');
-  els.dailyPuzzleBtn = document.getElementById('dailyPuzzleBtn');
-  els.localAiBlock = document.getElementById('localAiBlock');
-  els.onlineBlock = document.getElementById('onlineBlock');
-  els.createOnlineBtn = document.getElementById('createOnlineBtn');
-  els.joinCodeInput = document.getElementById('joinCodeInput');
-  els.joinOnlineBtn = document.getElementById('joinOnlineBtn');
-  els.onlineError = document.getElementById('onlineError');
-  els.waitingScreen = document.getElementById('waitingScreen');
-  els.inviteCodeDisplay = document.getElementById('inviteCodeDisplay');
-  els.cancelWaitingBtn = document.getElementById('cancelWaitingBtn');
-  els.startTutorialBtn = document.getElementById('startTutorialBtn');
-  els.tutorialVeil = document.getElementById('tutorialVeil');
-  els.tutorialBubble = document.getElementById('tutorialBubble');
-  els.tutorialProgress = document.getElementById('tutorialProgress');
-  els.tutorialText = document.getElementById('tutorialText');
-  els.tutorialNextBtn = document.getElementById('tutorialNextBtn');
-  els.tutorialSkipBtn = document.getElementById('tutorialSkipBtn');
-  els.gameControls = document.getElementById('gameControls');
-  els.goalOverlay = document.getElementById('goalOverlay');
-  els.goalTitle = document.getElementById('goalTitle');
-  els.goalSub = document.getElementById('goalSub');
-  els.continueBtn = document.getElementById('continueBtn');
-  els.endOverlay = document.getElementById('endOverlay');
-  els.endTitle = document.getElementById('endTitle');
-  els.endSub = document.getElementById('endSub');
-  els.newGameBtn = document.getElementById('newGameBtn');
-  els.watchRewardedBtn = document.getElementById('watchRewardedBtn');
-  els.shareResultBtn = document.getElementById('shareResultBtn');
-  els.shopBtn = document.getElementById('shopBtn');
-  els.purchaseToast = document.getElementById('purchaseToast');
-  els.purchaseToastIcon = document.getElementById('purchaseToastIcon');
-  els.purchaseToastText = document.getElementById('purchaseToastText');
-  els.shopScreen = document.getElementById('shopScreen');
-  els.profileBtn = document.getElementById('profileBtn');
-  els.profileNotifBadge = document.getElementById('profileNotifBadge');
-  els.dailyHint = document.getElementById('dailyHint');
-  els.profileScreen = document.getElementById('profileScreen');
-  els.founderBadge = document.getElementById('founderBadge');
-  els.profileBackBtn = document.getElementById('profileBackBtn');
-  els.profileTabs = document.getElementById('profileTabs');
-  els.panelProgress = document.getElementById('panelProgress');
-  els.panelChallenges = document.getElementById('panelChallenges');
-  els.panelTeam = document.getElementById('panelTeam');
-  els.panelLeaderboard = document.getElementById('panelLeaderboard');
-  els.progressLevel = document.getElementById('progressLevel');
-  els.progressXp = document.getElementById('progressXp');
-  els.progressStreak = document.getElementById('progressStreak');
-  els.progressWins = document.getElementById('progressWins');
-  els.progressStreakLabel = document.getElementById('progressStreakLabel');
-  els.progressWinsLabel = document.getElementById('progressWinsLabel');
-  els.progressEmptyNote = document.getElementById('progressEmptyNote');
-  els.challengesList = document.getElementById('challengesList');
-  els.lineupSlots = document.getElementById('lineupSlots');
-  els.collectionGrid = document.getElementById('collectionGrid');
-  els.powerShopGrid = document.getElementById('powerShopGrid');
-  els.saveLineupBtn = document.getElementById('saveLineupBtn');
-  els.openCreatePlayerBtn = document.getElementById('openCreatePlayerBtn');
-  els.createPlayerOverlay = document.getElementById('createPlayerOverlay');
-  els.createPlayerError = document.getElementById('createPlayerError');
-  els.createPlayerQuotaNote = document.getElementById('createPlayerQuotaNote');
-  els.createPlayerPreview = document.getElementById('createPlayerPreview');
-  els.newPlayerName = document.getElementById('newPlayerName');
-  els.newPlayerStyleOptions = document.getElementById('newPlayerStyleOptions');
-  els.newPlayerColorOptions = document.getElementById('newPlayerColorOptions');
-  els.newPlayerPatternOptions = document.getElementById('newPlayerPatternOptions');
-  els.newPlayerAccessoryOptions = document.getElementById('newPlayerAccessoryOptions');
-  els.confirmCreatePlayerBtn = document.getElementById('confirmCreatePlayerBtn');
-  els.closeCreatePlayerBtn = document.getElementById('closeCreatePlayerBtn');
-  els.panelMercato = document.getElementById('panelMercato');
-  els.friendPseudoInput = document.getElementById('friendPseudoInput');
-  els.sendFriendRequestBtn = document.getElementById('sendFriendRequestBtn');
-  els.friendRequestError = document.getElementById('friendRequestError');
-  els.shareProfileBtn = document.getElementById('shareProfileBtn');
-  els.shareProfileFeedback = document.getElementById('shareProfileFeedback');
-  els.pendingFriendRequests = document.getElementById('pendingFriendRequests');
-  els.pendingFriendRequestsSent = document.getElementById('pendingFriendRequestsSent');
-  els.friendsList = document.getElementById('friendsList');
-  els.mercatoOffersReceived = document.getElementById('mercatoOffersReceived');
-  els.mercatoOffersSent = document.getElementById('mercatoOffersSent');
-  els.mercatoOfferOverlay = document.getElementById('mercatoOfferOverlay');
-  els.mercatoOfferError = document.getElementById('mercatoOfferError');
-  els.myPlayerSelect = document.getElementById('myPlayerSelect');
-  els.friendPlayerSelect = document.getElementById('friendPlayerSelect');
-  els.friendPlayerSelectLabel = document.getElementById('friendPlayerSelectLabel');
-  els.confirmMercatoOfferBtn = document.getElementById('confirmMercatoOfferBtn');
-  els.closeMercatoOfferBtn = document.getElementById('closeMercatoOfferBtn');
-  els.leaderboardBody = document.getElementById('leaderboardBody');
-  els.shopGrid = document.getElementById('shopGrid');
-  els.shopBackBtn = document.getElementById('shopBackBtn');
-  els.accountBtn = document.getElementById('accountBtn');
-  els.accountStatus = document.getElementById('accountStatus');
-  els.accountOverlay = document.getElementById('accountOverlay');
-  els.accountLoggedOutView = document.getElementById('accountLoggedOutView');
-  els.accountLoggedInView = document.getElementById('accountLoggedInView');
-  els.authTitle = document.getElementById('authTitle');
-  els.authError = document.getElementById('authError');
-  els.authDisplayName = document.getElementById('authDisplayName');
-  els.authEmail = document.getElementById('authEmail');
-  els.authPassword = document.getElementById('authPassword');
-  els.authSubmitBtn = document.getElementById('authSubmitBtn');
-  els.authSwitchBtn = document.getElementById('authSwitchBtn');
-  els.forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-  els.forgotPasswordView = document.getElementById('forgotPasswordView');
-  els.forgotPasswordError = document.getElementById('forgotPasswordError');
-  els.forgotPasswordEmail = document.getElementById('forgotPasswordEmail');
-  els.sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
-  els.backToLoginBtn = document.getElementById('backToLoginBtn');
-  els.accountEmailDisplay = document.getElementById('accountEmailDisplay');
-  els.signOutBtn = document.getElementById('signOutBtn');
-  els.consentBlock = document.getElementById('consentBlock');
-  els.consentAnalytics = document.getElementById('consentAnalytics');
-  els.consentEmailMarketing = document.getElementById('consentEmailMarketing');
-  els.consentDataSharing = document.getElementById('consentDataSharing');
-  els.consentAdvertising = document.getElementById('consentAdvertising');
-  els.accountRequiredNote = document.getElementById('accountRequiredNote');
-  els.manageConsentBtn = document.getElementById('manageConsentBtn');
-  els.exportDataBtn = document.getElementById('exportDataBtn');
-  els.deleteDataBtn = document.getElementById('deleteDataBtn');
-  els.accountCloseBtn = document.getElementById('accountCloseBtn');
-  els.coinDisplay   = document.getElementById('coinDisplay');
-  els.coinAmount    = document.getElementById('coinAmount');
-}
+// Références DOM : extraites dans domRefs.js (#311).
 
 // ---------- Cycle de vie du jeu ----------
 
@@ -423,81 +264,13 @@ function flashGoalBoard() {
 }
 
 // ---------- #210 : Puzzle du jour ----------
-
-function startPuzzle() {
-  currentPuzzle = getDailyPuzzle();
-  puzzleActive = true;
-  puzzleMoves = 0;
-  gameMode = 'puzzle'; // ni IA ni online : maybeTriggerAiTurn() (garde !== 'ai') ne se déclenche pas
-  undoSnapshot = null;
-  els.setupScreen.classList.add('hidden');
-  els.configScreen.classList.add('hidden');
-  els.shootoutScreen?.classList.add('hidden');
-  els.gameScreen.classList.remove('hidden');
-  myTeam = currentPuzzle.turn;
-  gameState = {
-    ...createGame({ goalsToWin: 1, ruleset: currentPuzzle.ruleset }),
-    tokens: currentPuzzle.tokens.map(t => ({ ...t })),
-    ball: { ...currentPuzzle.ball },
-    turn: currentPuzzle.turn
-  };
-  buildBoardGrid(els.boardGrid, handleCellClick);
-  myResolvedLineup = null;
-  render();
-  updatePuzzleHint();
-}
-
-function handlePuzzleProgress(previousState) {
-  const solver = currentPuzzle.turn;
-  render();
-
-  // Résolu : l'équipe du solveur a marqué (objectif à 1 but -> gameOver).
-  if (gameState.score[solver] > previousState.score[solver]) {
-    endPuzzle(true);
-    return;
-  }
-
-  // Un coup du solveur s'est terminé (le tour a basculé) : on le compte et on
-  // garde la main sur le solveur — il n'y a pas d'adversaire en mode puzzle.
-  if (!gameState.gameOver && gameState.turn !== solver) {
-    puzzleMoves += 1;
-    gameState = { ...gameState, turn: solver };
-    render();
-  }
-
-  updatePuzzleHint();
-
-  // Échec : plus de coups disponibles sans avoir marqué.
-  if (gameState.score[solver] === 0 && puzzleMoves >= currentPuzzle.maxMoves) {
-    endPuzzle(false);
-  }
-}
-
-function updatePuzzleHint() {
-  if (!puzzleActive || !els.hintBar) return;
-  const left = Math.max(0, currentPuzzle.maxMoves - puzzleMoves);
-  els.hintBar.textContent = t('{title} — {hint} (coups restants : {n})', {
-    title: currentPuzzle.title, hint: currentPuzzle.hint, n: left
-  });
-}
-
-function endPuzzle(solved) {
-  puzzleActive = false;
-  const wasPuzzle = currentPuzzle;
-  if (solved) {
-    render();
-    showToast(t('🎉 Puzzle résolu en {n} coup(s) !', { n: puzzleMoves || wasPuzzle.maxMoves }));
-    setTimeout(() => { gameMode = 'local'; overlaysModule.goToLanding(); }, 1800);
-  } else {
-    showToast(t('Raté — le puzzle recommence, réessaie !'));
-    setTimeout(() => startPuzzle(), 1200); // rejoue le même puzzle du jour
-  }
-}
+// Extrait dans dailyPuzzleUI.js (#311) — y compris son état (puzzleActive,
+// currentPuzzle, puzzleMoves), qui n'intéressait aucun autre module.
 
 function startGame(goalsToWin) {
-  puzzleActive = false; // sortie de tout mode puzzle en cours
+  puzzleModule?.exitPuzzle(); // sortie de tout mode puzzle en cours
   selectedGoals = goalsToWin;
-  saveLastConfig(); // #204 : mémorise les réglages pour le prochain « Jouer »
+  settingsModule.saveLastConfig(); // #204 : mémorise les réglages pour le prochain « Jouer »
   gameState = createGame({ goalsToWin, ruleset: selectedRuleset, variant: selectedVariant, freePowers: freePowersOn, turnLimit: selectedFormat === 'manche' ? 40 : null });
   undoSnapshot = null;
   els.shootoutScreen?.classList.add('hidden');
@@ -600,7 +373,7 @@ function render() {
 
 function updateHint() {
   // #210 : en mode puzzle, l'indice affiche l'objectif et les coups restants.
-  if (puzzleActive) { updatePuzzleHint(); return; }
+  if (puzzleModule?.isPuzzleActive()) { puzzleModule.updatePuzzleHint(); return; }
   // #207 : conseils désactivables pour les habitués.
   if (!hintsOn) { els.hintBar.textContent = ''; return; }
   if (gameState.gameOver) { els.hintBar.textContent = ''; return; }
@@ -752,7 +525,7 @@ function handlePostActionEffects(previousState) {
 
   // #210 — le mode puzzle a sa propre boucle (pas d'IA, pas de but adverse,
   // décompte des coups, réussite/échec) et court-circuite le flux normal.
-  if (puzzleActive) { handlePuzzleProgress(previousState); return; }
+  if (puzzleModule?.isPuzzleActive()) { puzzleModule.handlePuzzleProgress(previousState); return; }
 
   if (gameState.lastGoalBy && gameState.lastGoalBy !== previousState.lastGoalBy) {
     render();
@@ -1081,7 +854,7 @@ function wireSetupScreen() {
   });
 
   // #210 — Puzzle du jour, démarrage direct depuis l'accueil.
-  els.dailyPuzzleBtn?.addEventListener('click', startPuzzle);
+  els.dailyPuzzleBtn?.addEventListener('click', () => puzzleModule.startPuzzle());
 
   els.configBackBtn.addEventListener('click', () => {
     els.configScreen.classList.add('hidden');
@@ -1089,9 +862,31 @@ function wireSetupScreen() {
     markRoute('accueil');
   });
 
+  // Réglages : module extrait (#311). L'état reste dans main.js, le module ne
+  // fait que le sérialiser et le refléter à l'écran.
+  settingsModule = initSettings({
+    els,
+    setSoundEnabled,
+    getSettings: () => ({
+      gameMode, aiLevel, selectedRuleset, selectedVariant,
+      freePowersOn, selectedFormat, selectedGoals, hintsOn, soundOn
+    }),
+    applySettings: p => {
+      if (p.gameMode !== undefined) gameMode = p.gameMode;
+      if (p.aiLevel !== undefined) aiLevel = p.aiLevel;
+      if (p.selectedRuleset !== undefined) selectedRuleset = p.selectedRuleset;
+      if (p.selectedVariant !== undefined) selectedVariant = p.selectedVariant;
+      if (p.freePowersOn !== undefined) freePowersOn = p.freePowersOn;
+      if (p.selectedFormat !== undefined) selectedFormat = p.selectedFormat;
+      if (p.selectedGoals !== undefined) selectedGoals = p.selectedGoals;
+      if (p.hintsOn !== undefined) hintsOn = p.hintsOn;
+      if (p.soundOn !== undefined) soundOn = p.soundOn;
+    }
+  });
+
   // Restaure les derniers réglages et les reflète dans l'écran de config.
-  restoreLastConfig();
-  applyConfigToUI();
+  settingsModule.restoreLastConfig();
+  settingsModule.applyConfigToUI();
 }
 
 // #259 — garde-fou anti mis-clic : une partie en cours ne meurt jamais sans
@@ -1102,7 +897,7 @@ function wireSetupScreen() {
 async function confirmAbandonThen(proceed) {
   const playing = !!gameState && !gameState.winner
     && !els.gameScreen.classList.contains('hidden')
-    && !(tutorialModule?.isActive()) && !puzzleActive;
+    && !(tutorialModule?.isActive()) && !puzzleModule?.isPuzzleActive();
   if (!playing) { proceed(); return; }
   const ok = await showConfirm(
     gameMode === 'online'
@@ -1113,61 +908,8 @@ async function confirmAbandonThen(proceed) {
   if (ok) proceed();
 }
 
-// #204/#205/#207 — persistance des réglages de partie entre les sessions.
-const CONFIG_KEY = 'tm_lastConfig';
-
-function saveLastConfig() {
-  try {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({
-      gameMode, aiLevel, selectedRuleset, selectedVariant,
-      freePowersOn, selectedFormat, selectedGoals, hintsOn, soundOn
-    }));
-  } catch { /* stockage indispo : on ignore */ }
-}
-
-function restoreLastConfig() {
-  let cfg = null;
-  try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)); } catch { cfg = null; }
-  if (!cfg || typeof cfg !== 'object') return;
-  if (['local', 'ai', 'online'].includes(cfg.gameMode)) gameMode = cfg.gameMode;
-  if (Object.values(AI_LEVELS).includes(cfg.aiLevel)) aiLevel = cfg.aiLevel;
-  if (['decouverte', 'classique', 'expert'].includes(cfg.selectedRuleset)) selectedRuleset = cfg.selectedRuleset;
-  if (['standard', 'tactique'].includes(cfg.selectedVariant)) selectedVariant = cfg.selectedVariant;
-  if (typeof cfg.freePowersOn === 'boolean') freePowersOn = cfg.freePowersOn;
-  if (['score', 'manche'].includes(cfg.selectedFormat)) selectedFormat = cfg.selectedFormat;
-  if ([1, 3, 5, 99].includes(cfg.selectedGoals)) selectedGoals = cfg.selectedGoals;
-  if (typeof cfg.hintsOn === 'boolean') hintsOn = cfg.hintsOn;
-  if (typeof cfg.soundOn === 'boolean') { soundOn = cfg.soundOn; setSoundEnabled(soundOn); }
-}
-
-// Reflète l'état courant des réglages dans les boutons de l'écran de config,
-// pour que « Personnaliser » montre toujours les derniers choix.
-function applyConfigToUI() {
-  const setActive = (container, val) => {
-    if (!container) return;
-    container.querySelectorAll('.setup-option').forEach(o =>
-      o.classList.toggle('active', o.dataset.val === String(val)));
-  };
-  setActive(els.modeOptions, gameMode === 'ai' ? 'ai' : gameMode === 'online' ? 'online' : 'local');
-  setActive(els.aiDifficultyOptions, aiLevel);
-  setActive(els.rulesetOptions, selectedRuleset);
-  setActive(els.variantOptions, selectedVariant);
-  setActive(els.powersOptions, freePowersOn ? 'on' : 'off');
-  setActive(els.formatOptions, selectedFormat);
-  setActive(els.goalOptions, selectedGoals);
-  setActive(els.hintsOptions, hintsOn ? 'on' : 'off');
-  setActive(els.soundOptions, soundOn ? 'on' : 'off');
-
-  // Visibilité des blocs selon le mode (réplique le handler de sélection de mode).
-  els.aiDifficultyField?.classList.toggle('hidden', gameMode !== 'ai');
-  els.onlineBlock?.classList.toggle('hidden', gameMode !== 'online');
-  els.localAiBlock?.classList.toggle('hidden', gameMode === 'online');
-
-  // État plié/déplié des Options avancées.
-  if (els.advancedOptions) {
-    els.advancedOptions.open = localStorage.getItem('tm_advancedOpen') === '1';
-  }
-}
+// Réglages de partie : persistance et reflet dans l'UI extraits dans
+// settingsUI.js (#311). L'état lui-même reste ici (lu dans ~30 endroits).
 
 function wireGameControls() {
   // Bouton "← Accueil" dans l'overlay de fin de partie
@@ -1279,7 +1021,7 @@ function switchProfileTab(tabName, profileModule, mercatoModule) {
 // ---------- Démarrage ----------
 
 function init() {
-  cacheDomRefs();
+  cacheDomRefs(els);
   initAdsEarly();
 
   // i18n : langue memorisee (fr par defaut), toggle FR|EN en haut a droite,
@@ -1330,6 +1072,22 @@ function init() {
     maybeShowInterstitial,
     refreshHomeBanner
   });
+
+  // Puzzle du jour : module extrait (#311). Il possède son propre état ; main.js
+  // ne fait que lui fournir les leviers qui touchent à la partie en cours.
+  puzzleModule = initDailyPuzzle({
+    els,
+    getGameState: () => gameState,
+    setGameState: s => { gameState = s; },
+    setGameMode: m => { gameMode = m; },
+    setMyTeam: team => { myTeam = team; },
+    clearUndoSnapshot: () => { undoSnapshot = null; },
+    clearLineup: () => { myResolvedLineup = null; },
+    buildBoard: () => buildBoardGrid(els.boardGrid, handleCellClick),
+    render,
+    goToLanding: () => overlaysModule.goToLanding()
+  });
+
   // Multijoueur en ligne : module extrait (#21, lot 4). La session Realtime
   // est la propriété du module ; gameState et myTeam restent dans main.js.
   onlineModule = initOnline({

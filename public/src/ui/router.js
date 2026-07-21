@@ -70,8 +70,13 @@ export function hashForScreen(screen) {
  */
 export function initRouter({ onNavigate, confirmLeaveGame, win } = {}) {
   const w = win || (typeof window !== 'undefined' ? window : null);
-  if (!w) {
-    // Contexte non navigateur (tests unitaires d'autres modules) : routeur inerte.
+  // On exige `location` ET `history`, pas seulement l'existence de `window` :
+  // plusieurs suites de tests posent un `globalThis.window = {}` minimal pour
+  // faire tourner des modules UI sous Node. Se fier au seul `typeof window`
+  // ferait planter le routeur sur `location.hash` dans ce cas — et, en
+  // production, dans tout contexte incomplet (certains WebViews embarqués).
+  if (!w || !w.location || !w.history) {
+    // Contexte non navigateur : routeur inerte plutôt que plantage.
     return { go() {}, current: () => 'accueil', start() {} };
   }
 

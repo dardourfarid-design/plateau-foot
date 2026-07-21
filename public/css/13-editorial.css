@@ -1,0 +1,120 @@
+/* =====================================================================
+   CONTENU ÉDITORIAL INDEXABLE ET OVERLAY RÈGLES & FAQ
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ===== CONTENU ÉDITORIAL INDEXABLE (#181) ==================================
+   Bloc « à propos + règles + FAQ » sous l'app, au-dessus du footer légal.
+   Discret (couleurs atténuées) mais VISIBLE : pas de display:none, Google
+   dévalorise le texte caché. */
+
+/* #270 — la section n'a de sens que sous la LANDING : sur les autres écrans
+   (boutique, profil, configuration, partie) elle doublonne l'overlay
+   « Règles & FAQ » (#252). Tous ces écrans posent .hidden sur #setupScreen,
+   d'où ce sélecteur. Compatible SEO : au rendu initial (état crawlé par les
+   moteurs), la landing est affichée et la section reste visible — le
+   display:none ne s'applique qu'après une navigation utilisateur. Sans
+   support de :has() (navigateurs anciens), comportement d'avant conservé. */
+body:has(#setupScreen.hidden) .seo-about{ display:none; }
+
+.seo-about{
+  max-width:720px;
+  margin:0 auto;
+  padding:36px 20px 8px;
+  border-top:1px solid rgba(200,132,26,0.15);
+  color:var(--craie-att);
+  font-size:14px;
+  line-height:1.7;
+}
+.seo-about h2{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800; font-size:22px;
+  text-transform:uppercase; letter-spacing:.02em;
+  color:var(--craie);
+  margin:0 0 10px;
+}
+.seo-about h3{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700; font-size:17px;
+  text-transform:uppercase; letter-spacing:.02em;
+  color:var(--craie);
+  margin:26px 0 8px;
+}
+.seo-about p{ margin:0 0 10px; }
+.seo-about ul{ margin:8px 0; padding-left:20px; }
+.seo-about li{ margin-bottom:4px; }
+
+/* Fiche de faits (GEO) : deux colonnes sur large, empilé sur mobile. */
+.seo-facts{
+  display:grid;
+  grid-template-columns:max-content 1fr;
+  gap:6px 14px;
+  margin:14px 0 4px;
+}
+.seo-facts dt{ font-weight:700; color:var(--craie); }
+.seo-facts dd{ margin:0; }
+@media (max-width:480px){
+  .seo-facts{ grid-template-columns:1fr; gap:2px; }
+  .seo-facts dd{ margin:0 0 8px; }
+}
+.seo-about details{
+  border-bottom:1px solid rgba(240,230,211,0.08);
+  padding:8px 0;
+}
+.seo-about summary{
+  cursor:pointer;
+  color:var(--craie);
+  font-weight:600;
+}
+.seo-about details p{ margin:8px 0 4px; }
+
+/* ---------- OVERLAY RÈGLES & FAQ (M11 #252) ----------
+   Le corps .faq-body reçoit un clone du contenu de .seo-about : mêmes règles
+   typographiques, mais classe distincte (les e2e SEO comptent les <details>
+   de .seo-about et ne doivent matcher que l'original en bas de page). */
+.faq-card{
+  max-width:640px;
+  width:calc(100% - 32px);
+  max-height:82vh;
+  display:flex; flex-direction:column;
+  text-align:left;
+  padding:22px 26px 18px;
+}
+.faq-card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+.faq-title{ font-size:26px; margin:0; white-space:nowrap; }
+.faq-close{ flex-shrink:0; font-size:13px; }
+.faq-body{
+  overflow-y:auto;
+  padding-right:8px;
+  color:var(--craie-att);
+  font-size:14px;
+  line-height:1.7;
+}
+.faq-body h3{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700; font-size:17px;
+  text-transform:uppercase; letter-spacing:.02em;
+  color:var(--craie);
+  margin:20px 0 8px;
+}
+.faq-body > h3:first-child{ margin-top:2px; }
+.faq-body p{ margin:0 0 10px; }
+.faq-body ul{ margin:8px 0; padding-left:20px; }
+.faq-body li{ margin-bottom:4px; }
+.faq-body details{
+  border-bottom:1px solid rgba(240,230,211,0.08);
+  padding:8px 0;
+}
+.faq-body summary{ cursor:pointer; color:var(--craie); font-weight:600; }
+.faq-body details p{ margin:8px 0 4px; }
+
+/* Accès FAQ dans la barre latérale de jeu (sous le rappel des règles) */
+.sidebar-faq-link{ margin-top:10px; font-size:13px; }

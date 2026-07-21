@@ -1,0 +1,315 @@
+/* =====================================================================
+   SÉANCE DE TIRS AU BUT (4 THÈMES)
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ============ SÉANCE DE TIRS AU BUT (Penalty v2 — 4 thèmes) ============ */
+/* Le thème est piloté par l'attribut data-pk-theme sur .shootout-screen.
+   Toutes les couleurs/polices/rayons passent par des variables --pk-* ;
+   chaque thème n'a qu'à surcharger ces variables. Stade = valeurs par défaut.
+   Néon/Cartoon/Manga seront verrouillés/monétisés en PR D. */
+.shootout-screen{
+  --pk-screen-bg:radial-gradient(130% 100% at 50% -15%, #1a2647 0%, #0b1122 55%, #070b16 100%);
+  --pk-card:linear-gradient(180deg,#141d33,#0e1626);
+  --pk-card-border:1px solid rgba(245,197,66,.22);
+  --pk-card-shadow:0 30px 70px rgba(0,0,0,.5);
+  --pk-ink:#eef2fb; --pk-sub:#93a0bd;
+  --pk-accent:#f5c542; --pk-accent-dark:#c99a17; --pk-on-accent:#1b1400;
+  --pk-blue:#4f8cff; --pk-red:#ff5b5b;
+  --pk-pitch-a:#1f7a44; --pk-pitch-b:#237f49; --pk-pitch-line:rgba(255,255,255,.55);
+  --pk-goal-post:#f4f7ff; --pk-goal-bg:rgba(6,14,22,.34); --pk-net:rgba(255,255,255,.16);
+  --pk-crowd-bg:linear-gradient(180deg,#0a1120 0%,#101b32 100%);
+  --pk-led-bg:linear-gradient(180deg,#05121a,#020a10); --pk-led-cell:#06222e; --pk-led-glow:rgba(34,230,255,.33);
+  --pk-zone-ring:rgba(255,255,255,.34); --pk-zone-active:#f5c542; --pk-zone-glow:none;
+  --pk-stage-bg:radial-gradient(45% 34% at 14% -6%, rgba(255,255,255,.16), transparent),radial-gradient(45% 34% at 86% -6%, rgba(255,255,255,.16), transparent),radial-gradient(120% 80% at 50% 0%, #12233f, #0a1220 62%);
+  --pk-stage-border:1px solid rgba(255,255,255,.06);
+  --pk-radius:20px; --pk-font:'Archivo',sans-serif; --pk-display:'Anton',sans-serif;
+  --pk-title-shadow:none; --pk-cta-shadow:0 10px 24px rgba(0,0,0,.4); --pk-cta-transform:uppercase;
+  --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
+
+  width:100%; min-height:calc(100vh - 96px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(12px,3vw,20px); padding:clamp(14px,4vw,30px) 12px; box-sizing:border-box;
+  background:var(--pk-screen-bg); border-radius:16px;
+}
+.shootout-screen[data-pk-theme="neon"]{
+  --pk-screen-bg:radial-gradient(130% 100% at 50% 0%, #1a0640 0%, #0a0118 58%, #040109 100%);
+  --pk-card:linear-gradient(180deg,rgba(22,8,44,.92),rgba(8,2,20,.96));
+  --pk-card-border:1px solid rgba(34,230,255,.5);
+  --pk-card-shadow:0 0 40px rgba(34,230,255,.25), inset 0 0 40px rgba(34,230,255,.05);
+  --pk-ink:#eafcff; --pk-sub:#7fd7e6;
+  --pk-accent:#22e6ff; --pk-accent-dark:#12a6bd; --pk-on-accent:#04121a;
+  --pk-blue:#22e6ff; --pk-red:#ff2fb0;
+  --pk-pitch-a:#0a2a34; --pk-pitch-b:#0d3340; --pk-pitch-line:rgba(34,230,255,.55);
+  --pk-goal-post:#22e6ff; --pk-goal-bg:rgba(4,10,20,.34); --pk-net:rgba(34,230,255,.2);
+  --pk-crowd-bg:linear-gradient(180deg,#0a0320,#160a3e);
+  --pk-led-bg:linear-gradient(180deg,#0a0326,#05011a); --pk-led-cell:#12063a; --pk-led-glow:rgba(255,47,176,.5);
+  --pk-zone-ring:rgba(34,230,255,.42); --pk-zone-active:#ff2fb0; --pk-zone-glow:0 0 22px #ff2fb0;
+  --pk-stage-bg:radial-gradient(45% 34% at 14% -6%, rgba(34,230,255,.22), transparent),radial-gradient(45% 34% at 86% -6%, rgba(255,47,176,.2), transparent),radial-gradient(120% 80% at 50% 0%, #14063a, #060112 62%);
+  --pk-stage-border:1px solid rgba(34,230,255,.2);
+  --pk-radius:8px; --pk-font:'Space Mono',monospace; --pk-display:'Anton',sans-serif;
+  --pk-title-shadow:0 0 18px #22e6ff; --pk-cta-shadow:0 0 24px #22e6ff; --pk-cta-transform:uppercase;
+  --pk-result-shadow:0 0 24px currentColor;
+}
+.shootout-screen[data-pk-theme="cartoon"]{
+  --pk-screen-bg:linear-gradient(180deg,#a7e2ff,#79c7ff);
+  --pk-card:#ffffff; --pk-card-border:3px solid #22314f; --pk-card-shadow:0 14px 0 rgba(34,49,79,.18);
+  --pk-ink:#1c2b4a; --pk-sub:#5b6b8a;
+  --pk-accent:#ff8a3d; --pk-accent-dark:#d96a1f; --pk-on-accent:#ffffff;
+  --pk-blue:#2f9bff; --pk-red:#ff5a5a;
+  --pk-pitch-a:#4fc251; --pk-pitch-b:#57cc57; --pk-pitch-line:rgba(255,255,255,.85);
+  --pk-goal-post:#ffffff; --pk-goal-bg:rgba(120,200,255,.24); --pk-net:rgba(28,43,74,.14);
+  --pk-crowd-bg:linear-gradient(180deg,#33508c,#43619e);
+  --pk-led-bg:linear-gradient(180deg,#1c2b4a,#0f1830); --pk-led-cell:#22345a; --pk-led-glow:rgba(255,138,61,.3);
+  --pk-zone-ring:rgba(28,43,74,.3); --pk-zone-active:#ff8a3d; --pk-zone-glow:none;
+  --pk-stage-bg:linear-gradient(180deg,#bfe8ff,#a3dcff); --pk-stage-border:3px solid #22314f;
+  --pk-radius:26px; --pk-font:'Fredoka',sans-serif; --pk-display:'Fredoka',sans-serif;
+  --pk-title-shadow:none; --pk-cta-shadow:0 6px 0 #d96a1f; --pk-cta-transform:none;
+  --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
+}
+.shootout-screen[data-pk-theme="manga"]{
+  --pk-screen-bg:#0a0f1e;
+  --pk-card:#f4f1ea; --pk-card-border:3px solid #16130f; --pk-card-shadow:0 30px 70px rgba(0,0,0,.5);
+  --pk-ink:#16130f; --pk-sub:#6b655b;
+  --pk-accent:#e5342a; --pk-accent-dark:#b81f16; --pk-on-accent:#ffffff;
+  --pk-blue:#2f6bff; --pk-red:#e5342a;
+  --pk-pitch-a:#2f9a4f; --pk-pitch-b:#37a657; --pk-pitch-line:rgba(255,255,255,.82);
+  --pk-goal-post:#ffffff; --pk-goal-bg:rgba(10,20,40,.26); --pk-net:rgba(255,255,255,.24);
+  --pk-crowd-bg:linear-gradient(180deg,#0d1e42,#1a3d6e);
+  --pk-led-bg:#16130f; --pk-led-cell:#0e0c0a; --pk-led-glow:rgba(229,52,42,.5);
+  --pk-zone-ring:rgba(255,255,255,.62); --pk-zone-active:#ffd166; --pk-zone-glow:none;
+  --pk-stage-bg:radial-gradient(circle at 50% 8%, #dcefff 0%, #5b8fe0 16%, #23478f 44%, #0e1f4d 100%);
+  --pk-stage-border:4px solid #16130f;
+  --pk-radius:6px; --pk-font:'Archivo',sans-serif; --pk-display:'Anton',sans-serif;
+  --pk-title-shadow:none; --pk-cta-shadow:0 10px 24px rgba(0,0,0,.4); --pk-cta-transform:uppercase;
+  --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
+}
+
+/* ---- Sélecteur de thème ---- */
+/* #229 — Réglages d'avant-match (Ambiance + Adversaire) : intégrés à la modale
+   sous forme de blocs discrets, au lieu du bandeau « Ambiance » qui flottait
+   au-dessus d'elle. Ils partagent le même habillage que la scène (variables
+   --pk-*) plutôt que les couleurs de l'app, qui juraient sur Néon/Cartoon/Manga. */
+.pk-switcher, .shootout-modal .so-opponent{
+  display:flex; flex-direction:column; gap:8px;
+  padding:10px 12px; border-radius:10px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.07);
+}
+.shootout-modal .setup-label{
+  color:var(--pk-sub); font-family:var(--pk-font); margin-bottom:0;
+  font-size:10px; letter-spacing:.18em;
+}
+.shootout-modal .setup-options{ gap:8px; justify-content:center; flex-wrap:wrap; }
+.shootout-modal .setup-option{
+  flex:0 1 auto; padding:8px 16px; border-radius:999px;
+  font-family:var(--pk-font); font-weight:700; font-size:clamp(11px,2.6vw,13px);
+  letter-spacing:.02em; text-transform:none;
+  border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
+  transition:all .15s;
+}
+.shootout-modal .setup-option.active{
+  background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent);
+}
+.pk-switcher-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+/* #229 — dans la modale, les 4 thèmes doivent tenir sur UNE ligne : les thèmes
+   verrouillés affichent leur prix et s'élargissent, ce qui laissait « Manga »
+   orphelin sur une 2e ligne. On compacte (le retour à la ligne reste possible
+   sur les petits écrans, où il tombe alors sur 2 lignes équilibrées). */
+.pk-switcher .pk-theme-btn{ padding:8px 10px; }
+.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:9px; }
+.pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
+  font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;
+  border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
+  transition:all .15s; }
+.pk-theme-btn.active{ background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent); }
+.pk-theme-btn.locked{ opacity:.82; }
+.pk-theme-btn.locked::after{ content:'🔒 ' attr(data-price); margin-left:6px; font-size:10px; font-weight:700; opacity:.95; }
+
+/* ---- Carte ---- */
+.shootout-modal{
+  width:min(94vw,540px); background:var(--pk-card); border:var(--pk-card-border);
+  border-radius:calc(var(--pk-radius) + 6px); box-shadow:var(--pk-card-shadow);
+  padding:clamp(16px,4.5vw,26px); text-align:center; color:var(--pk-ink); font-family:var(--pk-font);
+  display:flex; flex-direction:column; gap:clamp(10px,2.6vw,14px);
+}
+.shootout-title{ font-family:var(--pk-display); font-weight:900; font-size:clamp(24px,7vw,40px);
+  text-transform:uppercase; letter-spacing:.04em; color:var(--pk-ink); text-shadow:var(--pk-title-shadow); }
+.shootout-scoreline{ display:flex; align-items:center; justify-content:center; gap:clamp(12px,4vw,22px); }
+.so-team{ font-family:var(--pk-font); font-weight:800; font-size:clamp(13px,3.6vw,17px); letter-spacing:.06em; text-transform:uppercase; }
+.so-bleu{ color:var(--pk-blue); }
+.so-rouge{ color:var(--pk-red); }
+.so-score{ font-family:var(--pk-display); font-weight:900; font-size:clamp(32px,10vw,56px); color:var(--pk-ink); line-height:.9; }
+.shootout-dots-wrap{ display:flex; flex-direction:column; gap:6px; align-items:center; }
+.shootout-dots{ display:inline-flex; gap:clamp(6px,2vw,9px); min-height:16px; flex-wrap:wrap; justify-content:center; }
+.shootout-dot{ display:inline-block; vertical-align:middle; width:clamp(15px,3.6vw,20px); height:clamp(15px,3.6vw,20px);
+  border-radius:50%; box-sizing:border-box; border:2px solid var(--pk-sub); opacity:.45; }
+.shootout-dot.scored{ background:var(--pk-accent); border-color:var(--pk-accent); opacity:1; }
+.shootout-dot.missed{ background:transparent; border-color:var(--pk-red); opacity:1; }
+.pk-round{ font-size:10px; font-weight:700; letter-spacing:.24em; color:var(--pk-sub); opacity:.85; }
+
+/* ---- Scène ---- */
+.pk-stage{ position:relative; width:100%; aspect-ratio:6 / 5; margin:0 auto; container-type:inline-size;
+  border-radius:var(--pk-radius); overflow:hidden; border:var(--pk-stage-border); background:var(--pk-stage-bg); }
+.pk-stage.shake{ animation:pkShake .42s; }
+.pk-crowd{ position:absolute; top:0; left:0; right:0; height:15%; overflow:hidden; z-index:0; background:var(--pk-crowd-bg); }
+.pk-crowd.roar{ animation:pkRoar .7s ease-out; }
+.pk-crowd-shade{ position:absolute; top:0; left:0; right:0; height:15%; z-index:1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,0,0,.5) 0%, transparent 45%, rgba(0,0,0,.35) 100%); }
+.pk-fan{ position:absolute; transform:translate(-50%,-50%); width:clamp(5px,1.4vw,9px); height:clamp(8px,2vw,13px);
+  border-radius:50% 50% 42% 42%; opacity:.75; animation:pkBob 1.9s ease-in-out infinite; }
+/* #241 — Le panneau appartient à la scène, il n'est pas posé dessus : il court
+   sur toute la largeur au pied des tribunes et passe DERRIÈRE la cage (même
+   z-index que .pk-goal mais placé avant dans le DOM, donc peint dessous).
+   Il reste OPAQUE et au-dessus de la foule : translucide, les supporters
+   transparaissaient à travers le texte et le panneau semblait « déborder sur
+   le public » — un vrai panneau masque le bas des tribunes, il ne s'y fond pas.
+   Géométrie critique : le fond de la cage est translucide, donc un panneau qui
+   descend DANS la cage se voit à travers le filet et repasse visuellement par
+   dessus. Son bord bas doit donc mourir dans la barre transversale (22,1 % +
+   7px de montant), jamais en dessous — d'où le bas calé à 23 %. */
+.pk-led{ position:absolute; top:8%; left:2%; right:2%; height:15%; z-index:1; display:flex; gap:5px; padding:4px;
+  overflow:hidden; border-radius:4px; background:var(--pk-led-bg); pointer-events:none;
+  transform:perspective(680px) rotateX(34deg); transform-origin:50% 100%;
+  box-shadow:0 10px 22px rgba(0,0,0,.4), 0 0 26px var(--pk-led-glow); border:1px solid rgba(255,255,255,.08); }
+.pk-led-cell{ flex:1; display:flex; align-items:center; justify-content:center; background:var(--pk-led-cell);
+  border-radius:3px; color:rgba(255,255,255,.78); font-size:clamp(8px,2.5cqw,13px); font-weight:700; letter-spacing:.1em;
+  padding:0 2%; text-align:center; overflow:hidden; text-shadow:0 1px 2px rgba(0,0,0,.75);
+  box-shadow:inset 0 0 8px rgba(0,0,0,.6), 0 0 6px var(--pk-led-glow); }
+.pk-led-sheen{ position:absolute; top:0; left:0; width:30%; height:100%; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); animation:pkLed 5s linear infinite; }
+.pk-goal{ position:absolute; left:8%; top:22%; width:84%; height:30%; z-index:1;
+  border-top:7px solid var(--pk-goal-post); border-left:7px solid var(--pk-goal-post); border-right:7px solid var(--pk-goal-post);
+  background:var(--pk-goal-bg); box-shadow:0 3px 10px rgba(0,0,0,.3); }
+.pk-net{ position:absolute; inset:0;
+  background-image:linear-gradient(var(--pk-net) 1px,transparent 1px),linear-gradient(90deg,var(--pk-net) 1px,transparent 1px);
+  background-size:14px 14px; }
+.pk-pitch{ position:absolute; left:0; right:0; bottom:0; height:50%; z-index:2; overflow:hidden;
+  background:linear-gradient(180deg,var(--pk-pitch-a),var(--pk-pitch-b)); }
+.pk-pitch-stripe{ position:absolute; inset:0; background:repeating-linear-gradient(180deg, rgba(255,255,255,.06) 0 11%, rgba(0,0,0,.05) 11% 22%); }
+.pk-box{ position:absolute; left:18%; right:18%; top:52%; height:30%; z-index:3; pointer-events:none;
+  border:3px solid var(--pk-pitch-line); border-top:none; border-radius:0 0 4px 4px; }
+.pk-arc{ position:absolute; left:50%; top:62%; transform:translateX(-50%); width:44%; height:24%; z-index:3;
+  border:3px solid var(--pk-pitch-line); border-top:none; border-radius:50%; }
+.pk-spot{ position:absolute; left:50%; top:66%; transform:translate(-50%,-50%); width:10px; height:6px;
+  background:var(--pk-pitch-line); border-radius:50%; z-index:3; }
+.pk-keeper{ position:absolute; left:50%; top:40%; width:clamp(76px,22%,132px); height:clamp(118px,36vw,196px);
+  transform:translate(-50%,-50%); z-index:5; filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));
+  transition:left .5s cubic-bezier(.34,.9,.4,1), top .5s cubic-bezier(.34,.9,.4,1), transform .5s; }
+.pk-shooter{ position:absolute; left:39%; top:87%; width:clamp(72px,20%,124px); height:clamp(116px,34vw,188px);
+  transform:translate(-50%,-50%); z-index:6; filter:drop-shadow(0 6px 10px rgba(0,0,0,.4)); }
+.pk-shooter.kick{ animation:pkKick .5s ease-out; }
+.pk-keeper img, .pk-shooter img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; user-select:none; }
+.pk-fig-shadow{ position:absolute; left:50%; bottom:-4%; transform:translateX(-50%); width:74%; height:8%;
+  background:rgba(0,0,0,.32); border-radius:50%; filter:blur(3px); z-index:0; }
+.pk-zones{ position:absolute; inset:0; z-index:8; pointer-events:none; }
+.pk-zone{ position:absolute; width:27%; height:22%; transform:translate(-50%,-50%);
+  display:flex; align-items:center; justify-content:center; }
+.pk-zones.aim .pk-zone{ pointer-events:auto; cursor:pointer; }
+.pk-zone-ring{ width:clamp(36px,9.5vw,58px); height:clamp(36px,9.5vw,58px); border-radius:50%;
+  border:3px solid var(--pk-zone-ring); display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .2s, border-color .15s; }
+.pk-zones.aim .pk-zone-ring{ opacity:1; animation:pkPulse 1.5s ease-in-out infinite; }
+.pk-zone.selected .pk-zone-ring{ opacity:1; border-color:var(--pk-zone-active);
+  box-shadow:0 0 0 6px color-mix(in srgb, var(--pk-zone-active) 13%, transparent), var(--pk-zone-glow); }
+.pk-zone-dot{ width:7px; height:7px; border-radius:50%; background:var(--pk-zone-ring); }
+.pk-zone.selected .pk-zone-dot{ background:var(--pk-zone-active); }
+/* #227 — phase « plongeon » : on ne vise plus, on garde la cage. Repère rouge
+   pour distinguer sans ambiguïté le tour adverse du sien, et curseur adapté. */
+.pk-zones.dive .pk-zone{ cursor:grab; }
+.pk-zones.dive .pk-zone-ring{ border-color:#ff5b5b; animation-duration:1s; }
+.pk-zones.dive .pk-zone-dot{ background:#ff5b5b; }
+.pk-stage.opponent-turn .pk-shooter{ filter: hue-rotate(140deg) saturate(1.25); }
+
+/* #230/#243 — Avatars : un seul dessin par figure, recoloré par thème via un
+   filtre (avant : 8 PNG teintés à la main). Les thèmes payants restent
+   visuellement différenciés. Appliqué sur l'<img>, donc composable avec le
+   filtre de tour adverse posé sur le conteneur .pk-shooter.
+   Le ballon suit les mêmes filtres, sinon il jurerait avec les figures. */
+[data-pk-theme="neon"] .pk-keeper img,
+[data-pk-theme="neon"] .pk-shooter img,
+[data-pk-theme="neon"] .pk-ball{ filter:saturate(1.5) contrast(1.12) drop-shadow(0 0 6px rgba(0,240,255,.5)); }
+[data-pk-theme="cartoon"] .pk-keeper img,
+[data-pk-theme="cartoon"] .pk-shooter img,
+[data-pk-theme="cartoon"] .pk-ball{ filter:saturate(1.35) brightness(1.08); }
+[data-pk-theme="manga"] .pk-keeper img,
+[data-pk-theme="manga"] .pk-shooter img,
+[data-pk-theme="manga"] .pk-ball{ filter:grayscale(.72) contrast(1.5) brightness(1.04); }
+/* #243 — Même ballon que le plateau (img/ball.png) : c'est le seul objet qui
+   traverse tout le jeu, il ne doit pas changer de dessin d'un écran à l'autre.
+   L'ombre portée reste en CSS, elle suit les déplacements sans coût. */
+/* aspect-ratio et non une hauteur en % : un % de hauteur se résout sur la
+   HAUTEUR de la scène et un % de largeur sur sa LARGEUR — la scène étant en
+   6/5, le ballon sortait en ellipse (31x26). Invisible sur un rond uni, pas
+   sur un ballon à panneaux. */
+.pk-ball{ position:absolute; left:50%; top:79%; width:clamp(22px,6.5%,36px); aspect-ratio:1;
+  transform:translate(-50%,-50%); border-radius:50%; z-index:9;
+  background:url('img/ball.png') center/cover no-repeat;
+  box-shadow:0 5px 9px rgba(0,0,0,.4);
+  transition:left .64s cubic-bezier(.25,.7,.3,1), top .64s cubic-bezier(.4,0,.75,.6), transform .64s; }
+.pk-result{ position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); display:flex; flex-direction:column;
+  align-items:center; gap:2px; z-index:14; white-space:nowrap; pointer-events:none; opacity:0; }
+.pk-result.show{ opacity:1; animation:pkPop .42s ease-out both; }
+.pk-result-main{ font-family:var(--pk-display); font-size:clamp(38px,12vw,74px); line-height:1;
+  letter-spacing:.02em; text-shadow:var(--pk-result-shadow); color:var(--pk-accent); }
+.pk-result.save .pk-result-main{ color:var(--pk-red); }
+.pk-result.miss .pk-result-main{ color:var(--pk-sub); }
+.pk-result-sub{ font-family:var(--pk-font); font-weight:800; font-size:clamp(12px,3.4vw,17px);
+  color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.7); }
+.pk-toast{ position:absolute; left:50%; top:27%; transform:translateX(-50%); padding:7px 15px; border-radius:999px;
+  font-family:var(--pk-font); font-weight:700; font-size:clamp(11px,3vw,14px); white-space:nowrap; z-index:14; color:#fff;
+  background:rgba(0,0,0,.6); border:1px solid var(--pk-zone-ring); opacity:0; transition:opacity .2s; }
+.pk-toast.show{ opacity:1; animation:pkToastIn .25s ease-out; }
+.pk-toast.goal{ background:var(--pk-red); border-color:var(--pk-red); }
+.pk-flash{ position:absolute; inset:0; z-index:12; pointer-events:none; opacity:0;
+  background:radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--pk-accent) 80%, transparent), transparent 60%); }
+.pk-flash.on{ animation:pkFlash .7s ease-out forwards; }
+.pk-confetti{ position:absolute; left:50%; top:34%; z-index:13; border-radius:2px;
+  transform:translate(-50%,-50%); animation:pkConfetti 1s ease-out forwards; }
+
+/* ---- Contrôles ---- */
+.pk-controls{ min-height:clamp(84px,22vw,110px); display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:12px; }
+.pk-hint{ font-size:clamp(13px,3.4vw,16px); font-weight:800; color:var(--pk-ink); text-align:center; }
+.pk-power-wrap{ width:100%; display:flex; justify-content:center; }
+.pk-power-track{ position:relative; width:min(360px,86%); height:20px; border-radius:999px;
+  background:rgba(127,127,127,.14); border:1px solid var(--pk-zone-ring); overflow:hidden; }
+.pk-power-sweet{ position:absolute; top:0; bottom:0; width:18%; background:linear-gradient(90deg,#3ddc84aa,#2ec96f); border-radius:999px; }
+.pk-power-marker{ position:absolute; top:-4px; bottom:-4px; left:0; width:5px; transform:translateX(-50%);
+  border-radius:3px; background:var(--pk-ink); box-shadow:0 0 6px rgba(0,0,0,.4); }
+.pk-cta{ font-family:var(--pk-display); font-weight:700; letter-spacing:.04em; text-transform:var(--pk-cta-transform);
+  font-size:clamp(16px,4.6vw,23px); padding:clamp(12px,3.4vw,16px) clamp(24px,8vw,44px);
+  background:var(--pk-accent) !important; color:var(--pk-on-accent) !important; border:none !important;
+  border-radius:var(--pk-radius) !important; box-shadow:var(--pk-cta-shadow); }
+.pk-cta:active{ transform:scale(.96); }
+.shootout-end-row{ display:flex; justify-content:center; gap:12px; }
+
+/* ---- Animations ---- */
+@keyframes pkPulse{ 0%,100%{transform:scale(1);opacity:.68} 50%{transform:scale(1.16);opacity:1} }
+@keyframes pkPop{ 0%{transform:translate(-50%,-50%) scale(.3) rotate(-6deg);opacity:0} 55%{transform:translate(-50%,-50%) scale(1.18) rotate(2deg);opacity:1} 100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1} }
+@keyframes pkConfetti{ 0%{transform:translate(-50%,-50%);opacity:1} 100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) rotate(var(--rot));opacity:0} }
+@keyframes pkShake{ 10%,90%{transform:translate3d(-2px,0,0)} 20%,80%{transform:translate3d(4px,0,0)} 30%,50%,70%{transform:translate3d(-7px,0,0)} 40%,60%{transform:translate3d(7px,0,0)} }
+@keyframes pkToastIn{ from{transform:translate(-50%,-16px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
+@keyframes pkBob{ 0%,100%{transform:translate(-50%,-50%)} 50%{transform:translate(-50%,-64%)} }
+@keyframes pkRoar{ 0%{filter:brightness(1)} 25%{filter:brightness(1.85) saturate(1.4)} 100%{filter:brightness(1)} }
+@keyframes pkFlash{ 0%{opacity:0} 12%{opacity:.9} 100%{opacity:0} }
+@keyframes pkKick{ 0%{transform:translate(-50%,-50%) rotate(0)} 40%{transform:translate(-44%,-54%) rotate(-7deg)} 100%{transform:translate(-50%,-50%) rotate(0)} }
+@keyframes pkLed{ 0%{transform:translateX(-30%)} 100%{transform:translateX(230%)} }
+
+/* Badge Fondateur (#61) — doré, affiché dans l'entête du profil quand
+   profiles.is_founder = true. Récompense du Pack Fondateurs. */
+.founder-badge{
+  display:inline-flex; align-items:center; gap:4px;
+  margin-left:12px; vertical-align:middle;
+  padding:4px 10px; border-radius:999px;
+  font-size:13px; font-weight:700; letter-spacing:.02em; white-space:nowrap;
+  color:#3d2b06;
+  background:linear-gradient(135deg,#F6D365 0%,#C8841A 60%,#F6D365 100%);
+  border:1px solid rgba(255,240,200,.7);
+  box-shadow:0 2px 10px rgba(200,132,26,.45), inset 0 1px 0 rgba(255,255,255,.4);
+}
+.founder-badge.hidden{ display:none; }

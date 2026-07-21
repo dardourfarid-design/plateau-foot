@@ -1,0 +1,334 @@
+/* =====================================================================
+   PROFIL, JOUEURS PERSONNALISÉS, AMIS ET MERCATO
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- ÉCRAN PROFIL ---------- */
+
+.profile-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  border-bottom: 1px solid rgba(245,242,232,0.1);
+  padding-bottom:2px;
+}
+
+.profile-tab{
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  padding:10px 14px;
+  cursor:pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.profile-tab:hover{ color: var(--craie); }
+.profile-tab.active{ color: var(--or); border-color: var(--ambre); }
+
+.profile-panel{ width:100%; }
+
+.progress-summary{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.progress-stat{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:16px 10px;
+  text-align:center;
+}
+
+.progress-stat-value{
+  display:block;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900;
+  font-size:28px;
+  color: var(--or);
+}
+
+.progress-stat-label{
+  display:block;
+  font-size:11px;
+  color: var(--craie-att);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  margin-top:4px;
+}
+
+.profile-empty-note{
+  font-size:13px;
+  color: var(--craie-att);
+  text-align:center;
+  padding:20px 0;
+}
+
+.challenge-card{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.challenge-card.completed{ border: 1px solid rgba(46,158,79,0.4); }
+
+.challenge-desc{ font-size:14px; color: var(--craie); }
+.challenge-progress{ font-size:12px; color: var(--craie-att); margin-top:4px; }
+.challenge-check{
+  flex-shrink:0;
+  width:24px; height:24px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px;
+  background: rgba(245,242,232,0.08);
+  color: var(--craie-att);
+}
+.challenge-card.completed .challenge-check{
+  background: var(--terre-vif);
+  color:#1A1208;
+}
+
+.team-tab-intro{ font-size:13px; color: var(--craie-att); margin-bottom:16px; }
+
+.lineup-slots{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+}
+
+.lineup-slot{
+  background: var(--nuit-clair);
+  border: 1px dashed rgba(245,242,232,0.2);
+  border-radius:6px;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  min-height:70px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lineup-slot.filled{ border-style:solid; border-color: rgba(244,211,94,0.4); }
+.lineup-slot.drop-target-active{
+  border-color: var(--terre-vif);
+  background: rgba(244,211,94,0.08);
+}
+.lineup-slot-label{ font-size:10px; text-transform:uppercase; color: var(--craie-att); letter-spacing:0.06em; }
+.lineup-slot-name{ font-size:13px; color: var(--craie); margin-top:4px; font-weight:600; }
+.lineup-slot-avatar{ width:32px; height:32px; margin-bottom:4px; }
+.lineup-slot-avatar svg{ width:100%; height:100%; display:block; }
+
+.lineup-slot-clear{
+  position:absolute;
+  top:4px; right:4px;
+  width:18px; height:18px;
+  border-radius:50%;
+  border:none;
+  background: rgba(200,75,49,0.7);
+  color: var(--craie);
+  font-size:10px;
+  line-height:18px;
+  text-align:center;
+  cursor:pointer;
+  padding:0;
+}
+.lineup-slot-clear:hover{ background: var(--rouge-equipe); }
+
+.collection-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:24px;
+  margin-bottom:4px;
+}
+
+.collection-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.player-card{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:12px;
+  cursor:grab;
+  border: 1px solid rgba(245,242,232,0.08);
+  position:relative;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.player-card.rarity-rare{ border-color: rgba(108,180,238,0.4); }
+.player-card.rarity-legendaire{ border-color: rgba(244,211,94,0.5); }
+.player-card.rarity-custom{ border-color: rgba(155,93,229,0.5); }
+.player-card:hover{ transform: translateY(-1px); }
+.player-card.dragging{ opacity:0.4; }
+.player-card.assigned{ box-shadow: inset 0 0 0 1px rgba(244,211,94,0.3); }
+
+.player-card-avatar{ width:40px; height:40px; margin-bottom:8px; }
+.player-card-avatar svg{ width:100%; height:100%; display:block; }
+
+.player-card-name{ font-size:13px; font-weight:700; color: var(--craie); }
+.player-card-style{ font-size:11px; color: var(--craie-att); text-transform:capitalize; margin-top:2px; }
+.player-card-rarity{
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin-top:6px;
+  display:inline-block;
+  padding:2px 6px;
+  border-radius:4px;
+  background: rgba(245,242,232,0.08);
+  color: var(--craie-att);
+}
+.player-card-assigned-badge{
+  position:absolute;
+  top:8px; right:8px;
+  font-size:8px;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  color: var(--terre-vif);
+  background: rgba(244,211,94,0.12);
+  padding:2px 5px;
+  border-radius:6px;
+}
+
+/* ---------- CRÉATION DE JOUEUR PERSONNALISÉ ---------- */
+
+.create-player-card{ max-width:440px; }
+.create-player-title{ font-size:24px; }
+.create-player-sub:not(:empty){ color: var(--rouge-equipe-clair); text-align:left; }
+.create-player-quota-note{ font-size:12px; color: var(--craie-att); margin: 0 0 16px; }
+
+.create-player-layout{
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+}
+
+.create-player-preview{
+  width:90px; height:90px;
+  flex-shrink:0;
+}
+.create-player-preview svg{ width:100%; height:100%; display:block; }
+
+.create-player-fields{ flex:1; display:flex; flex-direction:column; gap:4px; }
+.create-player-fields .setup-label{ margin-top:8px; }
+
+.create-player-style-options .setup-option{ font-size:11px; padding:8px 4px; }
+
+.avatar-color-options{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px; }
+.avatar-color-swatch{
+  width:26px; height:26px;
+  border-radius:50%;
+  cursor:pointer;
+  border: 2px solid transparent;
+}
+.avatar-color-swatch.active{ border-color: var(--craie); }
+
+.collection-section{ width:100%; }
+
+.leaderboard-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+.leaderboard-table th{
+  text-align:left;
+  padding:8px 10px;
+  color: var(--craie-att);
+  font-family:'Barlow Condensed', sans-serif;
+  text-transform:uppercase;
+  font-size:11px;
+  border-bottom: 1px solid rgba(245,242,232,0.12);
+}
+.leaderboard-table td{
+  padding:10px 10px;
+  color: var(--craie);
+  border-bottom: 1px solid rgba(245,242,232,0.06);
+}
+
+/* ---------- AMIS & MERCATO ---------- */
+
+.mercato-section{ margin-bottom:28px; }
+
+.friend-row, .offer-row{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.friend-row-name, .offer-row-desc{ font-size:14px; color: var(--craie); }
+.offer-row-desc strong{ color: var(--terre-vif); }
+
+.friend-row-actions, .offer-row-actions{ display:flex; gap:8px; flex-shrink:0; }
+
+.btn-small{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:11px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  padding:6px 12px;
+  border-radius:6px;
+  border:1px solid rgba(245,242,232,0.14);
+  background: var(--nuit);
+  color: var(--craie);
+  cursor:pointer;
+}
+.btn-small.primary{ background: var(--terre); border-color: var(--terre); color:#1A1208; }
+.btn-small.danger{ background: rgba(200,75,49,0.15); border-color: rgba(200,75,49,0.4); color: var(--rouge-equipe-clair); }
+
+.mercato-offer-card{ max-width:480px; }
+.mercato-offer-columns{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.mercato-offer-column{ flex:1; }
+.mercato-offer-arrow{ font-size:24px; color: var(--terre-vif); flex-shrink:0; margin-top:18px; }
+
+.mercato-player-select{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:220px;
+  overflow-y:auto;
+  margin-top:8px;
+}
+
+.mercato-player-option{
+  background: var(--nuit);
+  border: 1px solid rgba(245,242,232,0.1);
+  border-radius:4px;
+  padding:8px 10px;
+  font-size:12px;
+  color: var(--craie);
+  cursor:pointer;
+  text-align:left;
+}
+.mercato-player-option.selected{ border-color: var(--terre-vif); background: rgba(244,211,94,0.08); }

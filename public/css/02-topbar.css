@@ -1,0 +1,168 @@
+/* =====================================================================
+   TOPBAR ET BASCULE DE LANGUE
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- TOPBAR ---------- */
+
+.topbar{
+  width:100%;
+  max-width:1100px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 18px 2px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(200,132,26,0.18);
+}
+
+.topbar-link{
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-family:'Space Grotesk', sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  padding: 6px 10px;
+  border-radius:6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.topbar-link:hover{ color: var(--craie); background: rgba(255,255,255,0.06); }
+.topbar-link:focus-visible{ outline:2px solid var(--terre-vif); outline-offset:2px; }
+
+/* ---------- LAYOUT JEU (deux colonnes sur grand écran) ---------- */
+
+.game-layout{
+  width:100%;
+  max-width:1100px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:28px;
+}
+
+.game-main{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:460px;
+}
+
+.game-sidebar{
+  display:none; /* masqué sur mobile, activé en desktop via media query plus bas */
+  flex-direction:column;
+  gap:16px;
+  width:280px;
+  flex-shrink:0;
+}
+
+.sidebar-card{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.sidebar-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+  margin-bottom:14px;
+}
+
+.sidebar-stats{ margin:0; display:flex; flex-direction:column; gap:10px; }
+.sidebar-stat{ display:flex; justify-content:space-between; align-items:baseline; margin:0; }
+.sidebar-stat dt{ font-size:13px; color: var(--craie-att); }
+.sidebar-stat dd{
+  margin:0;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:18px;
+}
+
+.sidebar-rules{
+  margin:0; padding-left:18px;
+  display:flex; flex-direction:column; gap:10px;
+  font-size:13px;
+  line-height:1.5;
+  color: var(--craie-att);
+}
+.sidebar-rules li::marker{ color: var(--terre-vif); }
+/* #199 — règles avancées du palier actif, distinguées du socle de base */
+.sidebar-rules li.rule-advanced{ color: var(--craie-att); opacity:0.9; }
+.sidebar-rules li.rule-advanced::marker{ color: #FFD87A; }
+/* #199 — badge du palier de règles à côté du titre du rappel */
+.rules-palier-badge{
+  font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+  padding:2px 7px; border-radius:999px; vertical-align:middle;
+  background: rgba(255,216,122,0.14); color:#FFD87A;
+  border:1px solid rgba(255,216,122,0.28);
+}
+.rules-palier-badge:empty{ display:none; }
+
+.scoreboard{
+  width:100%;
+  display:grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items:center;
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding: 14px 18px;
+  margin-bottom:18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
+  position:relative;
+}
+
+.team-block{display:flex; align-items:center; gap:10px;}
+.team-block.right{justify-content:flex-end; flex-direction:row-reverse;}
+
+.team-dot{ width:14px; height:14px; border-radius:50%; flex-shrink:0; }
+.team-dot.bleu{background: var(--bleu-equipe-clair); box-shadow:0 0 8px var(--bleu-equipe);}
+.team-dot.rouge{background: var(--rouge-equipe-clair); box-shadow:0 0 8px var(--rouge-equipe);}
+
+.team-name{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:15px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color: var(--craie);
+}
+
+.score-center{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900;
+  font-size:42px;
+  letter-spacing:0.02em;
+  padding: 0 10px;
+}
+.score-num{min-width:30px; text-align:center;}
+.score-sep{color:var(--ambre); font-size:22px; font-weight:700; opacity:0.7;}
+
+.turn-banner{
+  width:100%;
+  text-align:center;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color: var(--craie-att);
+  margin-bottom:14px;
+  height:18px;
+  transition: color 0.2s ease;
+}
+.turn-banner.active-bleu{color: var(--bleu-equipe-clair);}
+.turn-banner.active-rouge{color: var(--rouge-equipe-clair);}

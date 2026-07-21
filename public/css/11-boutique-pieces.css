@@ -1,0 +1,417 @@
+/* =====================================================================
+   BOUTIQUE ET PIÈCES (SPRINTS E1/E2)
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ========== SPRINTS E1/E2 — NOUVELLE BOUTIQUE & PIÈCES ========== */
+
+/* --- Topbar : solde pièces --- */
+.topbar-coins {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ambre);
+  background: rgba(200,132,26,0.1);
+  border: 1px solid rgba(200,132,26,0.25);
+  border-radius: 3px;
+  padding: 4px 10px;
+}
+
+/* Animation gain de pièces */
+.coin-gain-badge {
+  position: fixed;
+  top: 52px;
+  right: 16px;
+  background: var(--ambre);
+  color: var(--noir);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 6px 14px;
+  border-radius: 4px;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.coin-gain-badge-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Layout boutique --- */
+.shop-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+#shopGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  margin-top: 24px;
+}
+
+/* --- Sections --- */
+.shop-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.shop-section-header { display: flex; flex-direction: column; gap: 6px; }
+.shop-section-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ambre);
+}
+.shop-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--craie);
+  margin: 0;
+}
+.shop-section-desc {
+  font-size: 13px;
+  color: var(--craie-att);
+  margin: 0;
+  max-width: 560px;
+}
+
+/* --- Pack Fondateurs --- */
+.shop-section-founders {
+  background: var(--noir-clair);
+  border: 1px solid rgba(200,132,26,0.35);
+  border-radius: 6px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.shop-section-founders::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ambre), var(--or), var(--ambre));
+}
+.shop-tag-limited {
+  color: var(--or) !important;
+}
+.founders-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0;
+}
+.founders-counter-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--or);
+  line-height: 1;
+}
+.founders-counter-label {
+  font-size: 12px;
+  color: var(--craie-att);
+  text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: .1em;
+}
+.founders-counter-bar {
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: rgba(200,132,26,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.founders-counter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ambre), var(--or));
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+.founders-perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+.founders-perk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--craie-att);
+}
+.shop-founders-btn {
+  background: var(--ambre);
+  color: var(--noir);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 14px 28px;
+  border-radius: 4px;
+  align-self: flex-start;
+  transition: background .15s, transform .15s;
+}
+.shop-founders-btn:hover {
+  background: var(--or);
+  transform: translateY(-1px);
+}
+
+/* --- Passes --- */
+.shop-passes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.shop-pass-card {
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.1);
+  border-radius: 6px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+.shop-pass-best {
+  border-color: rgba(200,132,26,0.35);
+}
+.shop-pass-active {
+  border-color: var(--succes);
+}
+.shop-pass-badge-best {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ambre);
+  color: var(--noir);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.shop-pass-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  color: var(--craie-att);
+  text-transform: uppercase;
+}
+.shop-pass-price {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--craie);
+  line-height: 1;
+}
+.shop-pass-period {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--craie-att);
+}
+.shop-pass-savings {
+  font-size: 11px;
+  color: var(--succes);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+}
+.shop-pass-perks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.shop-pass-perks li {
+  font-size: 12px;
+  color: var(--craie-att);
+  padding-left: 14px;
+  position: relative;
+}
+.shop-pass-perks li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--ambre);
+  font-weight: 700;
+}
+.shop-pass-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: auto;
+}
+.shop-pass-active-badge {
+  font-size: 11px;
+  color: var(--succes);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  padding: 8px;
+  background: rgba(31,168,107,0.1);
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* --- Packs --- */
+.shop-packs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.shop-pack-card {
+  position: relative; /* ancre le badge "MEILLEUR TAUX" sur la carte (sinon il fuit en haut de page) */
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.1);
+  border-radius: 6px;
+  padding: 18px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shop-pack-icon { font-size: 24px; }
+.shop-pack-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--craie);
+}
+.shop-pack-desc {
+  font-size: 12px;
+  color: var(--craie-att);
+  flex: 1;
+}
+.shop-pack-footer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.shop-pack-price {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--or);
+}
+.shop-pack-saves {
+  font-size: 10px;
+  color: var(--craie-dim);
+}
+.shop-pack-btn {
+  width: 100%;
+  padding: 9px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* --- Kits --- */
+.shop-coins-header {
+  background: rgba(200,132,26,0.06);
+  border: 1px solid rgba(200,132,26,0.2);
+  border-radius: 6px;
+  padding: 16px;
+}
+.shop-coins-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--craie-att);
+  margin-bottom: 12px;
+}
+.shop-coins-hint {
+  font-size: 11px;
+  color: var(--craie-dim);
+  margin-left: 8px;
+}
+.shop-coins-grid, .shop-kits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.shop-kit-card {
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color .2s, transform .15s;
+}
+.shop-kit-card:hover { border-color: rgba(200,132,26,0.3); transform: translateY(-2px); }
+.shop-kit-active { border-color: var(--ambre) !important; }
+.shop-kit-owned  { opacity: .75; }
+
+.shop-kit-preview {
+  height: 70px;
+  position: relative;
+  overflow: hidden;
+}
+.shop-kit-preview-lines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0%, transparent 45%,
+    rgba(var(--acc, 200,132,26), 0.12) 45%, rgba(var(--acc, 200,132,26), 0.12) 55%,
+    transparent 55%, transparent 100%
+  );
+}
+.shop-kit-preview-ball {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #F8F0E0, #C4B898);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.shop-kit-body { padding: 10px; }
+.shop-kit-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--craie);
+  margin-bottom: 3px;
+}
+.shop-kit-desc {
+  font-size: 10px;
+  color: var(--craie-dim);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.shop-kit-footer { display: flex; flex-direction: column; gap: 4px; }
+.shop-kit-buy-btn, .shop-kit-coin-btn, .shop-kit-select-btn {
+  font-size: 11px;
+  padding: 6px 8px;
+  width: 100%;
+  font-weight: 700;
+  display: flex;
+}

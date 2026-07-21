@@ -1,0 +1,171 @@
+/* =====================================================================
+   BOUTIQUE (PREMIÈRE VERSION)
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- BOUTIQUE ---------- */
+
+.shop-layout{
+  width:100%;
+  max-width:920px;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+}
+
+.shop-hero{
+  display:flex;
+  align-items:flex-start;
+  gap:24px;
+  margin: 12px 0 32px;
+  flex-wrap:wrap;
+}
+
+.shop-hero .btn{ flex-shrink:0; }
+
+.shop-hero-text{ display:flex; flex-direction:column; gap:6px; }
+
+.shop-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800; font-size:30px;
+  letter-spacing:0.02em; text-transform:uppercase;
+  line-height:1;
+}
+
+.shop-subtitle{
+  margin:0;
+  font-size:14px;
+  color: var(--craie-att);
+  max-width:440px;
+}
+
+.shop-grid{
+  width:100%;
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap:16px;
+}
+
+.theme-card{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:18px;
+  display:flex; flex-direction:column; gap:10px;
+  border: 1px solid rgba(245,242,232,0.08);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  position:relative;
+}
+.theme-card:hover{ transform: translateY(-2px); }
+.theme-card.active{ border-color: var(--terre-vif); }
+
+.theme-card.world-cup{
+  border-color: rgba(244,211,94,0.35);
+  background: linear-gradient(165deg, var(--nuit-clair), #1d1408);
+}
+.theme-card.world-cup:hover{ border-color: rgba(244,211,94,0.6); }
+
+.world-cup-badge{
+  position:absolute;
+  top:-10px;
+  right:14px;
+  background: linear-gradient(135deg, #F4D35E, #E0A52C);
+  color: #1A1208;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:10px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding: 4px 10px;
+  border-radius:20px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+.theme-swatch{
+  height:72px;
+  border-radius:4px;
+  display:flex; align-items:flex-end; gap:8px;
+  padding:10px;
+}
+.bundle-card{
+  border-color: rgba(244,211,94,0.5);
+  border-width: 2px;
+}
+
+.bundle-swatch{
+  background: linear-gradient(120deg, #0F2818, #1d1408);
+  justify-content:space-between;
+}
+.bundle-swatch span{
+  width:16px; height:16px; border-radius:50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.theme-swatch span{
+  width:18px; height:18px; border-radius:50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.theme-name{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700; font-size:17px;
+  text-transform:uppercase; letter-spacing:0.02em;
+}
+
+.theme-desc{ font-size:13px; color: var(--craie-att); line-height:1.4; flex:1; }
+
+.theme-action{ width:100%; margin-top:4px; }
+
+.shop-empty, .shop-mock-banner{
+  grid-column: 1 / -1;
+  text-align:center;
+  font-size:13px;
+  color: var(--craie-att);
+  padding: 16px;
+}
+
+.shop-offline-banner{
+  background: rgba(200,75,49,0.12);
+  border: 1px solid rgba(200,75,49,0.3);
+  border-radius:4px;
+  color: var(--craie);
+}
+
+@media (max-width: 380px){
+  .logo-title{ font-size:42px; }
+  .score-center{ font-size:26px; }
+  .team-name{ font-size:12px; }
+}
+
+@media (max-width: 760px){
+  .feature-grid{ grid-template-columns: 1fr; }
+  .setup-hero{ flex-direction:column; gap:32px; text-align:center; }
+  .setup-text{ align-items:center; text-align:center; }
+  .hero-pitch{ text-align:center; }
+}
+
+/* ---------- ADAPTATION GRAND ÉCRAN ---------- */
+/* Au-delà de 860px de large, assez de place pour afficher le panneau
+   "feuille de match" à côté du plateau plutôt qu'en dessous, et agrandir
+   légèrement le plateau pour qu'il ne reste pas perdu dans l'espace. */
+@media (min-width: 860px){
+  .game-layout{
+    flex-direction:row;
+    align-items:flex-start;
+    justify-content:center;
+    gap:32px;
+  }
+
+  .game-main{ max-width:520px; }
+
+  .game-sidebar{
+    display:flex;
+    margin-top: 4px;
+  }
+
+  .setup-text{ text-align:left; }
+  .setup-preview{ display:flex; }
+}

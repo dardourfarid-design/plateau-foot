@@ -1,0 +1,298 @@
+/* =====================================================================
+   CARTES JOUEURS TCG, ONGLETS ET SKELETONS
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ========== SPRINT D4 — CARTES TCG + SKELETON + ONGLETS + HOVER 3D ========== */
+
+/* --- Onglets profil : indicateur glissant --- */
+.profile-tabs {
+  position:relative;
+  border-bottom: 1px solid rgba(200,132,26,0.15);
+  padding-bottom:0;
+  margin-bottom:24px;
+}
+/* L'indicateur ambre animé est injecté en JS via .tab-indicator */
+.tab-indicator {
+  position:absolute;
+  bottom:0;
+  height:2px;
+  background: var(--ambre);
+  border-radius:2px 2px 0 0;
+  transition: left 0.25s cubic-bezier(0.4,0,0.2,1),
+              width 0.25s cubic-bezier(0.4,0,0.2,1);
+  pointer-events:none;
+}
+.profile-tab {
+  position:relative;
+  border-bottom:2px solid transparent;
+}
+.profile-tab.active {
+  color: var(--or);
+  border-color: transparent; /* l'indicateur prend le relais */
+}
+
+/* --- Skeleton loader --- */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(240,230,211,0.05) 25%,
+    rgba(240,230,211,0.10) 50%,
+    rgba(240,230,211,0.05) 75%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-sweep 1.6s ease infinite;
+  border-radius:4px;
+}
+@keyframes skeleton-sweep {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+.skeleton-card {
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.06);
+  border-radius:4px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.skeleton-circle {
+  width:44px; height:44px;
+  border-radius:50%;
+}
+.skeleton-line { height:10px; }
+.skeleton-line.short { width:55%; }
+.skeleton-line.medium { width:75%; }
+.skeleton-line.long { width:90%; }
+.skeleton-badge { height:18px; width:40%; border-radius:3px; }
+
+/* --- Cartes joueur TCG : refonte complète --- */
+.player-card {
+  background: var(--noir-clair);
+  border-radius:4px;
+  padding:0;
+  cursor:grab;
+  position:relative;
+  overflow:hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Perspective pour le hover 3D */
+  perspective:600px;
+  transform-style:preserve-3d;
+}
+
+/* Liseré de rareté en haut */
+.player-card::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:3px;
+  z-index:2;
+}
+.player-card.rarity-commun::before  { background: rgba(240,230,211,0.15); }
+.player-card.rarity-rare::before    { background: linear-gradient(90deg,#2A5FA5,#7AAEE8,#2A5FA5); }
+.player-card.rarity-legendaire::before { background: linear-gradient(90deg,#C8841A,#FFD87A,#E8A030,#FFD87A,#C8841A); }
+.player-card.rarity-custom::before  { background: linear-gradient(90deg,#7A4FC8,#9B6BFF,#7A4FC8); }
+
+/* Hover 3D léger — rotation selon position souris via JS */
+.player-card:hover {
+  box-shadow: 0 14px 36px rgba(0,0,0,0.7);
+  z-index:2;
+}
+/* Lueur de rareté au hover */
+.player-card.rarity-rare:hover      { box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 20px rgba(42,95,165,0.25); }
+.player-card.rarity-legendaire:hover{ box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 24px rgba(200,132,26,0.3); }
+.player-card.rarity-custom:hover    { box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 20px rgba(122,79,200,0.3); }
+
+.player-card.dragging { opacity:0.35; transform:scale(0.95); }
+.player-card.assigned { outline: 1px solid rgba(200,132,26,0.4); }
+
+/* Intérieur de la carte */
+.player-card-inner {
+  padding: 12px 12px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+/* Header : avatar + numéro + badge position */
+.player-card-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:8px;
+}
+.player-card-avatar-wrap {
+  position:relative;
+  width:46px; height:46px;
+  flex-shrink:0;
+}
+.player-card-avatar-wrap svg { width:46px; height:46px; display:block; }
+
+/* Numéro de maillot sur l'avatar */
+.player-card-jersey {
+  position:absolute;
+  bottom:-4px; right:-4px;
+  background: var(--noir);
+  border: 1px solid rgba(240,230,211,0.15);
+  border-radius:3px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:11px;
+  font-weight:900;
+  color: var(--craie);
+  width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1;
+}
+.player-card.rarity-rare .player-card-jersey     { border-color: rgba(42,95,165,0.5); color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-jersey{ border-color: rgba(200,132,26,0.6); color: var(--or); }
+.player-card.rarity-custom .player-card-jersey   { border-color: rgba(122,79,200,0.5); color: var(--pouvoir-clair); }
+
+/* Badge position (DEF / ATT / GK) */
+.player-card-pos {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding: 2px 5px;
+  border-radius:2px;
+  border: 1px solid rgba(240,230,211,0.2);
+  color: var(--craie-att);
+}
+.player-card.rarity-rare .player-card-pos       { border-color: rgba(42,95,165,0.4); color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-pos { border-color: rgba(200,132,26,0.5); color: var(--or); }
+.player-card.rarity-custom .player-card-pos     { border-color: rgba(122,79,200,0.4); color: var(--pouvoir-clair); }
+
+/* Nom + style */
+.player-card-name {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:15px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color: var(--craie);
+  margin-bottom:1px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.player-card-style {
+  font-size:10px;
+  color: var(--craie-att);
+  text-transform:capitalize;
+  margin-bottom:8px;
+  letter-spacing:.02em;
+}
+
+/* Stats VIT / TIR */
+.player-card-stats {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  margin-bottom:8px;
+}
+.player-card-stat {
+  background: rgba(240,230,211,0.04);
+  border-radius:2px;
+  padding: 3px 6px;
+  display:flex;
+  flex-direction:column;
+}
+.player-card-stat-label {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color: var(--craie-dim);
+}
+.player-card-stat-val {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:16px;
+  font-weight:900;
+  line-height:1;
+  color: var(--craie);
+}
+.player-card.rarity-rare .player-card-stat-val      { color: var(--bleu-equipe-clair); }
+.player-card.rarity-legendaire .player-card-stat-val{ color: var(--or); }
+.player-card.rarity-custom .player-card-stat-val    { color: var(--pouvoir-clair); }
+
+/* Footer : rareté + badge pouvoir */
+.player-card-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+}
+.player-card-rarity {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding: 2px 6px;
+  border-radius:2px;
+}
+.player-card.rarity-commun .player-card-rarity {
+  background: rgba(240,230,211,0.07);
+  color: var(--craie-att);
+}
+.player-card.rarity-rare .player-card-rarity {
+  background: rgba(42,95,165,0.15);
+  color: var(--bleu-equipe-clair);
+}
+.player-card.rarity-legendaire .player-card-rarity {
+  background: rgba(200,132,26,0.15);
+  color: var(--or);
+}
+.player-card.rarity-custom .player-card-rarity {
+  background: rgba(122,79,200,0.15);
+  color: var(--pouvoir-clair);
+}
+
+/* Badge pouvoir sur la carte (pas le pion) */
+.player-card-power-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: var(--pouvoir-clair);
+  background: rgba(122,79,200,0.12);
+  border: 1px solid rgba(122,79,200,0.3);
+  border-radius:2px;
+  padding: 2px 5px;
+}
+
+/* Badge "Aligné" repositionné */
+.player-card-assigned-badge {
+  position:absolute;
+  top:8px; left:8px;
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color: var(--ambre);
+  background: rgba(200,132,26,0.15);
+  border: 1px solid rgba(200,132,26,0.3);
+  padding: 2px 5px;
+  border-radius:2px;
+  z-index:3;
+}
+
+/* Stats de progression : liseré ambre à gauche */
+.progress-stat {
+  border-left: 2px solid rgba(200,132,26,0.3);
+  border-radius:0 4px 4px 0;
+  transition: border-color 0.2s ease;
+}
+.progress-stat:hover { border-left-color: var(--ambre); }

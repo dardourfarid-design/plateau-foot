@@ -1,0 +1,335 @@
+/* =====================================================================
+   PLATEAU DE JEU ET PIONS
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- PLATEAU ---------- */
+
+.board-grid.ai-thinking{
+  pointer-events: none;
+  opacity: 0.92;
+  transition: opacity 0.2s ease;
+}
+
+.board-wrap{
+  position:relative;
+  width:100%;
+  max-width:460px;
+  aspect-ratio: 7 / 9;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--vert-terrain-clair) 0%,
+      var(--vert-terrain-clair) 11.11%,
+      var(--vert-terrain) 11.11%,
+      var(--vert-terrain) 22.22%
+    );
+  border-radius:6px;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(200,132,26,0.18);
+  overflow:hidden;
+}
+
+.pitch-lines{ position:absolute; inset:0; pointer-events:none; }
+
+.board-grid{
+  position:absolute; inset:0;
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+}
+
+.cell{ position:relative; display:flex; align-items:center; justify-content:center; }
+
+.cell::after{
+  content:'';
+  position:absolute;
+  inset: 1px;
+  border: 1px solid rgba(200,132,26,0.07);
+}
+
+/* ---------- Toggle de langue FR|EN (topbar) ---------- */
+.lang-toggle{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid rgba(232,160,48,0.35);
+  border-radius:999px;
+  overflow:hidden;
+  margin-right:10px;
+}
+.lang-toggle .lang-opt{
+  background:transparent;
+  border:none;
+  color:var(--craie-att);
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  padding:4px 9px;
+  cursor:pointer;
+  line-height:1;
+  transition:background .15s, color .15s;
+}
+.lang-toggle .lang-opt:hover{ color:var(--craie); }
+.lang-toggle .lang-opt.active{
+  background:var(--or);
+  color:var(--noir);
+}
+
+.cell.goal-zone-bleu{ background: rgba(42,95,165,0.12); }
+.cell.goal-zone-rouge{ background: rgba(200,50,34,0.12); }
+
+/* v0.5 — cases speciales : ailes (centres) et points de penalty. Reperes
+   discrets, pour ne pas surcharger le plateau tout en enseignant les regles. */
+.cell.wing-lane{ box-shadow: inset 0 0 0 1px rgba(232,160,48,0.10); }
+.cell.penalty-spot::after{
+  content:'';
+  position:absolute;
+  top:50%; left:50%;
+  width:6px; height:6px;
+  transform: translate(-50%,-50%);
+  border-radius:50%;
+  background: rgba(255,216,122,0.55);
+  box-shadow: 0 0 6px rgba(255,216,122,0.4);
+  pointer-events:none;
+}
+
+/* #208 — trajectoire de passe animée : une pastille lumineuse « file » le long
+   de la ligne de passe, case par case, puis s'efface. Non bloquant. */
+.cell.pass-trail::after{
+  content:'';
+  position:absolute; top:50%; left:50%;
+  width:44%; height:44%;
+  transform: translate(-50%,-50%);
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(255,216,122,0.85) 0%, rgba(255,216,122,0) 70%);
+  pointer-events:none;
+  animation: passTrail 0.35s ease-out forwards;
+}
+@keyframes passTrail{
+  0%{ opacity:0; transform: translate(-50%,-50%) scale(0.4); }
+  40%{ opacity:1; }
+  100%{ opacity:0; transform: translate(-50%,-50%) scale(1.1); }
+}
+/* #208 — flash de but sur le plateau. */
+.board-wrap.goal-flash-board{ animation: goalFlashBoard 0.6s ease-out; }
+@keyframes goalFlashBoard{
+  0%{ box-shadow: 0 0 0 0 rgba(255,216,122,0); }
+  30%{ box-shadow: 0 0 0 6px rgba(255,216,122,0.35); }
+  100%{ box-shadow: 0 0 0 0 rgba(255,216,122,0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .cell.pass-trail::after{ animation:none; opacity:0; }
+  .board-wrap.goal-flash-board{ animation:none; }
+}
+
+/* #201 — cases coupées par la couverture adverse (interception). Hachurée
+   rouge discrète : "tu ne peux pas passer ici". Non cliquable, purement
+   pédagogique. N'apparaît que si le palier active la couverture. */
+.cell.covered-cell::before{
+  content:'';
+  position:absolute; inset:3px;
+  border-radius:3px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(214,72,72,0.16) 0, rgba(214,72,72,0.16) 2px,
+    transparent 2px, transparent 5px);
+  box-shadow: inset 0 0 0 1px rgba(214,72,72,0.18);
+  pointer-events:none;
+}
+
+.center-mark{
+  position:absolute;
+  top:50%; left:50%;
+  width:64px; height:64px;
+  margin-left:-32px; margin-top:-32px;
+  border: 1px solid rgba(200,132,26,0.28);
+  border-radius:50%;
+  pointer-events:none;
+}
+.center-line{
+  position:absolute; top:50%; left:0; right:0; height:1px;
+  background: rgba(200,132,26,0.22);
+  pointer-events:none;
+}
+
+.goal-line-top, .goal-line-bottom{
+  position:absolute; left: 28.57%; right:28.57%; height:1px;
+  background: rgba(200,132,26,0.45);
+  pointer-events:none;
+}
+.goal-line-top{top: 0;}
+.goal-line-bottom{bottom:0;}
+
+.goal-box-top, .goal-box-bottom{
+  position:absolute; left: 28.57%; right:28.57%; height: 11.11%;
+  border-left:1px solid rgba(200,132,26,0.3);
+  border-right:1px solid rgba(200,132,26,0.3);
+  pointer-events:none;
+}
+.goal-box-top{top:0; border-top:none;}
+.goal-box-bottom{bottom:0; border-bottom:none;}
+
+/* Pions */
+
+.token{
+  width:78%; height:78%;
+  border-radius:50%;
+  position:relative;
+  cursor:pointer;
+  transition: transform 0.16s ease;
+  display:flex; align-items:center; justify-content:center;
+  z-index:3;
+}
+
+.token.bleu{
+  background: radial-gradient(circle at 33% 28%, var(--bleu-equipe-clair) 0%, var(--bleu-equipe) 55%, #142E5A 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px var(--ombre);
+}
+.token.rouge{
+  background: radial-gradient(circle at 33% 28%, var(--rouge-equipe-clair) 0%, var(--rouge-equipe) 55%, #6A1510 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px var(--ombre);
+}
+
+.token.gardien{ outline: 2px solid var(--or); outline-offset: -5px; }
+
+.token .gk-mark{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight:900;
+  color: rgba(255,255,255,0.95);
+  letter-spacing:0.02em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+/* Numéro de maillot affiché sur le pion */
+.token .jersey-number{
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:15px;
+  font-weight:900;
+  color: rgba(255,255,255,0.92);
+  letter-spacing:0;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  line-height:1;
+  pointer-events:none;
+  z-index:4;
+}
+
+.token-name-label{
+  position:absolute;
+  bottom: 14%;
+  left:50%;
+  transform: translateX(-50%);
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:8px;
+  font-weight:700;
+  white-space:nowrap;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  pointer-events:none;
+  z-index:6;
+  max-width: 85%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+
+@media (max-width: 480px){
+  .token-name-label{ display:none; } /* trop petit pour rester lisible sans casser la grille */
+}
+
+.token-power-badge{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  width:18px; height:18px;
+  border-radius:50%;
+  background: var(--pouvoir);
+  border: 1.5px solid var(--pouvoir-clair);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:7;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  overflow:hidden;
+}
+.token-power-badge svg{ display:block; }
+.token-power-badge.used{
+  background: rgba(240,230,211,0.1);
+  border-color: rgba(240,230,211,0.2);
+  filter: grayscale(1);
+  opacity:0.5;
+}
+
+.power-btn{
+  background: linear-gradient(135deg, #9B5DE5, #6A3FA0) !important;
+  color:#fff !important;
+  border-color: #9B5DE5 !important;
+}
+.power-btn:hover{ filter: brightness(1.1); }
+
+.token.selectable{ cursor:pointer; }
+
+.token.selected{
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px var(--craie), 0 4px 14px var(--ombre);
+  z-index:5;
+}
+
+.token:hover{ transform: scale(1.06); }
+
+/* Ballon */
+
+.ball{
+  /* #243 — Ballon unique du jeu (img/ball.png), partagé avec la séance de tirs
+     au but : avant, le plateau avait son propre ballon en data-URI et la séance
+     un simple rond blanc — deux dessins pour un même objet. */
+  width:74%; height:74%;
+  border-radius:50%;
+  background: url('img/ball.png') center/cover no-repeat;
+  position:relative;
+  z-index:4;
+  box-shadow: 0 4px 10px var(--ombre), 0 0 0 2px rgba(0,0,0,0.08);
+  transition: transform 0.18s ease;
+}
+
+/* Destinations */
+
+.cell.dest-move .move-dot{
+  width:34%; height:34%;
+  border-radius:50%;
+  background: rgba(245,242,232,0.5);
+  position:absolute;
+  pointer-events:none;
+  z-index:2;
+}
+.cell.dest-move{ cursor:pointer; }
+.cell.dest-pass{ cursor:pointer; }
+.cell.dest-pass .pass-ring{
+  position:absolute; inset:14%;
+  border-radius:50%;
+  border: 3px solid var(--terre-vif);
+  pointer-events:none;
+  z-index:2;
+  animation: pulse-ring 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse-ring{
+  0%,100%{ opacity:0.55; transform:scale(0.96); }
+  50%{ opacity:1; transform:scale(1.04); }
+}
+
+.cell.dest-power{ cursor:pointer; }
+.cell.dest-power::after{
+  content:'';
+  position:absolute; inset:18%;
+  border-radius:50%;
+  border: 3px solid #9B5DE5;
+  background: rgba(155,93,229,0.15);
+  pointer-events:none;
+  z-index:2;
+  animation: pulse-ring 1.1s ease-in-out infinite;
+}

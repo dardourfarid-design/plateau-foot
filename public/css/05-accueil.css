@@ -1,0 +1,312 @@
+/* =====================================================================
+   ACCUEIL, HERO ET ÉCRAN DE CONFIGURATION
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+/* ---------- SETUP ---------- */
+
+.setup-screen{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:90vh;
+  padding: 30px 20px 60px;
+}
+
+.setup-hero{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:64px;
+  max-width:880px;
+  width:100%;
+}
+
+.setup-text{
+  display:flex; flex-direction:column;
+  text-align:center;
+  max-width:420px;
+  width:100%;
+}
+
+.logo-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:900; font-size:60px;
+  letter-spacing:-0.01em; text-transform:uppercase;
+  line-height:0.92;
+  margin:0 0 2px; /* neutralise les marges UA du h1 (#181) */
+}
+.logo-title span{ color: var(--ambre); }
+
+.logo-sub{
+  font-size:13px; color: var(--craie-att);
+  letter-spacing:0.08em; text-transform:uppercase;
+  margin-bottom:20px;
+}
+
+.hero-pitch{
+  font-size:15px;
+  line-height:1.6;
+  color: var(--craie-att);
+  margin: 0 0 28px;
+  max-width: 380px;
+}
+
+.cta-main{
+  width:100%;
+  padding:16px;
+  font-size:16px;
+}
+/* #204 — bouton secondaire « Personnaliser » sous le « Jouer » immédiat */
+.cta-secondary{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+}
+
+/* M11 #253 — cartes de modes : les entrées secondaires du hero (tirs au but,
+   personnaliser, puzzle) regroupées en grille compacte sous le CTA « Jouer ».
+   Un seul bouton dominant, une hiérarchie visuelle nette. */
+.mode-cards{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  width:100%;
+  margin-top:12px;
+}
+.mode-card{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  padding:12px 12px 10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(240,230,211,0.14);
+  border-radius:6px;
+  color:var(--craie);
+  font-family:inherit;
+  cursor:pointer;
+  text-align:left;
+  transition:transform .15s ease, border-color .15s ease, background .15s ease;
+}
+.mode-card:hover{
+  transform:translateY(-2px);
+  border-color:var(--or);
+  background:rgba(232,160,48,0.08);
+}
+.mode-card:focus-visible{
+  outline:2px solid var(--or);
+  outline-offset:2px;
+  border-color:var(--or);
+}
+.mode-card-icon{ font-size:20px; line-height:1; }
+.mode-card-name{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800; font-size:15px; line-height:1.15;
+  letter-spacing:.06em; text-transform:uppercase;
+  margin-top:6px;
+}
+.mode-card-desc{ font-size:11px; color:var(--craie-att); letter-spacing:.02em; }
+
+/* Liens texte sous les cartes : tutoriel + Règles & FAQ côte à côte */
+.hero-links{
+  display:flex; align-items:center; justify-content:center;
+  gap:4px 22px; flex-wrap:wrap;
+}
+
+@media (max-width: 640px){
+  .mode-cards{ grid-template-columns:1fr; }
+  .mode-card{ flex-direction:row; align-items:center; gap:10px; padding:11px 14px; }
+  .mode-card-name{ margin-top:0; }
+  .mode-card-desc{ margin-left:auto; text-align:right; }
+}
+
+.setup-field{ width:100%; margin-bottom:20px; text-align:left; }
+/* #205 — bloc « Options avancées » repliable (divulgation progressive) */
+.advanced-options{
+  width:100%; text-align:left; margin-bottom:20px;
+  border:1px solid rgba(245,242,232,0.12); border-radius:6px;
+  background: rgba(255,255,255,0.02);
+}
+.advanced-options[open]{ padding-bottom:4px; }
+.advanced-summary{
+  cursor:pointer; list-style:none; user-select:none;
+  padding:12px 14px;
+  font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+  color: var(--craie-att);
+  display:flex; align-items:center; gap:8px;
+}
+.advanced-summary::-webkit-details-marker{ display:none; }
+.advanced-summary::before{
+  content:'▸'; color: var(--ambre); font-size:11px;
+  transition: transform 0.15s ease;
+}
+.advanced-options[open] .advanced-summary::before{ transform: rotate(90deg); }
+.advanced-summary:hover{ color: var(--craie); }
+.advanced-options .setup-field{ padding:0 14px; margin-bottom:16px; }
+.advanced-options .setup-field:first-of-type{ margin-top:4px; }
+.setup-label{
+  font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+  color: var(--craie-att); margin-bottom:8px; display:block;
+}
+.setup-hint{
+  font-size:12px; line-height:1.4; color: var(--craie-att);
+  opacity:0.75; margin:8px 0 0;
+}
+.setup-options{ display:flex; gap:8px; }
+.setup-option{
+  flex:1; padding: 12px 8px;
+  border-radius:4px;
+  border: 1px solid rgba(245,242,232,0.14);
+  background: var(--nuit-clair);
+  color: var(--craie);
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600; font-size:14px;
+  cursor:pointer; text-align:center;
+  transition: all 0.15s ease;
+}
+.setup-option.active{ background: var(--terre); color:#1A1208; border-color: var(--terre); }
+
+/* Aperçu visuel du plateau : évocation stylisée (pas le vrai plateau interactif),
+   masquée sur mobile pour ne pas pousser le formulaire hors écran. */
+.setup-preview{
+  display:none;
+  flex-direction:column;
+  gap:18px;
+  padding: 32px 40px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--vert-terrain-clair) 0%, var(--vert-terrain-clair) 16.6%,
+      var(--vert-terrain) 16.6%, var(--vert-terrain) 33.3%
+    );
+  border-radius:6px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(245,242,232,0.18);
+}
+
+.preview-row{ display:flex; gap:14px; justify-content:center; }
+
+.preview-token{
+  width:34px; height:34px; border-radius:50%;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25), 0 3px 6px rgba(0,0,0,0.4);
+}
+.preview-token.bleu{ background: linear-gradient(155deg, var(--bleu-equipe-clair), var(--bleu-equipe)); }
+.preview-token.rouge{ background: linear-gradient(155deg, var(--rouge-equipe-clair), var(--rouge-equipe)); }
+
+.preview-ball{
+  width:30px; height:30px; border-radius:50%;
+  margin: 0 auto;
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, #f1ede0 38%, #d9d3c0 70%, #bfb89f 100%);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+/* ---------- FEATURES (page de vente) ---------- */
+
+.feature-grid{
+  width:100%;
+  max-width:880px;
+  margin: 56px auto 0;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:20px;
+}
+
+.feature-card{
+  background: var(--nuit-clair);
+  border-radius:6px;
+  padding:22px 20px;
+  text-align:left;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.feature-icon{
+  font-size:22px;
+  margin-bottom:10px;
+  color: var(--terre-vif);
+}
+
+.feature-title{
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:700;
+  font-size:16px;
+  text-transform:uppercase;
+  letter-spacing:0.02em;
+  margin:0 0 8px; /* neutralise les marges UA du h2 (#181) */
+}
+
+.feature-desc{
+  font-size:13px;
+  line-height:1.5;
+  color: var(--craie-att);
+  margin:0;
+}
+
+/* ---------- ÉCRAN DE CONFIGURATION DE PARTIE ---------- */
+
+.config-screen{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:420px;
+  margin: 24px auto 0;
+  min-height:60vh;
+  justify-content:center;
+  position:relative;
+}
+
+.config-back{
+  position:absolute;
+  top:-48px; left:0;
+}
+
+.config-card{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+}
+
+.world-cup-banner{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  background: linear-gradient(120deg, #1d1408, #2a1d0a);
+  border: 1px solid rgba(244,211,94,0.3);
+  border-radius:6px;
+  padding: 14px 18px;
+  margin-bottom:22px;
+}
+
+.world-cup-banner-tag{
+  background: linear-gradient(135deg, #F4D35E, #E0A52C);
+  color: #1A1208;
+  font-family:'Barlow Condensed', sans-serif;
+  font-weight:800;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding: 5px 12px;
+  border-radius:20px;
+  flex-shrink:0;
+}
+
+.world-cup-banner-text{
+  font-size:13px;
+  color: var(--craie-att);
+}
+
+/* ---------- TOPBAR : groupe droit ---------- */
+
+.topbar-right{
+  display:flex;
+  gap:18px;
+  align-items:center;
+}

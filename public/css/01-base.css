@@ -1,0 +1,110 @@
+/* =====================================================================
+   VARIABLES, REMISES À ZÉRO, ÉLÉMENTS DE BASE
+   ---------------------------------------------------------------------
+   Découpé de styles.css (#312). public/styles.css est GÉNÉRÉ par
+   tools/build-css.mjs à partir de ce dossier — ne pas l'éditer à la main.
+   L'ordre des fichiers (préfixe numérique) EST l'ordre de cascade :
+   le renommer ou l'intercaler change le rendu.
+   ===================================================================== */
+
+:root{
+  /* Palette Snowfall x Football japonais — Sprint D1 */
+  --noir:          #0C0A07;
+  --noir-clair:    #181410;
+  --noir-moyen:    #231E18;
+  --ambre:         #C8841A;
+  --or:            #E8A030;
+  --or-pale:       #FFD87A;
+  --craie:         #F0E6D3;
+  --craie-att:     rgba(240,230,211,0.62); /* opacité relevée : contraste WCAG AA (#131) */
+  --craie-dim:     rgba(240,230,211,0.25);
+  --ombre:         rgba(0,0,0,0.55);
+
+  /* Couleurs équipes */
+  --bleu-equipe:        #2A5FA5;
+  --bleu-equipe-clair:  #7AAEE8;
+  --rouge-equipe:       #C83222;
+  --rouge-equipe-clair: #E07060;
+
+  /* Accents thématiques */
+  --pouvoir:       #7A4FC8;
+  --pouvoir-clair: #9B6BFF;
+  --succes:        #1FA86B;
+
+  /* Terrain */
+  --vert-terrain:       #0A1208;
+  --vert-terrain-clair: #0F1C0D;
+  --ligne-terrain:      rgba(200,132,26,0.10);
+
+  /* Alias rétrocompatibilité (valeurs utilisées dans le JS via CSS) */
+  --nuit:       var(--noir);
+  --nuit-clair: var(--noir-clair);
+  --terre:      var(--ambre);
+  --terre-vif:  var(--or);
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+
+html,body{
+  margin:0; padding:0;
+  background: var(--nuit);
+  color: var(--craie);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Vignette de fond : évite le grand vide uni sur les larges écrans en ancrant
+   doucement le regard vers le centre, sans détourner l'attention du plateau. */
+body{
+  background: var(--noir);
+  /* Grain pellicule : texture SVG très subtile, jamais visible directement
+     mais perçu inconsciemment — donne la profondeur des affiches Snowfall
+     vs un aplat numérique trop propre. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+}
+
+.app{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+  width:100%;
+  padding: 0 20px 48px;
+}
+
+.hidden{display:none !important;}
+.screen-col{display:flex; flex-direction:column; align-items:center; width:100%;}
+
+/* ---------- TOAST DE CONFIRMATION D'ACHAT ---------- */
+
+.purchase-toast{
+  position:fixed;
+  top:18px;
+  left:50%;
+  /* -60px (au lieu de -12px) : l'état masqué est entièrement HORS écran,
+     plus de pilule à moitié coupée en haut de page pendant les transitions. */
+  transform: translateX(-50%) translateY(-60px);
+  z-index:100;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 22px;
+  border-radius:6px;
+  background: var(--nuit-clair);
+  border: 1px solid rgba(46,158,79,0.4);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  font-family:'Space Grotesk', sans-serif;
+  font-size:14px;
+  color: var(--craie);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.purchase-toast.show{
+  opacity:1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events:auto;
+}
+.purchase-toast.cancelled{ border-color: rgba(245,242,232,0.2); }
+.purchase-toast #purchaseToastIcon{ font-size:18px; }

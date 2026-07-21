@@ -16,6 +16,12 @@ jobs:
           node-version: '20'
       - name: Lancer la suite de tests
         run: node tests/run-tests.js
+      # #324 : la liste modulepreload d'index.html doit rester le miroir exact
+      # du graphe d'imports STATIQUES de main.js. Sans ce contrôle, précharger
+      # un module rendu dynamique annulerait silencieusement le chargement
+      # paresseux — le code continuerait de marcher, seul le gain disparaîtrait.
+      - name: Cohérence modulepreload ↔ graphe d'imports
+        run: node tools/check-modulepreload.mjs
 
   # Le job « Parité src/ ↔ public/src/ » a été retiré : public/src/ est
   # désormais la SOURCE UNIQUE du code applicatif (#20) — il n'y a plus de

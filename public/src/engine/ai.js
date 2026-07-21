@@ -17,12 +17,11 @@ import {
   getValidRepliTargets, activateRepliAdverse
 } from './powers.js';
 import { GOAL_COLS, GOAL_ROW_TOP, GOAL_ROW_BOTTOM, BOARD_ROWS, TEAMS } from './constants.js';
-
-export const AI_LEVELS = Object.freeze({
-  FACILE: 'facile',
-  MOYEN: 'moyen',
-  DIFFICILE: 'difficile'
-});
+// AI_LEVELS vit dans aiLevels.js (#324) pour que l'UI puisse le connaître sans
+// charger ce module. Réexporté ici pour ne pas casser les importeurs existants
+// (tests unitaires) qui le prennent depuis ai.js.
+import { AI_LEVELS } from './aiLevels.js';
+export { AI_LEVELS };
 
 function targetGoalRow(team) {
   // L'équipe Bleu attaque vers la ligne 0 (cage Rouge), Rouge attaque vers

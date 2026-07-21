@@ -9,7 +9,7 @@ import {
   createGame, selectToken, moveSelectedToken, passBall, passTurn,
   applyMove, PHASES
 } from '../engine/gameEngine.js';
-import { applyAiTurn, AI_LEVELS } from '../engine/ai.js';
+import { AI_LEVELS } from '../engine/aiLevels.js';
 import { setSoundEnabled, playSound, vibrate } from '../services/soundService.js';
 import { TEAMS, RULESET_DEFAULTS } from '../engine/constants.js';
 import {
@@ -101,6 +101,7 @@ import {
 import { initRouter } from './router.js';
 import { lazyScreen } from './lazyScreen.js';
 import { loadSavedThemeId, loadSavedThemeConfig, saveActiveTheme } from './themeStorage.js';
+import { ensureAiEngine } from './aiEngine.js';
 import { cacheDomRefs } from './domRefs.js';
 import { initSettings } from './settingsUI.js';
 
@@ -607,12 +608,26 @@ function maybeTriggerAiTurn() {
 
   aiThinking = true;
   els.boardGrid.classList.add('ai-thinking');
-  setTimeout(() => {
+  // Le chargement démarre MAINTENANT, pas dans le setTimeout : il recouvre le
+  // délai de réflexion au lieu de s'y ajouter.
+  const enginePromise = ensureAiEngine();
+  setTimeout(async () => {
+    const ai = await enginePromise;
+    // Le plateau reste verrouillé pendant aiThinking (handleCancel et les clics
+    // sont ignorés), donc gameState n'a pas bougé pendant l'attente : on capture
+    // `before` ici, juste avant de jouer, comme le faisait le code synchrone.
     const before = gameState;
+    if (!ai) {
+      // Échec de chargement au tout premier tour IA : on relâche le verrou
+      // plutôt que de laisser la partie figée « en réflexion ».
+      aiThinking = false;
+      els.boardGrid.classList.remove('ai-thinking');
+      return;
+    }
     // #202 : applyAiTurn joue une action atomique — un pouvoir avantageux si
     // disponible (sauf niveau Facile), sinon un coup normal. Retourne l'état
     // inchangé s'il n'y a rien à jouer (on s'arrête alors sans reboucler).
-    const next = applyAiTurn(gameState, aiLevel);
+    const next = ai.applyAiTurn(gameState, aiLevel);
     aiThinking = false;
     if (next === before) {
       els.boardGrid.classList.remove('ai-thinking');

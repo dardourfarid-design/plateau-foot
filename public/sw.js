@@ -21,7 +21,7 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-const CACHE_NAME = 'tactic-master-v26'; // v26 : partage du résultat (#111, shareResult + matchSummary) et polices différées (#309, lazyFonts)
+const CACHE_NAME = 'tactic-master-v27'; // v27 : routeur par hash (#310)
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -79,6 +79,7 @@ const STATIC_ASSETS = [
   './src/ui/onlineUI.js',
   './src/ui/matchSummary.js',
   './src/ui/overlaysUI.js',
+  './src/ui/router.js',
   './src/ui/shareResult.js',
   './src/ui/playerAvatar.js',
   './src/ui/playerIdentity.js',

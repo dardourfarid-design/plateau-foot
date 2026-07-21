@@ -21,11 +21,11 @@
 // PaymentProvider.contract). i18n-en.js est chargé dynamiquement (langue EN) :
 // précaché aussi pour que le hors-ligne fonctionne dans les deux langues.
 // À maintenir en même temps que la liste modulepreload d'index.html.
-// La liste ne change pas ici, mais keeper.png et shooter.png sont RÉÉCRITS
-// (#329) : sans nouvelle version de cache, un joueur déjà venu garderait les
-// anciens avatars, le cache étant indexé par URL et les noms de fichiers étant
-// inchangés.
-const CACHE_NAME = 'tactic-master-v31'; // v31 : tutoriel/puzzle à la demande (#324) — + themeStorage.js
+// NB : cette liste sert le HORS-LIGNE, pas le graphe de boot. Les modules
+// chargés à la demande (shopUI, profileUI, ai.js…) y figurent AUSSI, sinon le
+// jeu ne fonctionnerait plus hors connexion dès qu'on ouvre un de ces écrans.
+// C'est pourquoi ai.js reste précaché alors qu'il a quitté le graphe statique.
+const CACHE_NAME = 'tactic-master-v32'; // v32 : ai.js à la demande (#324) — + aiLevels.js, aiEngine.js
 const STATIC_ASSETS = [
   // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
   // l'entrée './', une navigation hors-ligne vers / raterait le cache
@@ -46,6 +46,7 @@ const STATIC_ASSETS = [
   './img/shootout/shooter.png',
   './img/ball.png',
   './src/engine/ai.js',
+  './src/engine/aiLevels.js',
   './src/engine/constants.js',
   './src/engine/gameEngine.js',
   './src/engine/penaltyShootoutV2.js',
@@ -72,6 +73,7 @@ const STATIC_ASSETS = [
   './src/services/progressService.js',
   './src/services/supabaseClient.js',
   './src/ui/accountUI.js',
+  './src/ui/aiEngine.js',
   './src/ui/boardRenderer.js',
   './src/ui/dailyPuzzleUI.js',
   './src/ui/dialogs.js',

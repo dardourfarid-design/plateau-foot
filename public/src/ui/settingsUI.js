@@ -13,7 +13,7 @@
 // l'appelant : c'est la lecture/écriture du stockage et le rendu de l'UI qui
 // sortent de main.js, pas l'état de la partie.
 
-import { AI_LEVELS } from '../engine/ai.js';
+import { AI_LEVELS } from '../engine/aiLevels.js';
 
 const CONFIG_KEY = 'tm_lastConfig';
 

@@ -116,6 +116,19 @@
 
 <meta name="theme-color" content="#1F3D2B">
 <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+
+<!-- PWA : installation sur écran d'accueil (#323). Chemins ABSOLUS — /en n'a
+     pas de barre finale (cleanUrls), un chemin relatif se résoudrait de façon
+     ambiguë. Le manifest est partagé avec le reste du site : son start_url "/"
+     démarre en français ; distinguer la langue à l'installation relèverait d'un
+     manifest par langue (#313), hors de portée ici. -->
+<link rel="manifest" href="/manifest.json">
+<!-- iOS ne lit pas le manifest standard pour l'icône/le plein écran. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tactic Master">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- #309 — identique au <head> français : 2 familles seulement. Les polices
@@ -170,6 +183,7 @@
     <dt>Board</dt><dd>7 columns × 9 rows.</dd>
     <dt>Pieces</dt><dd>6 per team: 1 goalkeeper, 2 defenders, 3 forwards.</dd>
     <dt>Players</dt><dd>1 to 2 — solo vs the computer, two on one screen, or online.</dd>
+    <dt>Game modes</dt><dd>full match, penalty shootout, and a daily puzzle.</dd>
     <dt>Match length</dt><dd>about 5 minutes.</dd>
     <dt>Luck</dt><dd>none: no dice, no cards, full information like chess.</dd>
     <dt>Price</dt><dd>free, no installation; optional cosmetic shop.</dd>
@@ -228,6 +242,11 @@
 </section>
 
 <footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">
+  <!-- #323 : sans ce lien, le blog n'était atteignable depuis l'anglais que par
+       le sitemap — maillage interne nul. Les articles sont en français, d'où le
+       label, cohérent avec les liens légaux ci-dessous. -->
+  <a href="/blog" style="color:inherit">Blog (French)</a>
+  &nbsp;·&nbsp;
   <a href="/terms" style="color:inherit">Terms of use &amp; sale (French)</a>
   &nbsp;·&nbsp;
   <a href="/privacy" style="color:inherit">Privacy (French)</a>

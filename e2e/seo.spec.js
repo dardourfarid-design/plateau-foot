@@ -30,6 +30,45 @@ test('la landing /en/ se charge : h1, hreflang réciproques, CTA vers /?lang=en'
   await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(3);
 });
 
+// #323 — GARDE-FOU DE PARITÉ STRUCTURELLE FR ↔ EN.
+//
+// La landing EN est recopiée à la main depuis l'accueil FR (#183). À chaque
+// livraison, elle décroche en silence : elle avait perdu le tag Plausible
+// (#322), le manifest PWA, le lien vers le blog et la mention des modes ajoutés
+// depuis sa création. Ce test échoue si l'un de ces éléments structurants
+// disparaît d'un côté sans l'autre — pour que la dérive redevienne visible en
+// CI plutôt qu'après coup en production. (La vraie réparation de fond serait de
+// GÉNÉRER /en au lieu de le maintenir — #313.)
+async function structure(page, path) {
+  await page.goto(path);
+  return {
+    manifest: await page.locator('link[rel="manifest"]').count(),
+    appleIcon: await page.locator('link[rel="apple-touch-icon"]').count(),
+    blogLink: await page.locator('footer.legal-footer a[href="/blog"]').count(),
+    plausible: await page.locator('script[data-domain]').count(),
+    canonical: await page.locator('link[rel="canonical"]').count(),
+    hreflang: await page.locator('link[rel="alternate"][hreflang]').count()
+  };
+}
+
+test('parité structurelle FR ↔ EN : manifest, blog, Plausible, canonical (#323)', async ({ page }) => {
+  const fr = await structure(page, '/');
+  const en = await structure(page, '/en/');
+
+  // Chaque signal doit être présent des DEUX côtés (au moins une occurrence).
+  for (const key of Object.keys(fr)) {
+    expect(fr[key], `FR devrait porter ${key}`).toBeGreaterThan(0);
+    expect(en[key], `EN devrait porter ${key}`).toBeGreaterThan(0);
+  }
+  // hreflang réciproques : même compte des deux côtés (3).
+  expect(en.hreflang).toBe(fr.hreflang);
+
+  // Les modes ajoutés depuis #183 sont mentionnés dans le fact sheet EN.
+  await page.goto('/en/');
+  await expect(page.locator('section.seo-about .seo-facts')).toContainText(/penalty shootout/i);
+  await expect(page.locator('section.seo-about .seo-facts')).toContainText(/daily puzzle/i);
+});
+
 test("l'app démarre en anglais via /?lang=en (#183)", async ({ page }) => {
   await page.goto('/?lang=en');
   // Le CTA principal de l'accueil (« Jouer » → « Play ») doit être traduit.

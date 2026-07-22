@@ -228,6 +228,18 @@ tests/               suite de tests du moteur
 > plus de dossier `src/` dupliqué ni d'étape `node build.js`. On édite
 > directement `public/src/`, ce qui est committé est ce qui est servi.
 
+> **Fichiers HTML générés — ne pas éditer à la main :**
+> - `public/en/index.html` — landing anglaise, générée par `node tools/build-en.mjs`
+>   depuis `content/enLanding.mjs` (#313). Elle avait dérivé de l'accueil FR à
+>   plusieurs reprises quand elle était recopiée à la main ; le contenu est
+>   maintenant une donnée unique et l'échafaudage (métas, PWA, hreflang,
+>   Plausible) est écrit une seule fois dans le gabarit.
+> - `public/blog/*.html` — articles, générés depuis `content/blog/` (#300).
+>
+> Dans les deux cas, un test (`tests/enLandingGenerated.test.js`,
+> `tests/blog.test.js`) échoue en CI si le fichier committé a dérivé de sa
+> source : après modification du contenu, régénérer puis committer.
+
 ## Mettre l'app en ligne (déploiement réel)
 
 Le projet est prêt pour Vercel ou Netlify (configs déjà incluses : `vercel.json`,

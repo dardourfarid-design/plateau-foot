@@ -32,6 +32,7 @@ await import('./cssBuild.test.js');
 await import('./puzzles.test.js');
 await import('./houseAds.test.js');
 await import('./swPrecache.test.js');
+await import('./enLandingGenerated.test.js');
 
 // Les imports ci-dessus ne font qu'ENREGISTRER les tests ; on les exécute
 // ici séquentiellement (avec await), pour que les tests async ne s'entrelacent

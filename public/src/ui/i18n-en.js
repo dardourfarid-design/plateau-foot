@@ -20,6 +20,12 @@ registerMessages({
   // --- Accueil / hero ---
   'SAISON 01 — ÉDITION TACTIQUE': 'SEASON 01 — TACTICAL EDITION',
   'Le foot se joue aussi assis': 'Football, sitting down too',
+  'Un jeu de plateau de foot, aussi simple que les dames.': 'A football board game, as simple as checkers.',
+  'Gratuit · sans compte · une partie en 5 min': 'Free · no account · a match in 5 min',
+  'En bref': 'At a glance',
+  'Sans installation': 'No install',
+  'Zéro hasard, 100% stratégie': 'No luck, 100% strategy',
+  'Solo, à deux ou en ligne': 'Solo, 2-player or online',
   'Plateau': 'Board',
   'Pions / équipe': 'Pieces / team',
   '5min': '5min',
@@ -185,6 +191,18 @@ registerMessages({
   'Boutique de thèmes': 'Theme shop',
   "Change l'ambiance du terrain. Un thème acheté reste débloqué pour toujours.":
     'Change the pitch mood. A purchased theme stays unlocked forever.',
+  'Recommandé': 'Recommended',
+  'soit 1,33 €/mois': 'i.e. €1.33/month',
+  'De quoi débloquer un kit du jour !': 'Enough to unlock a daily kit!',
+  'Inclus dans le Pass': 'Included in the Pass',
+  'Packs Joueurs': 'Player Packs',
+  'ÉQUIPE': 'TEAM',
+  'Renforce ton effectif — joueurs à pouvoir en groupe, au meilleur prix.':
+    'Strengthen your squad — players with powers, bundled at the best price.',
+  'ou le Pass Saison : tous les kits dès 1,33 €/mois →':
+    'or the Season Pass: every kit from €1.33/month →',
+  'Plus tard — je continue à jouer': 'Later — back to playing',
+  'Recharger des pièces': 'Top up coins',
   'Édition limitée': 'Limited edition',
   "5 nouveaux thèmes aux couleurs du grand tournoi — l'ambiance des stades, sur ton plateau.":
     '5 new themes in the colors of the big tournament — stadium vibes on your board.',

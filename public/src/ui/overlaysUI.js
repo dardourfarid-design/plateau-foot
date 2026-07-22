@@ -172,7 +172,9 @@ export function initOverlays({
         .then(() => getCurrencyBalance())
         .then(newBalance => {
           updateCoinDisplay(newBalance);
-          if (newBalance > previousBalance) showCoinGain(newBalance - previousBalance);
+          // Le solde est transmis pour la ligne goal-gradient « X/100 vers ton
+          // prochain kit » (Zeigarnik : montrée au pic de motivation du gain).
+          if (newBalance > previousBalance) showCoinGain(newBalance - previousBalance, newBalance);
         })
         .catch(err => {
           console.error('Résultat de partie non enregistré :', err);

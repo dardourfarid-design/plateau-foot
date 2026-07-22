@@ -9,6 +9,7 @@
 // le profil le lisent) : le module y accède via getUser()/setUser().
 
 import { t } from './i18n.js';
+import { COIN_KIT_COST } from './shopConstants.js';
 import { showToast, showAlert, showConfirm, showConsentDialog } from './dialogs.js';
 import {
   getCurrentUser, onAuthStateChange, signOut, signInWithEmail, signUpWithEmail,
@@ -136,7 +137,7 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
           if (settled || balance === initialBalance) return;
           settled = true;
           updateCoinDisplay(balance);
-          if (balance > initialBalance) showCoinGain(balance - initialBalance);
+          if (balance > initialBalance) showCoinGain(balance - initialBalance, balance);
           if (els.shopScreen && !els.shopScreen.classList.contains('hidden')) {
             els.shopBtn?.click(); // recharge la boutique avec le nouveau solde
           }
@@ -145,18 +146,31 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
     });
   }
 
-  /** Micro-animation de gain de pièces affichée sur la topbar */
-  function showCoinGain(amount) {
+  /** Micro-animation de gain de pièces affichée sur la topbar.
+   *  @param {number} amount        gain à afficher (+X ⬤)
+   *  @param {number} [newBalance]  solde après crédit — si fourni, ajoute la
+   *    ligne goal-gradient « X/100 vers ton prochain kit » (effet Zeigarnik :
+   *    la proximité de la récompense, montrée au pic de motivation du gain,
+   *    donne une raison de rejouer). */
+  function showCoinGain(amount, newBalance) {
     const badge = document.createElement('div');
     badge.className = 'coin-gain-badge';
-    badge.textContent = '+' + amount + ' ⬤';
+    let html = '+' + amount + ' ⬤';
+    const hasGoal = Number.isFinite(newBalance);
+    if (hasGoal) {
+      const sub = newBalance < COIN_KIT_COST
+        ? `${newBalance}/${COIN_KIT_COST} vers ton prochain kit`
+        : 'De quoi débloquer un kit du jour !';
+      html += `<span class="coin-gain-sub">${sub}</span>`;
+    }
+    badge.innerHTML = html;
     badge.setAttribute('aria-live', 'polite');
     document.body.appendChild(badge);
     setTimeout(() => badge.classList.add('coin-gain-badge-show'), 10);
     setTimeout(() => {
       badge.classList.remove('coin-gain-badge-show');
       setTimeout(() => badge.remove(), 400);
-    }, 2200);
+    }, hasGoal ? 3200 : 2200); // 2 lignes = un peu plus de temps de lecture
   }
 
   function renderAccountOverlayContent() {

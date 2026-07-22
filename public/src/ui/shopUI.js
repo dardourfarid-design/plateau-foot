@@ -20,8 +20,16 @@ let kitCredits        = 0;
 let activePass        = null;
 let foundersRemaining = 200;
 
-// Kits disponibles via pièces (sélection aléatoire quotidienne stable)
-const COIN_KIT_COST = 100;
+// Kits disponibles via pièces (sélection aléatoire quotidienne stable).
+// Coût partagé avec accountUI (goal-gradient de fin de partie) via un module
+// de constantes sans dépendance.
+import { COIN_KIT_COST } from './shopConstants.js';
+
+// CRO/psycho #C3 — kit mis en avant (Default Effect / Paradox of Choice) : un
+// point d'entrée éditorial dans la grille, pour éviter la paralysie du choix.
+// « Recommandé » (choix éditorial honnête) plutôt que « Populaire » : on n'a pas
+// de données de popularité réelles, on n'en invente pas.
+const RECOMMENDED_KIT_ID = 'neon';
 
 // Les produits "virtuels" vivent dans la table themes (pattern migrations
 // 0012/0018/0025 : joueurs, packs, slot custom) mais ne sont pas des kits.
@@ -157,25 +165,27 @@ async function _loadShop(deps) {
   _renderShop(deps);
 }
 
+// Refonte « SaaS-first » : l'objectif business est le récurrent (Pass Saison).
+// L'architecture de choix converge vers le Pass : ancre Fondateurs compacte,
+// Pass en tête de gondole, kits = showroom du Pass, pièces en modale
+// contextuelle (plus de rayon permanent — le prompt arrive au moment du besoin).
 function _renderShop(deps) {
   const { els } = deps;
   const sections = [];
 
-  // 1. Pack Fondateurs (si encore disponible)
+  // 1. Pack Fondateurs — bandeau compact (ancre haute 9,99 €, sans dominer)
   if (foundersRemaining > 0) {
     sections.push(_renderFoundersPack(deps));
   }
 
-  // 2. Passes Saison
+  // 2. Pass Saison = tête de gondole (North Star : passes actifs / MRR)
   sections.push(_renderPasses(deps));
 
-  // 3. Kits (cœur de l'offre) + kit du jour en pièces
+  // 3. Kits (showroom du Pass) + kit du jour en pièces + carte pack 3 kits
   sections.push(_renderKits(deps));
 
-  // 4. Pièces tactiques (le moyen de gagner les kits du jour)
-  sections.push(_renderCoinPacks(deps));
-
-  // 5. Packs groupés
+  // 4. Packs joueurs (Académie / Légendes) — candidats à un déménagement
+  //    vers l'écran Équipe/Mercato (phase ultérieure)
   sections.push(_renderPacks(deps));
 
   els.shopGrid.innerHTML = '';
@@ -184,51 +194,23 @@ function _renderShop(deps) {
   });
 }
 
-// ── Section 1 : Pack Fondateurs ────────────────────────────────────
+// ── Section 1 : Pack Fondateurs (bandeau compact) ──────────────────
+// Refonte SaaS-first : l'ancien gros bloc ouvrait la boutique sur 9,99 € plein
+// écran. Le bandeau garde l'ancre haute (door-in-the-face : le Pass à 1,99 €
+// paraît dérisoire juste dessous) et la rareté, sans reléguer le Pass.
 function _renderFoundersPack(deps) {
   const section = document.createElement('section');
-  section.className = 'shop-section shop-section-founders';
+  section.className = 'shop-section shop-founders-banner';
 
   const spotsLeft = Math.max(foundersRemaining, 0);
 
   section.innerHTML = `
-    <div class="shop-section-header">
-      <span class="shop-section-tag shop-tag-limited">ÉDITION LIMITÉE</span>
-      <h2 class="shop-section-title">Pack Fondateurs</h2>
-      <p class="shop-section-desc">
-        Accès complet à tous les kits actuels + 1 joueur Légendaire exclusif
-        "Fondateur" introuvable nulle part ailleurs + badge doré permanent sur
-        ton profil + ton nom dans les crédits du jeu.
-      </p>
+    <span class="shop-section-tag shop-tag-limited">ÉDITION LIMITÉE</span>
+    <div class="shop-founders-banner-text">
+      <strong>Pack Fondateurs</strong> — tous les kits actuels + 1 Légendaire
+      exclusif + badge doré + Pass S1 inclus ·
+      <span class="shop-founders-left" id="foundersNum">${spotsLeft} places restantes sur 200</span>
     </div>
-
-    <div class="founders-counter">
-      <div class="founders-counter-num" id="foundersNum">${spotsLeft}</div>
-      <div class="founders-counter-label">places restantes sur 200</div>
-      <div class="founders-counter-bar">
-        <div class="founders-counter-fill" style="width:${((200 - spotsLeft) / 200) * 100}%"></div>
-      </div>
-    </div>
-
-    <div class="founders-perks">
-      <div class="founders-perk">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l1.8 5.5H15L10.2 10l1.8 5.5L8 12.3 4 15.5l1.8-5.5L1 6.5h5.2z" fill="#FFD87A"/></svg>
-        Tous les kits actuels débloqués — et ceux de la Saison 1 à venir
-      </div>
-      <div class="founders-perk">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 4.5H14L10.2 9l1.5 4.5L8 11.2 4.3 13.5 5.8 9 2 6.5h4.5z" fill="#9B6BFF"/></svg>
-        1 joueur Légendaire exclusif — pouvoir Tir Puissant
-      </div>
-      <div class="founders-perk">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="#C8841A" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#C8841A" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Badge FONDATEUR doré — visible par tous
-      </div>
-      <div class="founders-perk">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#1FA86B" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#1FA86B" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Pass Saison S1 inclus (valeur 3,99 €)
-      </div>
-    </div>
-
     <button class="btn shop-founders-btn" id="buyFoundersPack">
       Devenir Fondateur — 9,99 €
     </button>
@@ -243,12 +225,22 @@ function _renderFoundersPack(deps) {
 // ── Section 2 : Passes Saison ──────────────────────────────────────
 function _renderPasses(deps) {
   const section = document.createElement('section');
-  section.className = 'shop-section';
+  // shop-section-passes : cible du lien « voir le Pass » de la modale pièces.
+  section.className = 'shop-section shop-section-passes';
 
   const hasPass = !!activePass;
   const passType = activePass?.pass_type;
   const periodEnd = activePass?.current_period_end
     ? new Date(activePass.current_period_end).toLocaleDateString('fr-FR')
+    : null;
+
+  // Price relativity : « 1 kit seul coûte plus cher qu'un mois de TOUT le
+  // catalogue ». Calculé depuis les données (le prix des kits vient du
+  // serveur : rien en dur qui pourrait diverger de la facturation).
+  const paidKits = (availableThemes.length ? availableThemes : FALLBACK_THEMES)
+    .filter(_isRealKit).filter(t => t.price_cents > 0);
+  const minKitPrice = paidKits.length
+    ? formatPrice(Math.min(...paidKits.map(t => t.price_cents)), 'eur')
     : null;
 
   section.innerHTML = `
@@ -259,6 +251,11 @@ function _renderPasses(deps) {
         Tous les kits Saison 1 débloqués pendant l'abonnement + 1 joueur Rare offert +
         bonus XP +20% sur chaque partie. Annulable à tout moment.
       </p>
+      ${hasPass
+        ? `<p class="shop-pass-compare">Ton pass débloque ${paidKits.length} kits en ce moment.</p>`
+        : minKitPrice
+        ? `<p class="shop-pass-compare">Un kit seul : ${minKitPrice} · Le Pass : les ${paidKits.length} kits pour 1,99 €/mois.</p>`
+        : ''}
     </div>
     <div class="shop-passes-grid">
 
@@ -279,6 +276,9 @@ function _renderPasses(deps) {
         <div class="shop-pass-badge-best">MEILLEURE VALEUR</div>
         <div class="shop-pass-label">TRIMESTRIEL</div>
         <div class="shop-pass-price">3,99 €<span class="shop-pass-period">/3 mois</span></div>
+        <!-- #psycho — Mental accounting : ramener au prix mensuel rend l'écart
+             avec le mensuel (1,99 €) tangible. -->
+        <div class="shop-pass-permonth">soit 1,33 €/mois</div>
         <div class="shop-pass-savings">Économise 35% vs mensuel</div>
         <ul class="shop-pass-perks">
           <li>Tous les kits Saison 1</li>
@@ -308,15 +308,17 @@ function _renderPacks(deps) {
 
   section.innerHTML = `
     <div class="shop-section-header">
-      <span class="shop-section-tag">PACKS</span>
-      <h2 class="shop-section-title">Packs</h2>
-      <p class="shop-section-desc">Groupes de contenu — meilleur rapport qualité/prix.</p>
+      <span class="shop-section-tag">ÉQUIPE</span>
+      <h2 class="shop-section-title">Packs Joueurs</h2>
+      <p class="shop-section-desc">Renforce ton effectif — joueurs à pouvoir en groupe, au meilleur prix.</p>
     </div>
     <div class="shop-packs-grid"></div>
   `;
 
   const grid = section.querySelector('.shop-packs-grid');
-  PACKS.forEach(pack => {
+  // Le pack « 3 kits au choix » vit désormais dans la grille Kits (même rayon
+  // que ce qu'il vend) : ici, uniquement les packs de joueurs.
+  PACKS.filter(p => p.id !== 'pack-3-kits').forEach(pack => {
     const card = document.createElement('div');
     card.className = 'shop-pack-card';
     card.innerHTML = `
@@ -338,47 +340,49 @@ function _renderPacks(deps) {
   return section;
 }
 
-// ── Section 3bis : Packs de pièces tactiques ──────────────────────
-function _renderCoinPacks(deps) {
-  const section = document.createElement('section');
-  section.className = 'shop-section';
-
-  section.innerHTML = `
-    <div class="shop-section-header">
-      <span class="shop-section-tag">PIÈCES TACTIQUES</span>
-      <h2 class="shop-section-title">Pièces</h2>
-      <p class="shop-section-desc">
-        Ton solde : <strong>${coinBalance} pièce${coinBalance > 1 ? 's' : ''}</strong>.
-        Tu en gagnes à chaque partie (+10 victoire, +3 défaite, +15 par défi du jour) —
-        ou recharge instantanément avec un pack.
-      </p>
+// ── Modale contextuelle de recharge de pièces ─────────────────────
+// Remplace l'ancien rayon « Pièces » permanent : le prompt d'achat arrive au
+// moment exact du besoin (clic sur un kit du jour sans solde suffisant), pas
+// en rayonnage pour tout le monde (BJ Fogg : Motivation × Ability × Prompt).
+function _showCoinTopUpModal(theme, deps) {
+  const missing = COIN_KIT_COST - coinBalance;
+  const overlay = document.createElement('div');
+  overlay.className = 'coin-topup-overlay';
+  overlay.innerHTML = `
+    <div class="coin-topup-modal" role="dialog" aria-modal="true" aria-label="Recharger des pièces">
+      <div class="coin-topup-title">Il te manque ${missing} pièce${missing > 1 ? 's' : ''}</div>
+      <p class="coin-topup-sub">« ${theme.name} » coûte ${COIN_KIT_COST} pièces — tu en as ${coinBalance}.
+        Continue à jouer (+10 victoire, +15 par défi)… ou recharge :</p>
+      <div class="coin-topup-grid"></div>
+      <button class="coin-topup-pass-link" type="button">ou le Pass Saison : tous les kits dès 1,33 €/mois →</button>
+      <button class="btn coin-topup-close" type="button">Plus tard — je continue à jouer</button>
     </div>
-    <div class="shop-packs-grid shop-coins-packs-grid"></div>
   `;
 
-  const grid = section.querySelector('.shop-coins-packs-grid');
+  const close = () => overlay.remove();
+  const grid = overlay.querySelector('.coin-topup-grid');
   COIN_PACKS.forEach(pack => {
-    const card = document.createElement('div');
-    card.className = 'shop-pack-card';
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'coin-topup-pack';
     card.innerHTML = `
-      ${pack.tag ? `<div class="shop-pass-badge-best">${pack.tag}</div>` : ''}
-      <div class="shop-pack-icon"><svg width="28" height="28" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg></div>
-      <div class="shop-pack-name">${pack.amount} pièces</div>
-      <div class="shop-pack-desc">${Math.floor(pack.amount / COIN_KIT_COST) > 1
-        ? `Soit ${Math.floor(pack.amount / COIN_KIT_COST)} kits du jour, ou garde-les pour la suite.`
-        : 'Soit 1 kit du jour, ou garde-les pour la suite.'}</div>
-      <div class="shop-pack-footer">
-        <span class="shop-pack-price">${formatPrice(pack.price_cents, 'eur')}</span>
-      </div>
-      <button class="btn primary shop-pack-btn">Acheter</button>
+      <strong>${pack.amount} pièces</strong>
+      ${pack.tag ? `<span class="coin-topup-tag">${pack.tag}</span>` : ''}
+      <span class="coin-topup-price">${formatPrice(pack.price_cents, 'eur')}</span>
     `;
-    card.querySelector('.shop-pack-btn').addEventListener('click', () =>
-      _buyCoins(pack.id, deps)
-    );
+    card.addEventListener('click', () => { close(); _buyCoins(pack.id, deps); });
     grid.appendChild(card);
   });
 
-  return section;
+  // Passerelle SaaS : depuis le manque de pièces vers l'offre récurrente.
+  overlay.querySelector('.coin-topup-pass-link').addEventListener('click', () => {
+    close();
+    document.querySelector('.shop-section-passes')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  overlay.querySelector('.coin-topup-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
 }
 
 async function _buyCoins(packId, deps) {
@@ -426,6 +430,9 @@ function _renderKits(deps) {
         <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg>
         <strong>Kits du jour — ${COIN_KIT_COST} pièces</strong> · rotation quotidienne ·
         ton solde : <strong>${coinBalance} pièce${coinBalance > 1 ? 's' : ''}</strong>
+        ${coinBalance < COIN_KIT_COST
+          ? `<span class="shop-coins-goal">🎯 Plus que ${COIN_KIT_COST - coinBalance} pièce${(COIN_KIT_COST - coinBalance) > 1 ? 's' : ''} pour ton prochain kit</span>`
+          : ''}
         <span class="shop-coins-hint">+10 par victoire, +3 par défaite, +15 par défi</span>
       </div>
       <div class="shop-coins-grid" id="coinKitsGrid"></div>
@@ -449,12 +456,43 @@ function _renderKits(deps) {
   // normale dès demain, à la rotation suivante).
   const coinKitIds = coinKits.map(t => t.id);
   const kitsGrid = section.querySelector('#shopKitsGrid');
-  themes.filter(t => !coinKitIds.includes(t.id)).forEach(theme => {
-    const card = _buildKitCard(theme, deps, { coinMode: false });
-    kitsGrid.appendChild(card);
-  });
+  // #C3 — le kit recommandé remonte en tête (s'il est présent et non déjà en
+  // "kit du jour"), pour offrir un point d'entrée clair dans une longue grille.
+  const gridThemes = themes.filter(t => !coinKitIds.includes(t.id));
+  gridThemes.sort((a, b) =>
+    (b.id === RECOMMENDED_KIT_ID ? 1 : 0) - (a.id === RECOMMENDED_KIT_ID ? 1 : 0));
+  const cards = gridThemes.map(theme => _buildKitCard(theme, deps, { coinMode: false }));
+  // Le pack « 3 kits au choix » s'insère dans le rayon qu'il concerne, en 2e
+  // position (après le kit recommandé) — plus de section « Packs » fourre-tout.
+  const packCard = _buildKitPackCard(deps);
+  if (packCard) cards.splice(Math.min(1, cards.length), 0, packCard);
+  cards.forEach(card => kitsGrid.appendChild(card));
 
   return section;
+}
+
+// ── Carte « pack 3 kits » dans la grille des kits ─────────────────
+// Classe de bouton distincte de .shop-kit-buy-btn : l'e2e Stripe opt-in cible
+// « le premier .shop-kit-buy-btn » et doit continuer de tomber sur un vrai kit.
+function _buildKitPackCard(deps) {
+  const pack = PACKS.find(p => p.id === 'pack-3-kits');
+  if (!pack) return null;
+  const card = document.createElement('div');
+  card.className = 'shop-kit-card shop-kit-pack';
+  card.innerHTML = `
+    <div class="shop-kit-preview shop-kit-pack-preview">${pack.icon}</div>
+    <div class="shop-kit-body">
+      <div class="shop-kit-name">${pack.name}</div>
+      <div class="shop-kit-desc">${pack.description} <span class="shop-pack-saves">${pack.saves}</span></div>
+      <div class="shop-kit-footer">
+        <button class="btn primary shop-kit-pack-btn">${formatPrice(pack.price_cents, 'eur')}</button>
+      </div>
+    </div>
+  `;
+  card.querySelector('.shop-kit-pack-btn').addEventListener('click', () =>
+    _buyPack(pack.id, pack.name, deps)
+  );
+  return card;
 }
 
 // ── Constructeur d'une carte de kit ───────────────────────────────
@@ -466,9 +504,12 @@ function _buildKitCard(theme, deps, { coinMode }) {
   const owned          = purchased || unlockedByPass;
   const isActive       = theme.id === activeThemeId;
   const hasCoin        = coinMode;
+  // #C3 — mise en avant éditoriale (uniquement si non possédé/non actif et hors
+  // "kit du jour" en pièces, pour ne pas surcharger cette rangée).
+  const isReco         = theme.id === RECOMMENDED_KIT_ID && !owned && !isActive && !coinMode;
 
   const card = document.createElement('div');
-  card.className = 'shop-kit-card' + (isActive ? ' shop-kit-active' : '') + (owned ? ' shop-kit-owned' : '');
+  card.className = 'shop-kit-card' + (isActive ? ' shop-kit-active' : '') + (owned ? ' shop-kit-owned' : '') + (isReco ? ' shop-kit-reco' : '');
 
   // Prévisualisation couleur
   const bg  = theme.config?.vertTerrain ?? '#1F3D2B';
@@ -476,6 +517,7 @@ function _buildKitCard(theme, deps, { coinMode }) {
 
   card.innerHTML = `
     <div class="shop-kit-preview" style="background:${bg}">
+      ${isReco ? '<span class="shop-kit-reco-badge">Recommandé</span>' : ''}
       <div class="shop-kit-preview-lines" style="--acc:${acc}"></div>
       <div class="shop-kit-preview-ball"></div>
     </div>
@@ -495,7 +537,8 @@ function _buildKitCard(theme, deps, { coinMode }) {
           ? `<button class="btn shop-kit-coin-btn"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#C8841A"/><text x="8" y="12" font-size="9" font-weight="900" fill="#0C0A07" text-anchor="middle" font-family="'Barlow Condensed',sans-serif">P</text></svg> ${COIN_KIT_COST} pièces</button>`
           : theme.price_cents === 0
           ? '<span class="shop-kit-badge shop-kit-badge-free">Gratuit</span>'
-          : `<button class="btn primary shop-kit-buy-btn">${formatPrice(theme.price_cents, theme.currency ?? 'eur')}</button>`
+          : `<button class="btn primary shop-kit-buy-btn">${formatPrice(theme.price_cents, theme.currency ?? 'eur')}</button>
+             <span class="shop-kit-pass-hint">Inclus dans le Pass</span>`
         }
         ${owned && !isActive
           ? '<button class="btn shop-kit-select-btn">Sélectionner</button>'
@@ -540,7 +583,9 @@ async function _buyKit(theme, deps) {
 async function _buyWithCoins(theme, deps) {
   if (!deps.getCurrentUser()) { deps.openAccountForSignIn(); return; }
   if (coinBalance < COIN_KIT_COST) {
-    showAlert(`Il te faut ${COIN_KIT_COST} pièces. Tu en as ${coinBalance}.\nGagne des pièces en remportant des parties !`, { title: 'Pas assez de pièces' });
+    // Solde insuffisant → modale de recharge contextuelle (remplace l'ancienne
+    // alerte sèche ET l'ancien rayon « Pièces » permanent).
+    _showCoinTopUpModal(theme, deps);
     return;
   }
   if (!(await showConfirm(`Débloquer "${theme.name}" pour ${COIN_KIT_COST} pièces ?`, { okLabel: 'Débloquer' }))) return;
@@ -555,6 +600,9 @@ async function _buyWithCoins(theme, deps) {
     purchasedThemeIds.push(theme.id);
     _selectKit(theme, deps);
     _renderShop(deps);
+    // #C2 — moment de satisfaction (Peak-End Rule / Regret aversion) : sans ça,
+    // l'achat se fondait dans un simple re-render.
+    showToast(`🎉 Kit « ${theme.name} » débloqué et appliqué !`);
   } catch (err) {
     showAlert(err.message || 'Achat impossible pour le moment.');
   }
@@ -569,6 +617,7 @@ async function _buyWithCredit(theme, deps) {
     purchasedThemeIds.push(theme.id);
     _selectKit(theme, deps);
     _renderShop(deps);
+    showToast(`🎉 Kit « ${theme.name} » débloqué et appliqué !`); // #C2 peak-end
   } catch (err) {
     showAlert(err.message || 'Achat impossible pour le moment.');
   }

@@ -415,3 +415,172 @@
   font-weight: 700;
   display: flex;
 }
+
+/* #goal-gradient — sous-ligne du badge de gain (« X/100 vers ton prochain
+   kit ») : proximité de la récompense montrée au moment du gain (Zeigarnik). */
+.coin-gain-sub {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  margin-top: 2px;
+  opacity: .85;
+}
+
+/* #C3 — kit recommandé : liseré ambre + ruban « Recommandé » (Default Effect). */
+.shop-kit-reco { border-color: rgba(232,160,48,0.55); }
+.shop-kit-reco-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  background: var(--or);
+  color: #0C0A07;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+/* #goal-gradient — proximité de la récompense (Zeigarnik) : rendu saillant. */
+.shop-coins-goal {
+  display: inline-block;
+  margin-left: 8px;
+  font-weight: 700;
+  color: var(--or);
+}
+
+/* #mental-accounting — prix ramené au mois sur le pass trimestriel. */
+.shop-pass-permonth {
+  font-size: 12px;
+  color: var(--craie-att);
+  margin-top: 2px;
+}
+
+/* ===== Refonte SaaS-first ===== */
+
+/* Fondateurs : de gros bloc à bandeau compact — l'ancre 9,99 € reste, sans
+   dominer le premier écran (le Pass est la tête de gondole). */
+.shop-founders-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  border: 1px solid rgba(200,132,26,0.4);
+  background: rgba(200,132,26,0.06);
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+.shop-founders-banner-text {
+  flex: 1;
+  min-width: 220px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--craie-att);
+}
+.shop-founders-banner-text strong { color: var(--craie); }
+.shop-founders-left { color: var(--or); font-weight: 700; white-space: nowrap; }
+
+/* Price relativity : la ligne qui met le kit seul et le Pass côte à côte. */
+.shop-pass-compare {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--or);
+  margin: 8px 0 0;
+}
+
+/* Mere exposure : chaque carte de kit payant rappelle le Pass, discrètement. */
+.shop-kit-pass-hint {
+  font-size: 10px;
+  letter-spacing: .03em;
+  color: var(--craie-dim);
+  text-align: center;
+}
+
+/* Carte « pack 3 kits » insérée dans la grille des kits. */
+.shop-kit-pack { border-color: rgba(232,160,48,0.35); }
+.shop-kit-pack-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  background: rgba(232,160,48,0.10);
+}
+
+/* Modale contextuelle de recharge de pièces (remplace le rayon permanent). */
+.coin-topup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.coin-topup-modal {
+  background: var(--noir-clair);
+  border: 1px solid rgba(240,230,211,0.15);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 420px;
+  width: 100%;
+}
+.coin-topup-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  text-transform: uppercase;
+  color: var(--craie);
+}
+.coin-topup-sub {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--craie-att);
+  margin: 8px 0 14px;
+}
+.coin-topup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.coin-topup-pack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(240,230,211,0.14);
+  border-radius: 6px;
+  color: var(--craie);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.coin-topup-pack:hover { border-color: var(--or); }
+.coin-topup-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: var(--or);
+}
+.coin-topup-price { color: var(--or); font-weight: 800; }
+.coin-topup-pass-link {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--or);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+}
+.coin-topup-close { width: 100%; margin-top: 10px; }

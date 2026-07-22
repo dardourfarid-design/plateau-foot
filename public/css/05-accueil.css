@@ -63,6 +63,14 @@
   padding:16px;
   font-size:16px;
 }
+/* CRO #1 — réassurance sous le bouton « Jouer maintenant » (gratuité, sans
+   compte). Discrète mais lisible, juste sous le point de décision. */
+.cta-reassurance{
+  margin:10px 0 0;
+  font-size:12.5px;
+  letter-spacing:.02em;
+  color: var(--craie-att);
+}
 /* #204 — bouton secondaire « Personnaliser » sous le « Jouer » immédiat */
 .cta-secondary{
   width:100%;
@@ -113,6 +121,42 @@
   margin-top:6px;
 }
 .mode-card-desc{ font-size:11px; color:var(--craie-att); letter-spacing:.02em; }
+
+/* CRO #6 — carte mise en avant (Puzzle du jour) : liseré ambre + fond légèrement
+   teinté pour la distinguer sans concurrencer le CTA principal « Jouer ». */
+.mode-card-featured{
+  border-color:rgba(232,160,48,0.55);
+  background:rgba(232,160,48,0.06);
+}
+.mode-card-featured .mode-card-name{ color:var(--or); }
+
+/* CRO #7 — barre de réassurance factuelle sous le hero. Ligne discrète, séparée
+   par des points, vérités durables uniquement. */
+.trust-strip{
+  list-style:none;
+  margin:22px auto 4px;
+  padding:0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:6px 0;
+  font-size:12.5px;
+  letter-spacing:.02em;
+  color:var(--craie-att);
+}
+.trust-strip li{ display:inline-flex; align-items:center; }
+.trust-strip li::before{
+  content:"✓";
+  color:var(--or);
+  font-weight:700;
+  margin-right:7px;
+}
+.trust-strip li:not(:last-child)::after{
+  content:"·";
+  opacity:.45;
+  margin:0 14px;
+}
 
 /* Liens texte sous les cartes : tutoriel + Règles & FAQ côte à côte */
 .hero-links{

@@ -51,6 +51,9 @@
   text-transform:uppercase;
   color: var(--ambre);
   margin-bottom:14px;
+  /* CRO #4 — flavor décoratif : atténué pour que le regard aille d'abord au
+     titre, au pitch et au bouton « Jouer maintenant » (pas au « SAISON 01 »). */
+  opacity:.62;
 }
 .hero-season-dot{
   width:6px; height:6px;

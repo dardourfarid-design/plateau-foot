@@ -1078,7 +1078,7 @@ function init() {
     recordOnlineAction: (fn, args) => recordIfOnline(fn, args),
     isTutorialActive: () => tutorialModule?.isActive() ?? false,
     updateCoinDisplay: b => accountModule?.updateCoinDisplay(b),
-    showCoinGain: n => accountModule?.showCoinGain(n),
+    showCoinGain: (n, balance) => accountModule?.showCoinGain(n, balance),
     maybeShowInterstitial,
     refreshHomeBanner
   });

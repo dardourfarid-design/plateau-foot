@@ -208,6 +208,7 @@
 <link rel="modulepreload" href="src/ui/domRefs.js">
 <link rel="modulepreload" href="src/ui/settingsUI.js">
 <link rel="modulepreload" href="src/ui/shareResult.js">
+<link rel="modulepreload" href="src/ui/shopConstants.js">
 <link rel="modulepreload" href="src/ui/playerIdentity.js">
 <link rel="modulepreload" href="src/ui/powersUI.js">
 <link rel="modulepreload" href="src/ui/lazyFonts.js">
@@ -356,6 +357,11 @@
         </h1>
         <div class="logo-sub">Le foot se joue aussi assis</div>
 
+        <!-- CRO #1 — pitch de clarté : dit *ce que c'est* en langage client,
+             au-dessus de la ligne de flottaison (le bloc SEO le disait seulement
+             en bas de page). Traduit via i18n-en.js. -->
+        <p class="hero-pitch">Un jeu de plateau de foot, aussi simple que les dames.</p>
+
         <!-- Stats visuelles façon bandeau japonais -->
         <div class="hero-stats-row" aria-label="Caractéristiques du jeu">
           <div class="hero-stat">
@@ -376,12 +382,24 @@
 
         <button class="btn primary cta-main" id="quickPlayBtn">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3l7 5-7 5V3z" fill="currentColor"/></svg>
-          Jouer
+          Jouer maintenant
         </button>
+        <!-- CRO #1 — micro-réassurance au point de décision : gratuité + absence
+             de compte (le mot « gratuit » n'apparaissait nulle part dans le hero).
+             L'emoji est aria-hidden pour que le nœud texte traduit reste propre. -->
+        <p class="cta-reassurance"><span aria-hidden="true">⚽</span> Gratuit · sans compte · une partie en 5 min</p>
         <!-- M11 #253 — un seul CTA dominant (« Jouer »), les modes secondaires
              regroupés en cartes compactes. Les ids restent câblés dans
              main.js / shootoutUI.js et ciblés par les e2e : ne pas renommer. -->
+        <!-- CRO #6 — cartes ordonnées par valeur d'engagement : « Puzzle du jour »
+             en tête et mis en avant (habitude quotidienne = rétention), puis les
+             modes de partie. Les ids restent inchangés (câblés main.js/e2e). -->
         <div class="mode-cards" role="group" aria-label="Autres modes de jeu">
+          <button class="mode-card mode-card-featured" id="dailyPuzzleBtn">
+            <span class="mode-card-icon" aria-hidden="true">🧩</span>
+            <span class="mode-card-name">Puzzle du jour</span>
+            <span class="mode-card-desc">Le défi quotidien</span>
+          </button>
           <button class="mode-card" id="homeShootoutBtn">
             <span class="mode-card-icon" aria-hidden="true">⚽</span>
             <span class="mode-card-name">Tirs au but</span>
@@ -391,11 +409,6 @@
             <span class="mode-card-icon" aria-hidden="true">⚙️</span>
             <span class="mode-card-name">Personnaliser la partie</span>
             <span class="mode-card-desc">Mode, règles, IA</span>
-          </button>
-          <button class="mode-card" id="dailyPuzzleBtn">
-            <span class="mode-card-icon" aria-hidden="true">🧩</span>
-            <span class="mode-card-name">Puzzle du jour</span>
-            <span class="mode-card-desc">Le défi quotidien</span>
           </button>
         </div>
         <div class="hero-links">
@@ -445,6 +458,16 @@
         <div class="preview-field-label">TERRAIN OFFICIEL · 7×9</div>
       </div>
     </div>
+
+    <!-- CRO #7 — barre de réassurance factuelle (en l'absence de preuve sociale
+         réelle : n'inventer aucun chiffre/avis). Uniquement des vérités DURABLES,
+         volontairement AUCUNE promesse sur la publicité (des pubs en partie sont
+         possibles dès l'activation d'AdSense). -->
+    <ul class="trust-strip" aria-label="En bref">
+      <li>Sans installation</li>
+      <li>Zéro hasard, 100% stratégie</li>
+      <li>Solo, à deux ou en ligne</li>
+    </ul>
 
     <!-- === FEATURE GRID : bandeau informatif façon japonais === -->
     <div class="feature-grid">

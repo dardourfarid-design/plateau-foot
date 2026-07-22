@@ -25,13 +25,15 @@
 // chargés à la demande (shopUI, profileUI, ai.js…) y figurent AUSSI, sinon le
 // jeu ne fonctionnerait plus hors connexion dès qu'on ouvre un de ces écrans.
 // C'est pourquoi ai.js reste précaché alors qu'il a quitté le graphe statique.
-const CACHE_NAME = 'tactic-master-v32'; // v32 : ai.js à la demande (#324) — + aiLevels.js, aiEngine.js
+const CACHE_NAME = 'tactic-master-v33'; // v33 : retrait de ./index.html du précache (#325)
 const STATIC_ASSETS = [
-  // './' ET './index.html' : le manifest a start_url "/" (#184) — sans
-  // l'entrée './', une navigation hors-ligne vers / raterait le cache
-  // (match exact sur l'URL de requête, pas de fallback navigation).
+  // Seulement './' : le manifest a start_url "/" (#184), et une navigation
+  // hors-ligne vers / est servie par cette entrée (match exact sur l'URL, qui
+  // vaut l'origine + '/'). On NE précache PAS './index.html' (#325) : cleanUrls
+  // (vercel.json) le redirige en 308, donc l'entrée coûtait une requête suivie
+  // en pure perte à chaque installation, et stockait une réponse redirigée —
+  // qui ferait échouer respondWith si elle servait une navigation. './' suffit.
   './',
-  './index.html',
   './styles.css',
   './skins.css',
   './config.js',

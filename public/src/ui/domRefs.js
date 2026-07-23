@@ -152,8 +152,10 @@ export function cacheDomRefs(els) {
   els.authTitle = document.getElementById('authTitle');
   els.authError = document.getElementById('authError');
   els.authDisplayName = document.getElementById('authDisplayName');
+  els.authDisplayNameLabel = document.getElementById('authDisplayNameLabel');
   els.authEmail = document.getElementById('authEmail');
   els.authPassword = document.getElementById('authPassword');
+  els.authPasswordToggle = document.getElementById('authPasswordToggle');
   els.authSubmitBtn = document.getElementById('authSubmitBtn');
   els.authSwitchBtn = document.getElementById('authSwitchBtn');
   els.forgotPasswordBtn = document.getElementById('forgotPasswordBtn');

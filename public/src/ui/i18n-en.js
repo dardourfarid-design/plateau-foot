@@ -316,7 +316,11 @@ registerMessages({
   'Se déconnecter': 'Sign out',
   'Pseudo': 'Username',
   'Email': 'Email',
-  'Mot de passe': 'Password'
+  'Mot de passe': 'Password',
+  // #342 — formulaire compte : toggle mot de passe + microcopie de réassurance
+  'Afficher le mot de passe': 'Show password',
+  'Masquer le mot de passe': 'Hide password',
+  'Gratuit — aucune carte requise.': 'Free — no card required.'
 });
 
 // --- Chaînes dynamiques (JS) : jeu, overlays, auth, données, pouvoirs ---

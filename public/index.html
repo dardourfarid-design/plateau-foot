@@ -628,7 +628,7 @@
         <div class="online-divider">ou</div>
 
         <div class="setup-field">
-          <span class="setup-label">Rejoindre avec un code</span>
+          <label class="setup-label" for="joinCodeInput">Rejoindre avec un code</label>
           <div class="join-code-row">
             <input type="text" id="joinCodeInput" class="auth-input join-code-input" placeholder="EX: A1B2C3" maxlength="6" autocapitalize="characters">
             <button class="btn primary" id="joinOnlineBtn">Rejoindre</button>
@@ -832,6 +832,7 @@
           <div class="create-player-preview" id="createPlayerPreview"></div>
 
           <div class="create-player-fields">
+            <label class="setup-label" for="newPlayerName">Nom du joueur</label>
             <input class="auth-input" type="text" id="newPlayerName" placeholder="Nom du joueur" maxlength="24">
 
             <span class="setup-label">Style</span>
@@ -872,6 +873,7 @@
     <div class="profile-panel hidden" id="panelMercato">
       <div class="mercato-section">
         <div class="sidebar-title">Ajouter un ami</div>
+        <label class="setup-label" for="friendPseudoInput">Pseudo exact de ton ami</label>
         <div class="join-code-row">
           <input class="auth-input join-code-input" type="text" id="friendPseudoInput" placeholder="Pseudo exact de ton ami" style="text-transform:none;">
           <button class="btn primary" id="sendFriendRequestBtn">Ajouter</button>
@@ -1024,10 +1026,21 @@
   <div class="overlay-card account-card">
     <div id="accountLoggedOutView">
       <div class="overlay-title account-title" id="authTitle">Connexion</div>
-      <p class="overlay-sub account-sub" id="authError"></p>
-      <input class="auth-input" type="text" id="authDisplayName" placeholder="Pseudo" style="display:none;">
-      <input class="auth-input" type="email" id="authEmail" placeholder="Email">
-      <input class="auth-input" type="password" id="authPassword" placeholder="Mot de passe">
+      <!-- #342 : role=alert posé dès le DOM (une région créée au moment de
+           l'erreur n'est pas annoncée de façon fiable aux lecteurs d'écran). -->
+      <p class="overlay-sub account-sub" id="authError" role="alert"></p>
+      <!-- #342 : labels visibles (les placeholders disparaissent à la frappe)
+           + autocomplete pour que les gestionnaires de mots de passe remplissent. -->
+      <label class="auth-label" for="authDisplayName" id="authDisplayNameLabel" style="display:none;">Pseudo</label>
+      <input class="auth-input" type="text" id="authDisplayName" placeholder="Pseudo" autocomplete="nickname" style="display:none;">
+      <label class="auth-label" for="authEmail">Email</label>
+      <input class="auth-input" type="email" id="authEmail" placeholder="Email" autocomplete="email">
+      <label class="auth-label" for="authPassword">Mot de passe</label>
+      <div class="pw-field">
+        <input class="auth-input" type="password" id="authPassword" placeholder="Mot de passe" autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="authPasswordToggle" aria-pressed="false">Afficher le mot de passe</button>
+      </div>
+      <p class="auth-free-note">Gratuit — aucune carte requise.</p>
 
       <p class="account-required-note" id="accountRequiredNote">Le jeu est jouable sans compte. Crée un compte pour la boutique, ton équipe, les amis et le multijoueur.</p>
 
@@ -1066,7 +1079,8 @@
       <div class="overlay-title account-title">Mot de passe oublié</div>
       <p class="overlay-sub account-sub" id="forgotPasswordError"></p>
       <p class="account-required-note">Indique ton email, on t'envoie un lien pour choisir un nouveau mot de passe.</p>
-      <input class="auth-input" type="email" id="forgotPasswordEmail" placeholder="Email">
+      <label class="auth-label" for="forgotPasswordEmail">Email</label>
+      <input class="auth-input" type="email" id="forgotPasswordEmail" placeholder="Email" autocomplete="email">
       <button class="btn primary account-submit" id="sendResetLinkBtn">Envoyer le lien</button>
       <button class="topbar-link account-switch" id="backToLoginBtn">Retour à la connexion</button>
     </div>

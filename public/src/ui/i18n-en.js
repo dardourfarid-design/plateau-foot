@@ -564,6 +564,13 @@ registerMessages({
   'Séance perdue…': 'Shootout lost…',
   'Joueur 1 gagne la séance !': 'Player 1 wins the shootout!',
   'Joueur 2 gagne la séance !': 'Player 2 wins the shootout!',
+  // #242 — libellés d'accessibilité des 6 zones de la cage
+  'En haut à gauche': 'Top left',
+  'En haut au centre': 'Top center',
+  'En haut à droite': 'Top right',
+  'En bas à gauche': 'Bottom left',
+  'En bas au centre': 'Bottom center',
+  'En bas à droite': 'Bottom right',
   'Arrêt !': 'Saved!',
 });
 

@@ -35,3 +35,14 @@ verify_jwt = false
 # REWARDED_SSV_ENABLED n'est pas 'true'.
 [functions.rewarded-ssv]
 verify_jwt = false
+
+# rewarded-begin / rewarded-complete : modèle nonce des récompenses vidéo
+# GameMonetize (migration 0044), « en attendant AdSense ». On vérifie le JWT
+# MANUELLEMENT via getUser() (comme delete-account) : le gateway peut rejeter
+# des JWT valides de façon imprévisible. Échec fermé tant que
+# REWARDED_CLIENT_ENABLED n'est pas 'true'.
+[functions.rewarded-begin]
+verify_jwt = false
+
+[functions.rewarded-complete]
+verify_jwt = false

@@ -19,8 +19,31 @@ window.__PLATEAU_FOOT_CONFIG__ = {
     // Flags par format (n'ont d'effet que si enabled=true). Absent ou true =
     // format actif ; false = format désactivé (rollout progressif, A/B).
     banner: true,         // bannières AdSense hors-jeu (PR C / #28) — ACTIF
-    interstitial: false,  // interstitiels : pas d'unité AdSense encore (PR D)
-    rewarded: false,      // rewarded : nécessite Ad Manager + SSV (PR E / #30)
+    interstitial: true,   // interstitiel servi par GameMonetize « en attendant
+                          // AdSense » (gameId ci-dessous). ACTIF — vérifié en
+                          // local : une vraie pub joue (pause → vidéo → reprise).
+    rewarded: false,      // rewarded servi par GameMonetize (modèle nonce serveur,
+                          // migration 0044 + REWARDED_CLIENT_ENABLED=true, déjà
+                          // posés). ⚠️ EN ATTENTE de vérif : ce build de SDK
+                          // n'émet SDK_REWARDED_WATCH_COMPLETE que si l'inventaire
+                          // « Rewarded » est activé pour ce jeu dans le dashboard
+                          // GameMonetize. Tant que non confirmé, un joueur
+                          // regarderait sans être crédité. Activer « Rewarded »
+                          // côté GameMonetize, tester sur le domaine déployé
+                          // (localhost ne sert pas le rewarded), PUIS passer à true.
+    // Routage par format (composite, voir adProvider.js). Absent = tout AdSense.
+    // On garde AdSense sur la bannière et on confie interstitiel + rewarded à
+    // GameMonetize (eCPM jeu supérieur, aucun seuil de trafic).
+    providers: {
+      banner: 'adsense',
+      interstitial: 'gamemonetize',
+      rewarded: 'gamemonetize'
+    },
+    // Régie GameMonetize : l'ID du jeu est fourni par le tableau de bord
+    // GameMonetize après inscription du jeu. Vide = SDK non chargé (échec propre).
+    gameMonetize: {
+      gameId: 'vt4e2kq9iwdbrjjxcw3vwofibwwcch7t' // ID du jeu (dashboard GameMonetize)
+    },
     // Identifiants des blocs d'annonces AdSense (data-ad-slot).
     slots: {
       banner: '2744363190' // bloc Display « accueil » (à contrôler côté AdSense)

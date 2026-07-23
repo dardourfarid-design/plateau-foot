@@ -17,6 +17,8 @@ await import('./profileUI.test.js');
 await import('./mercatoUI.test.js');
 await import('./advertisingConsent.test.js');
 await import('./adService.test.js');
+await import('./adProviderRouting.test.js');
+await import('./gameMonetizeProvider.test.js');
 await import('./interstitialFrequency.test.js');
 await import('./adAnalytics.test.js');
 await import('./abTest.test.js');

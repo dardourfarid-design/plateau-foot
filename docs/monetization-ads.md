@@ -115,3 +115,77 @@ vendu, et `adService` n'est pas sollicité.
 fournisseur de contenu. Le jour où une vraie régie serait décidée, l'UI garde le
 même point d'entrée (`renderHouseAds()` dans `shootoutUI.js`) et c'est ce module
 qui déléguerait — mais il faudrait **d'abord** trancher la garantie ci-dessus.
+
+## GameMonetize « en attendant AdSense » — interstitiel + rewarded
+
+AdSense (bannières Display) reste la régie cible, mais sa validation traîne.
+Pour ne pas laisser l'inventaire **interstitiel** (entre deux parties) et
+**rewarded** (vidéo opt-in) vide — là où l'eCPM sur jeu est le plus fort — on
+branche **GameMonetize** sur ces deux seuls formats. La bannière Display reste
+servie par AdSense. Le routage par format est un composite (`adProvider.js`) :
+
+```js
+ads.providers = { banner: 'adsense', interstitial: 'gamemonetize', rewarded: 'gamemonetize' }
+```
+
+Régies disponibles : `adsense` (bannière), `gamemonetize` (interstitiel +
+rewarded), `mock` (dev). Absence de `providers` ⇒ tout AdSense (rétro-compatible).
+
+### Sécurité du crédit rewarded (important)
+
+GameMonetize (SDK HTML5, socle GameDistribution) **ne fournit pas de postback
+S2S signé** : le seul signal « vue terminée » est l'événement navigateur
+`SDK_REWARDED_WATCH_COMPLETE`, donc auto-déclaré par le client — exactement le
+farm que 0026 a fermé. On préserve l'invariant « le client n'écrit jamais le
+grand livre » avec un **modèle nonce serveur en deux temps** (migration 0044) :
+
+1. `rewarded-begin` (JWT) → `create_rewarded_nonce(user_id)` : nonce aléatoire à
+   usage unique, lié à l'utilisateur **authentifié** (jamais déclaré par le body).
+2. Le joueur regarde la vidéo (GameMonetize) → `SDK_REWARDED_WATCH_COMPLETE`.
+3. `rewarded-complete` (JWT) → `consume_rewarded_nonce(user_id, nonce)` : valide
+   propriété + non-consommé + non-expiré (15 min), puis crédite via la **même**
+   `grant_rewarded_coins` que le SSV Google (montant décidé serveur, plafond 10/j,
+   idempotence `provider_ref = nonce`).
+
+**Limite assumée** : sans crypto S2S, un utilisateur muni de son propre JWT peut
+réclamer sans regarder — dommage borné à 10 pièces/jour. Le vrai SSV signé
+revient avec AdMob/Ad Manager (`rewarded-ssv` reste en place, inchangé).
+
+Orchestration client : `services/ads/rewardedGrant.js` (`runRewardedGrant`),
+appelé par `handleWatchRewarded` dans `main.js`. Le nonce ne circule qu'entre le
+client et **notre** serveur — jamais transmis au SDK.
+
+### Comportement réel du SDK (vérifié le 2026-07-23, gameId réel)
+
+Testé en local avec un vrai `gameId` : `window.sdk` n'expose que **`showBanner()`**
+(pas de `showAd`/`preloadAd` ; `play()` est un no-op). Un interstitiel réel joue
+avec la séquence d'événements `SDK_GAME_PAUSE → [vidéo] → SDK_GAME_START` — c'est
+ce que `gameMonetizeProvider` mappe. Détail important : **le SDK mémorise
+`window.SDK_OPTIONS.onEvent` au chargement** et ignore toute réassignation ; on
+pose donc l'aiguilleur définitif avant d'insérer le script.
+
+Le **rewarded** se distingue par `SDK_REWARDED_WATCH_COMPLETE`, émis seulement si
+l'inventaire « Rewarded » est activé pour le jeu côté dashboard GameMonetize.
+En local, seul l'interstitiel a pu être observé (le rewarded ne sert pas sur
+`localhost`). Le provider ne crédite JAMAIS sans cet événement — un interstitiel
+laisse `completed:false`, donc aucun crédit indu.
+
+### Activation (aucun code à écrire)
+
+1. Inscrire le jeu sur GameMonetize → récupérer le **gameId**. ✅ *fait*
+2. `public/config.js` : `ads.gameMonetize.gameId` renseigné, `ads.interstitial:
+   true` ✅ (vérifié en local). `ads.rewarded` reste **`false`** tant que l'étape 5
+   n'est pas confirmée.
+3. Déployer la **migration 0044** (`rewarded_nonces` + les deux RPC). ✅ *fait*
+4. Déployer les Edge Functions `rewarded-begin` / `rewarded-complete`, désactiver
+   « Verify JWT » (comme `delete-account`), poser **`REWARDED_CLIENT_ENABLED=true`**
+   (échec fermé sinon). ✅ *fait*
+5. **Rewarded — reste à confirmer** : activer l'inventaire « Rewarded » pour le jeu
+   dans le dashboard GameMonetize, tester sur le **domaine déployé** (pas
+   localhost) qu'une vidéo regardée jusqu'au bout émet bien
+   `SDK_REWARDED_WATCH_COMPLETE` et crédite +10 pièces (idempotent, borné 10/j),
+   PUIS passer `ads.rewarded` à `true`.
+
+> ⚠️ Empiler AdSense + GameMonetize sur la **même page** peut heurter les CGU
+> AdSense. Ici les formats sont **disjoints** (bannière = AdSense ; interstitiel
+> plein écran / rewarded = GameMonetize), pas superposés sur un même emplacement.

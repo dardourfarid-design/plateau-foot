@@ -278,17 +278,19 @@
           <button class="pk-theme-btn" data-theme="manga" type="button">Manga</button>
         </div>
       </div>
-      <!-- #228 — choix de l'adversaire, visible avant le coup d'envoi -->
+      <!-- #228 — choix de l'adversaire, visible avant le coup d'envoi.
+           #242 — de vrais <button> : focus clavier et lecteur d'écran, comme
+           les boutons d'ambiance juste au-dessus. -->
       <div class="so-opponent" id="soOpponent">
         <span class="setup-label">Adversaire</span>
         <div class="setup-options" id="soOpponentOptions">
-          <div class="setup-option active" data-val="cpu">Ordinateur</div>
-          <div class="setup-option" data-val="human">2 joueurs</div>
+          <button class="setup-option active" data-val="cpu" type="button">Ordinateur</button>
+          <button class="setup-option" data-val="human" type="button">2 joueurs</button>
         </div>
         <div class="setup-options" id="soLevelOptions">
-          <div class="setup-option" data-val="25">Facile</div>
-          <div class="setup-option active" data-val="55">Moyen</div>
-          <div class="setup-option" data-val="85">Difficile</div>
+          <button class="setup-option" data-val="25" type="button">Facile</button>
+          <button class="setup-option active" data-val="55" type="button">Moyen</button>
+          <button class="setup-option" data-val="85" type="button">Difficile</button>
         </div>
       </div>
       <div class="shootout-scoreline">

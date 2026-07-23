@@ -31,6 +31,12 @@ const PK_ZONES = [
   { id: 'tl', x: 25, y: 30 }, { id: 'tc', x: 50, y: 26 }, { id: 'tr', x: 75, y: 30 },
   { id: 'bl', x: 25, y: 47 }, { id: 'bc', x: 50, y: 50 }, { id: 'br', x: 75, y: 47 },
 ];
+// #242 — libellés d'accessibilité des 6 zones (les zones sont de vrais boutons :
+// jouables au clavier et nommées pour un lecteur d'écran).
+const PK_ZONE_LABELS = {
+  tl: 'En haut à gauche', tc: 'En haut au centre', tr: 'En haut à droite',
+  bl: 'En bas à gauche', bc: 'En bas au centre', br: 'En bas à droite',
+};
 const PK_BALL_REST = { x: 50, y: 79 };
 const PK_KEEPER_REST = { x: 50, y: 40 };
 const PK_CROWD_COLORS = ['#4f8cff', '#ff5b5b', '#9fb0cf'];
@@ -49,7 +55,7 @@ const PK_SKIN_PRICE_CENTS = 199;
  *                                     le module y ajoute ses propres clés pk*.
  * @param {() => object|null} deps.getCurrentUser  utilisateur connecté ou null.
  * @param {() => void} deps.promptSignIn  ouvre l'overlay de connexion.
- * @returns {{ openShootout: () => void, startShootoutDepartage: () => void }}
+ * @returns {{ openShootout: () => void, startShootoutDepartage: (opponent?: string) => void }}
  */
 export function initShootout({ els, getCurrentUser, promptSignIn }) {
 
@@ -167,12 +173,18 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (!els.pkZones) return;
     els.pkZones.innerHTML = '';
     PK_ZONES.forEach(z => {
-      const zone = document.createElement('div');
+      // #242 — un vrai <button> : focus clavier (Tab + Entrée) et nom accessible,
+      // au lieu d'un div cliquable muet. Désactivé hors des phases de visée.
+      const zone = document.createElement('button');
+      zone.type = 'button';
       zone.className = 'pk-zone';
+      zone.disabled = true;
+      zone.setAttribute('aria-label', t(PK_ZONE_LABELS[z.id]));
       zone.style.left = z.x + '%';
       zone.style.top = z.y + '%';
       zone.dataset.zone = z.id;
-      zone.innerHTML = '<div class="pk-zone-ring"><span class="pk-zone-dot"></span></div>';
+      // (des <span> : un <button> n'accepte que du contenu phrasé)
+      zone.innerHTML = '<span class="pk-zone-ring"><span class="pk-zone-dot"></span></span>';
       zone.addEventListener('click', () => pkPickZone(z.id));
       els.pkZones.appendChild(zone);
     });
@@ -270,12 +282,20 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
   }
 
   function openShootout() { launchShootout('standalone', 'Séance de tirs au but'); }
-  function startShootoutDepartage() { launchShootout('departage', 'Départage aux tirs au but'); }
 
-  function launchShootout(mode, title) {
-    // #228 : le départage hérite du contexte (toujours face à l'ordinateur, comme
-    // la partie qu'il tranche) ; l'amical suit le choix fait à l'écran.
-    const opponent = mode === 'departage' ? 'cpu' : soOpponent;
+  /**
+   * #228 — le départage hérite de l'adversaire RÉEL de la partie qu'il tranche :
+   * 'human' si elle se jouait à 2 sur le même écran, 'cpu' sinon. C'est main.js
+   * qui connaît le gameMode et le traduit (voir handlePostActionEffects).
+   */
+  function startShootoutDepartage(opponent) {
+    launchShootout('departage', 'Départage aux tirs au but', opponent === 'human' ? 'human' : 'cpu');
+  }
+
+  function launchShootout(mode, title, forcedOpponent) {
+    // #228 : le départage hérite du contexte de la partie (adversaire imposé) ;
+    // l'amical suit le choix fait à l'écran.
+    const opponent = mode === 'departage' ? forcedOpponent : soOpponent;
     so = {
       phase: 'ready', mode, opponent,
       engine: createShootout({ difficulty: soDifficulty }),
@@ -549,6 +569,8 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (phase === 'over') {
       const w = shootoutWinner(s);
       if (so.mode === 'departage') return w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
+      // #228 : en 2 joueurs, personne n'est « toi » — on nomme le vainqueur.
+      if (so.opponent === 'human') return w === TEAMS.BLEU ? t('Joueur 1 gagne la séance !') : t('Joueur 2 gagne la séance !');
       return w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
     }
     // #228 : en 2 joueurs, on nomme qui doit agir (le duel est en pass-and-play).
@@ -598,14 +620,26 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     // #227/#228 : zones cliquables pour viser (aim), plonger face au CPU (dive)
     // ou garder la cage en 2 joueurs (keeper).
     const keeping = phase === 'dive' || phase === 'keeper';
-    els.pkZones?.classList.toggle('aim', phase === 'aim' || keeping);
+    const zonesActive = phase === 'aim' || keeping;
+    els.pkZones?.classList.toggle('aim', zonesActive);
     els.pkZones?.classList.toggle('dive', keeping);
     // En phase 'keeper', la visée du tireur DOIT rester masquée : le gardien est
     // assis devant le même écran.
-    els.pkZones?.querySelectorAll('.pk-zone').forEach(z =>
-      z.classList.toggle('selected', phase !== 'keeper' && z.dataset.zone === so.selectedZone));
+    els.pkZones?.querySelectorAll('.pk-zone').forEach(z => {
+      z.classList.toggle('selected', phase !== 'keeper' && z.dataset.zone === so.selectedZone);
+      // #242 : les zones sont des boutons — focusables uniquement quand jouables.
+      z.disabled = !zonesActive;
+    });
 
-    if (els.pkHint) els.pkHint.textContent = pkHintText(phase, s);
+    // #242 : le hint est LE fil conducteur de la machine à états — un léger
+    // glissé à chaque changement rend la transition de phase lisible.
+    const hintTxt = pkHintText(phase, s);
+    if (els.pkHint && els.pkHint.textContent !== hintTxt) {
+      els.pkHint.textContent = hintTxt;
+      els.pkHint.classList.remove('swap');
+      void els.pkHint.offsetWidth;   // retrigger animation
+      els.pkHint.classList.add('swap');
+    }
   }
 
   wireShootout();

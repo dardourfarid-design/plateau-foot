@@ -113,9 +113,22 @@
   letter-spacing:.02em; text-transform:none;
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
   transition:all .15s;
+  /* #242 : cibles tactiles ≥ 44px (comme la boutique, #346) et suppression du
+     délai de tap — ces options sont désormais de vrais <button>. */
+  min-height:44px; touch-action:manipulation;
 }
 .shootout-modal .setup-option.active{
   background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent);
+}
+/* #242 : états intermédiaires nets (survol / focus clavier) — un réglage qui
+   réagit avant le clic se lit comme cliquable. */
+.shootout-modal .setup-option:not(.active):hover,
+.pk-theme-btn:not(.active):not(.locked):hover{
+  background:rgba(255,255,255,.13); color:var(--pk-ink);
+}
+.shootout-modal .setup-option:focus-visible,
+.pk-theme-btn:focus-visible{
+  outline:2px solid var(--pk-accent); outline-offset:2px;
 }
 .pk-switcher-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
 /* #229 — dans la modale, les 4 thèmes doivent tenir sur UNE ligne : les thèmes
@@ -128,7 +141,7 @@
 .pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
   font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
-  transition:all .15s; }
+  transition:all .15s; min-height:44px; touch-action:manipulation; /* #242 */ }
 .pk-theme-btn.active{ background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent); }
 .pk-theme-btn.locked{ opacity:.82; }
 /* Audit UX 2026-07-23 (F9+F6, #344) : le cadenas est un SVG inline injecté
@@ -150,7 +163,8 @@
 .so-team{ font-family:var(--pk-font); font-weight:800; font-size:clamp(13px,3.6vw,17px); letter-spacing:.06em; text-transform:uppercase; }
 .so-bleu{ color:var(--pk-blue); }
 .so-rouge{ color:var(--pk-red); }
-.so-score{ font-family:var(--pk-display); font-weight:900; font-size:clamp(32px,10vw,56px); color:var(--pk-ink); line-height:.9; }
+/* #242 : chiffres tabulaires — le score ne « saute » pas quand il change. */
+.so-score{ font-family:var(--pk-display); font-weight:900; font-size:clamp(32px,10vw,56px); color:var(--pk-ink); line-height:.9; font-variant-numeric:tabular-nums; }
 .shootout-dots-wrap{ display:flex; flex-direction:column; gap:6px; align-items:center; }
 .shootout-dots{ display:inline-flex; gap:clamp(6px,2vw,9px); min-height:16px; flex-wrap:wrap; justify-content:center; }
 .shootout-dot{ display:inline-block; vertical-align:middle; width:clamp(15px,3.6vw,20px); height:clamp(15px,3.6vw,20px);
@@ -162,6 +176,12 @@
 /* ---- Scène ---- */
 .pk-stage{ position:relative; width:100%; aspect-ratio:6 / 5; margin:0 auto; container-type:inline-size;
   border-radius:var(--pk-radius); overflow:hidden; border:var(--pk-stage-border); background:var(--pk-stage-bg); }
+/* #242 — profondeur : léger vignettage qui ferme la scène et concentre le
+   regard sur la cage. Au-dessus des couches de décor, sous le flash/résultat,
+   et transparent aux clics. Discret exprès : il doit passer sur les 4 thèmes,
+   y compris Cartoon (fond clair). */
+.pk-stage::after{ content:''; position:absolute; inset:0; z-index:10; pointer-events:none;
+  background:radial-gradient(115% 92% at 50% 32%, transparent 62%, rgba(0,0,0,.2) 100%); }
 .pk-stage.shake{ animation:pkShake .42s; }
 .pk-crowd{ position:absolute; top:0; left:0; right:0; height:15%; overflow:hidden; z-index:0; background:var(--pk-crowd-bg); }
 .pk-crowd.roar{ animation:pkRoar .7s ease-out; }
@@ -197,6 +217,11 @@
   background-size:14px 14px; }
 .pk-pitch{ position:absolute; left:0; right:0; bottom:0; height:50%; z-index:2; overflow:hidden;
   background:linear-gradient(180deg,var(--pk-pitch-a),var(--pk-pitch-b)); }
+/* #242 — profondeur : ombre d'horizon en haut de la pelouse, qui « assoit » la
+   cage et les tribunes sur le terrain au lieu d'un raccord à plat. */
+.pk-pitch::before{ content:''; position:absolute; top:0; left:0; right:0; height:14%; pointer-events:none;
+  z-index:1; /* au-dessus des bandes de tonte (.pk-pitch-stripe) */
+  background:linear-gradient(180deg, rgba(0,0,0,.26), transparent); }
 .pk-pitch-stripe{ position:absolute; inset:0; background:repeating-linear-gradient(180deg, rgba(255,255,255,.06) 0 11%, rgba(0,0,0,.05) 11% 22%); }
 .pk-box{ position:absolute; left:18%; right:18%; top:52%; height:30%; z-index:3; pointer-events:none;
   border:3px solid var(--pk-pitch-line); border-top:none; border-radius:0 0 4px 4px; }
@@ -214,9 +239,18 @@
 .pk-fig-shadow{ position:absolute; left:50%; bottom:-4%; transform:translateX(-50%); width:74%; height:8%;
   background:rgba(0,0,0,.32); border-radius:50%; filter:blur(3px); z-index:0; }
 .pk-zones{ position:absolute; inset:0; z-index:8; pointer-events:none; }
+/* #242 : les zones sont de vrais <button> (clavier + lecteur d'écran) — reset
+   de l'habillage natif, l'anneau reste le seul visuel. */
 .pk-zone{ position:absolute; width:27%; height:22%; transform:translate(-50%,-50%);
-  display:flex; align-items:center; justify-content:center; }
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; padding:0; color:inherit; touch-action:manipulation; }
 .pk-zones.aim .pk-zone{ pointer-events:auto; cursor:pointer; }
+.pk-zone:focus-visible{ outline:none; }
+.pk-zone:focus-visible .pk-zone-ring{ opacity:1; border-color:var(--pk-zone-active);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--pk-zone-active) 55%, transparent); }
+/* Survol : l'anneau s'affirme avant le clic (affordance desktop). */
+.pk-zones.aim .pk-zone:hover .pk-zone-ring{ border-color:var(--pk-zone-active);
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--pk-zone-active) 16%, transparent); }
 .pk-zone-ring{ width:clamp(36px,9.5vw,58px); height:clamp(36px,9.5vw,58px); border-radius:50%;
   border:3px solid var(--pk-zone-ring); display:flex; align-items:center; justify-content:center;
   opacity:0; transition:opacity .2s, border-color .15s; }
@@ -282,7 +316,11 @@
 .pk-controls{ min-height:clamp(84px,22vw,110px); display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:12px; }
 .pk-hint{ font-size:clamp(13px,3.4vw,16px); font-weight:800; color:var(--pk-ink); text-align:center; }
+/* #242 — transitions d'état franches : le hint glisse à chaque changement de
+   phase (visée → puissance → tir → résultat), la jauge entre en montant. */
+.pk-hint.swap{ animation:pkHintSwap .24s ease-out; }
 .pk-power-wrap{ width:100%; display:flex; justify-content:center; }
+.pk-power-wrap:not(.hidden){ animation:pkRise .22s ease-out; }
 .pk-power-track{ position:relative; width:min(360px,86%); height:20px; border-radius:999px;
   background:rgba(127,127,127,.14); border:1px solid var(--pk-zone-ring); overflow:hidden; }
 .pk-power-sweet{ position:absolute; top:0; bottom:0; width:18%; background:linear-gradient(90deg,#3ddc84aa,#2ec96f); border-radius:999px; }
@@ -292,7 +330,12 @@
   font-size:clamp(16px,4.6vw,23px); padding:clamp(12px,3.4vw,16px) clamp(24px,8vw,44px);
   background:var(--pk-accent) !important; color:var(--pk-on-accent) !important; border:none !important;
   border-radius:var(--pk-radius) !important; box-shadow:var(--pk-cta-shadow); }
+.pk-cta{ transition:transform .12s ease, filter .12s ease; }
+.pk-cta:hover{ filter:brightness(1.07); transform:translateY(-1px); }
 .pk-cta:active{ transform:scale(.96); }
+/* Le focus .btn générique (terre-vif) jure sur les thèmes de séance : anneau
+   à l'encre du thème actif. */
+.pk-cta:focus-visible{ outline:2px solid var(--pk-ink); outline-offset:3px; }
 .shootout-end-row{ display:flex; justify-content:center; gap:12px; }
 
 /* ---- Animations ---- */
@@ -306,6 +349,9 @@
 @keyframes pkFlash{ 0%{opacity:0} 12%{opacity:.9} 100%{opacity:0} }
 @keyframes pkKick{ 0%{transform:translate(-50%,-50%) rotate(0)} 40%{transform:translate(-44%,-54%) rotate(-7deg)} 100%{transform:translate(-50%,-50%) rotate(0)} }
 @keyframes pkLed{ 0%{transform:translateX(-30%)} 100%{transform:translateX(230%)} }
+/* #242 */
+@keyframes pkHintSwap{ from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:translateY(0)} }
+@keyframes pkRise{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
 
 /* Badge Fondateur (#61) — doré, affiché dans l'entête du profil quand
    profiles.is_founder = true. Récompense du Pack Fondateurs. */
@@ -330,4 +376,9 @@
   .pk-led-sheen{ animation:none; }
   .pk-stage.shake{ animation:none; }
   .pk-confetti{ animation:none; opacity:0; }
+  /* #242 : les micro-transitions d'état sont décoratives — coupées aussi. */
+  .pk-hint.swap{ animation:none; }
+  .pk-power-wrap:not(.hidden){ animation:none; }
+  .pk-cta{ transition:none; }
+  .pk-cta:hover{ transform:none; }
 }

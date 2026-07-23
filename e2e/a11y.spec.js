@@ -86,11 +86,17 @@ test('plateau — jouable au clavier seul (#345)', async ({ page }) => {
   await expect(page.locator('.token.selected')).toHaveCount(1);
 
   // …et les coups légaux sont exposés puis jouables à l'Entrée.
+  // NB : `.cell.dest-move` est un locator VIVANT — après le coup il se
+  // re-résout vers les destinations de la phase suivante. On fige donc les
+  // coordonnées de la case AVANT de jouer, et on vérifie sur celles-ci.
   const dest = page.locator('.cell.dest-move').first();
   await expect(dest).toBeVisible();
+  const destPos = await dest.evaluate(el => ({ r: el.dataset.row, c: el.dataset.col }));
   await dest.focus();
   await page.keyboard.press('Enter');
-  await expect(dest.locator('.token')).toHaveCount(1); // le pion a bougé ici
+  await expect(
+    page.locator(`.cell[data-row="${destPos.r}"][data-col="${destPos.c}"] .token`)
+  ).toHaveCount(1); // le pion a bougé ici
 
   // Libellés parlants + annonceur d'état présent (changements seulement).
   await expect(page.locator('.cell[data-row="0"][data-col="0"]'))

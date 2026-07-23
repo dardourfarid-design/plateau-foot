@@ -1,11 +1,48 @@
-# Tactic Master — Projet
+# Tactic Master
+
+**⚽ Jeu de stratégie football au tour par tour — gratuit, jouable dans le navigateur.**
+
+🎮 **Jouer maintenant : [tactic-master.vercel.app](https://tactic-master.vercel.app)** — aucune installation, aucun compte requis pour commencer.
 
 [![CI](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/ci.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/ci.yml)
 [![Non-régression complète](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/full-regression.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/full-regression.yml)
 [![Smoke de production](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/prod-smoke.yml/badge.svg)](https://github.com/dardourfarid-design/plateau-foot/actions/workflows/prod-smoke.yml)
 [![Couverture](https://img.shields.io/badge/couverture-63%25%20lignes%20%C2%B7%2086%25%20branches-brightgreen)](docs/regression-runbook.md)
 
-> Santé du projet en un coup d'œil. Détails et rejeu : **[Santé & non-régression](#santé--non-régression)**.
+## Qu'est-ce que Tactic Master ?
+
+Tactic Master est un **jeu de plateau numérique** inspiré du football : sur un
+terrain de 7×9 cases, deux équipes de 6 pions (1 gardien, 2 défenseurs,
+3 attaquants) se déplacent, se passent le ballon et tentent de marquer. Chaque
+tour est un choix tactique — pas de réflexes, pas de chance, uniquement de la
+lecture de jeu. Une partie se joue en quelques minutes.
+
+**Modes de jeu :**
+
+- 🤖 **Solo contre l'IA** — 3 niveaux de difficulté, fonctionne même hors-ligne
+- 👥 **2 joueurs sur le même écran**
+- 🌐 **Multijoueur en ligne** — création de partie + code d'invitation, temps réel
+- 🧩 **Puzzle du jour** — une situation, une solution à trouver
+- 🎓 **Tutoriel guidé interactif** — apprendre en jouant une vraie mini-partie
+- 🥅 **Séance de tirs au but** — mini-jeu d'adresse (6 zones + jauge de puissance)
+
+**Autour du jeu** (avec un compte, optionnel) : progression XP/niveaux, défis
+quotidiens, streak sans punition, collection de joueurs fictifs et composition
+d'équipe, mercato entre amis, classement, boutique de thèmes et de kits.
+
+**Caractéristiques :**
+
+- 📱 **PWA installable** (Android/iOS/desktop), utilisable hors-ligne pour le solo
+- ♿ **Accessible** : plateau jouable au clavier et au lecteur d'écran, vraies modales
+- 🌍 Français + landing anglaise ; 🔒 consentement RGPD granulaire, export et suppression de données
+- 🧑‍🎨 Tous les joueurs sont **entièrement fictifs** (aucun nom réel, par choix)
+
+**Sous le capot :** JavaScript vanilla (ES modules, zéro build, zéro
+framework), moteur de jeu pur et testé unitairement, [Supabase](https://supabase.com)
+(auth, base Postgres + RLS, Realtime, Edge Functions), Playwright pour l'E2E,
+déployé sur Vercel. Voir [Structure du projet](#structure-du-projet).
+
+> Santé du projet en un coup d'œil via les badges ci-dessus. Détails et rejeu : **[Santé & non-régression](#santé--non-régression)**.
 
 ## Propriété intellectuelle
 

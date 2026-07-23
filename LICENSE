@@ -1,0 +1,21 @@
+Copyright (c) 2026 Farid Dardour. Tous droits réservés. / All rights reserved.
+
+FR — Le code source de ce dépôt est publié à des fins de consultation
+(« source-available »). Aucune licence n'est accordée : toute reproduction,
+modification, distribution, ou utilisation commerciale ou non commerciale du
+code, des textes, des images ou de tout autre contenu de ce dépôt est
+interdite sans l'accord écrit préalable du titulaire des droits.
+
+EN — The source code in this repository is published for viewing purposes
+only ("source-available"). No license is granted: any reproduction,
+modification, distribution, or commercial or non-commercial use of the code,
+texts, images, or any other content of this repository is prohibited without
+the prior written consent of the copyright holder.
+
+Exceptions — composants tiers sous leur propre licence :
+- public/vendor/supabase-js-2.110.1.js — © Supabase, Inc., licence MIT
+  (notice conservée en tête du fichier).
+- Polices Space Grotesk et Barlow Condensed — chargées via Google Fonts,
+  licence SIL Open Font License 1.1.
+
+Contact : dardour.farid@gmail.com

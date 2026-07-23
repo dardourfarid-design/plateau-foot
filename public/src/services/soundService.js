@@ -53,7 +53,10 @@ const SOUNDS = {
   pass: () => tone(620, 85, 'sine', 0.045),
   // Petit arpège ascendant pour le but.
   goal: () => { tone(523, 110, 'sine', 0.06); setTimeout(() => tone(784, 150, 'sine', 0.06), 100); setTimeout(() => tone(1047, 220, 'sine', 0.06), 240); },
-  whistle: () => tone(1800, 180, 'square', 0.025)
+  whistle: () => tone(1800, 180, 'square', 0.025),
+  // #263 — coup invalide : deux notes graves brèves et descendantes (« bzz »),
+  // ondes carrées douces, assez distinctes des sons positifs (select/pass/goal).
+  error: () => { tone(200, 90, 'square', 0.03); setTimeout(() => tone(150, 120, 'square', 0.03), 70); }
 };
 
 export function playSound(name) {

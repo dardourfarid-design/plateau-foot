@@ -134,28 +134,58 @@ export async function pushGameActions(sessionId) {
  * S'abonne aux mises à jour temps réel d'une session de partie.
  * `onUpdate` est appelé avec le nouveau game_state à chaque changement
  * détecté côté serveur (déclenché par l'appel pushGameState() de l'adversaire).
+ *
+ * #264 — présence : si `presence` est fourni ({ selfId, onPresence }), le canal
+ * suit aussi la PRÉSENCE Realtime des deux joueurs. `onPresence(present)` est
+ * rappelé (true = l'adversaire est là, false = il a disparu) à chaque
+ * synchronisation/arrivée/départ. Chaque client s'annonce sous sa propre clé
+ * (`selfId`, l'équipe) ; « l'adversaire est présent » = au moins une clé ≠ selfId.
+ * Sans backend Realtime, la présence reste simplement muette — le reste marche.
+ *
  * Retourne une fonction de désabonnement à appeler en quittant l'écran de jeu.
  */
-export function subscribeToGameSession(sessionId, onUpdate) {
+export function subscribeToGameSession(sessionId, onUpdate, presence = null) {
   const client = requireClient();
 
-  const channel = client
-    .channel(`game_session:${sessionId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'game_sessions',
-        filter: `id=eq.${sessionId}`
-      },
-      (payload) => {
-        if (payload.new && payload.new.game_state) {
-          onUpdate(payload.new.game_state, payload.new.status);
-        }
+  const channel = client.channel(
+    `game_session:${sessionId}`,
+    presence ? { config: { presence: { key: presence.selfId } } } : undefined
+  ).on(
+    'postgres_changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'game_sessions',
+      filter: `id=eq.${sessionId}`
+    },
+    (payload) => {
+      if (payload.new && payload.new.game_state) {
+        onUpdate(payload.new.game_state, payload.new.status);
       }
-    )
-    .subscribe();
+    }
+  );
+
+  if (presence) {
+    // « Adversaire présent » = au moins une clé de présence différente de la mienne.
+    const evaluate = () => {
+      try {
+        const state = channel.presenceState() || {};
+        const opponentHere = Object.keys(state).some(k => k !== presence.selfId);
+        presence.onPresence(opponentHere);
+      } catch { /* présence indispo : on ne signale rien */ }
+    };
+    channel
+      .on('presence', { event: 'sync' }, evaluate)
+      .on('presence', { event: 'join' }, evaluate)
+      .on('presence', { event: 'leave' }, evaluate);
+  }
+
+  channel.subscribe(async (status) => {
+    // Une fois abonné, on s'annonce pour que l'adversaire nous « voie ».
+    if (status === 'SUBSCRIBED' && presence) {
+      try { await channel.track({ selfId: presence.selfId }); } catch { /* best effort */ }
+    }
+  });
 
   return () => {
     client.removeChannel(channel);

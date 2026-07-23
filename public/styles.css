@@ -457,9 +457,21 @@ body{
   30%{ box-shadow: 0 0 0 6px rgba(255,216,122,0.35); }
   100%{ box-shadow: 0 0 0 0 rgba(255,216,122,0); }
 }
+/* #263 — coup invalide : micro-secousse de la case visée (~250 ms), retour
+   immédiat sans bloquer l'entrée. La classe est posée puis retirée en fin
+   d'animation par moveFeedback.js. Purement décoratif → coupé en reduced-motion. */
+.cell.cell-invalid{ animation: cellInvalidShake 0.25s ease-in-out; }
+@keyframes cellInvalidShake{
+  0%,100%{ transform: translateX(0); }
+  20%{ transform: translateX(-3px); }
+  40%{ transform: translateX(3px); }
+  60%{ transform: translateX(-2px); }
+  80%{ transform: translateX(2px); }
+}
 @media (prefers-reduced-motion: reduce){
   .cell.pass-trail::after{ animation:none; opacity:0; }
   .board-wrap.goal-flash-board{ animation:none; }
+  .cell.cell-invalid{ animation:none; }
 }
 
 /* #201 — cases coupées par la couverture adverse (interception). Hachurée
@@ -822,6 +834,17 @@ body{
   letter-spacing:.02em;
   color: var(--craie-att);
 }
+/* #261 — sous-texte d'état sous le CTA : annonce le mode + la difficulté que
+   « Jouer » lancera réellement. Juste sous le bouton, plus affirmé que la
+   réassurance. `:empty` le masque tant que le JS n'a pas calculé le libellé. */
+.cta-subtext{
+  margin:8px 0 0;
+  font-size:12.5px;
+  font-weight:700;
+  letter-spacing:.03em;
+  color: var(--ambre);
+}
+.cta-subtext:empty{ display:none; }
 /* #204 — bouton secondaire « Personnaliser » sous le « Jouer » immédiat */
 .cta-secondary{
   width:100%;
@@ -1691,7 +1714,43 @@ body{
   font-size:13px;
   color: var(--craie-att);
   max-width:280px;
-  margin: 0 0 20px;
+  margin: 0 0 16px;
+}
+
+/* #264 — copier / partager le code d'invitation. Deux boutons côte à côte,
+   cibles tactiles ≥ 44px, et un retour texte discret juste en dessous. */
+.waiting-actions{
+  display:flex;
+  gap:10px;
+  width:100%;
+  max-width:320px;
+  margin-bottom:8px;
+}
+.waiting-actions .btn{
+  flex:1;
+  min-height:44px;
+  touch-action:manipulation;
+}
+.waiting-feedback{
+  min-height:18px;
+  margin:0 0 6px;
+  font-size:13px;
+  font-weight:700;
+  color: var(--terre-vif);
+}
+
+/* #264 — bandeau « adversaire déconnecté » (parties en ligne). Bandeau
+   d'alerte discret en haut de l'écran de jeu, masqué par .hidden. */
+.opponent-disconnected{
+  margin:0 0 8px;
+  padding:10px 14px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+  color:#3a1d0e;
+  background: var(--terre-vif);
+  border:1px solid rgba(0,0,0,0.15);
 }
 
 .waiting-spinner{

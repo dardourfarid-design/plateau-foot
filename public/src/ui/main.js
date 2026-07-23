@@ -17,6 +17,7 @@ import {
 } from '../engine/powers.js';
 import { initPowers } from './powersUI.js';
 import { buildBoardGrid, renderBoard } from './boardRenderer.js';
+import { signalInvalidMove } from './moveFeedback.js';
 import { applyTheme, isThemeUnlocked, formatPrice, DEFAULT_THEME_ID } from './themeManager.js';
 import { initAccount } from './accountUI.js';
 import { initOnline } from './onlineUI.js';
@@ -491,22 +492,21 @@ function handleCellClick(row, col) {
 
     if (gameState.selectedTokenId) {
       const before = gameState;
-      gameState = passBall(gameState, row, col);
-      if (gameState !== before) {
-        recordIfOnline('passBall', [row, col]);
-        handlePostActionEffects(before);
-        return;
+      // Passe puis déplacement : le premier qui change l'état gagne (le moteur
+      // renvoie l'état inchangé pour un coup illégal, d'où la comparaison de réf).
+      for (const [apply, name] of [[passBall, 'passBall'], [moveSelectedToken, 'moveSelectedToken']]) {
+        gameState = apply(gameState, row, col);
+        if (gameState !== before) { recordIfOnline(name, [row, col]); handlePostActionEffects(before); return; }
       }
-      gameState = moveSelectedToken(gameState, row, col);
-      if (gameState !== before) {
-        recordIfOnline('moveSelectedToken', [row, col]);
-        handlePostActionEffects(before);
-        return;
-      }
-      // Clic ailleurs sans coup valide -> désélection simple
+      // Ni passe ni déplacement : on désélectionne ET on signale le coup mort (#263).
       gameState = { ...gameState, selectedTokenId: null };
       recordIfOnline('deselect');
       render();
+      signalInvalidMove(els.boardGrid, row, col);
+    } else {
+      // Aucun pion sélectionné et la case ne peut pas l'être (vide ou adverse) :
+      // clic mort — retour discret plutôt que silence (#263).
+      signalInvalidMove(els.boardGrid, row, col);
     }
   } else if (gameState.phase === PHASES.MOVED_CAN_PASS) {
     const before = gameState;
@@ -895,6 +895,7 @@ function wireSetupScreen() {
     els.configScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');
     markRoute('accueil');
+    settingsModule.updateQuickPlaySubtext(); // #261 : les réglages ont pu changer dans l'écran de config
   });
 
   // Réglages : module extrait (#311). L'état reste dans main.js, le module ne
@@ -919,7 +920,7 @@ function wireSetupScreen() {
     }
   });
 
-  // Restaure les derniers réglages et les reflète dans l'écran de config.
+  // Restaure les réglages et les reflète dans la config (+ sous-texte CTA #261).
   settingsModule.restoreLastConfig();
   settingsModule.applyConfigToUI();
 }

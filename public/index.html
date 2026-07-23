@@ -197,12 +197,14 @@
 <link rel="modulepreload" href="src/ui/accountUI.js">
 <link rel="modulepreload" href="src/ui/aiEngine.js">
 <link rel="modulepreload" href="src/ui/boardRenderer.js">
+<link rel="modulepreload" href="src/ui/moveFeedback.js">
 <link rel="modulepreload" href="src/ui/dialogs.js">
 <link rel="modulepreload" href="src/ui/faqUI.js">
 <link rel="modulepreload" href="src/ui/i18n.js">
 <link rel="modulepreload" href="src/ui/lazyScreen.js">
 <link rel="modulepreload" href="src/ui/matchSummary.js">
 <link rel="modulepreload" href="src/ui/onlineUI.js">
+<link rel="modulepreload" href="src/ui/inviteShare.js">
 <link rel="modulepreload" href="src/ui/overlaysUI.js">
 <link rel="modulepreload" href="src/ui/router.js">
 <link rel="modulepreload" href="src/ui/domRefs.js">
@@ -386,6 +388,11 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3l7 5-7 5V3z" fill="currentColor"/></svg>
           Jouer maintenant
         </button>
+        <!-- #261 — annonce ce que « Jouer » va RÉELLEMENT lancer (mode +
+             difficulté), calculé depuis tm_lastConfig. Rempli par main.js
+             (updateQuickPlaySubtext) au boot, au retour de config et au
+             changement de langue ; vide tant que le JS n'a pas tourné. -->
+        <p class="cta-subtext" id="quickPlaySubtext" aria-live="polite"></p>
         <!-- CRO #1 — micro-réassurance au point de décision : gratuité + absence
              de compte (le mot « gratuit » n'apparaissait nulle part dans le hero).
              L'emoji est aria-hidden pour que le nœud texte traduit reste propre. -->
@@ -647,6 +654,14 @@
       <div class="setup-label">Partie créée — invite un ami</div>
       <div class="invite-code-display" id="inviteCodeDisplay">------</div>
       <p class="waiting-text">Partage ce code. La partie démarre dès que ton adversaire le saisit.</p>
+      <!-- #264 — copier / partager le code sans avoir à le recopier à la main.
+           « Partager » utilise l'API Web Share si dispo, sinon retombe sur une
+           copie (voir inviteShare.js). Le retour s'affiche dans #waitingFeedback. -->
+      <div class="waiting-actions">
+        <button class="btn" id="copyInviteCodeBtn" type="button">Copier le code</button>
+        <button class="btn primary" id="shareInviteCodeBtn" type="button">Partager</button>
+      </div>
+      <p class="waiting-feedback" id="waitingFeedback" aria-live="polite"></p>
       <div class="waiting-spinner" aria-hidden="true"></div>
       <button class="btn" id="cancelWaitingBtn" style="width:100%; margin-top:18px;">Annuler</button>
     </div>
@@ -657,6 +672,12 @@
     <!-- #345 : annonces d'état de jeu pour lecteurs d'écran (but, tour,
          fin de partie) — les CHANGEMENTS d'état uniquement, jamais le focus. -->
     <div id="gameAnnouncer" class="sr-only" aria-live="polite"></div>
+    <!-- #264 — bandeau de déconnexion adverse (parties en ligne). Masqué par
+         défaut ; onlineUI le montre quand la présence Realtime de l'adversaire
+         se perd, et le retire à son retour. role=status pour l'annonce a11y. -->
+    <div id="opponentDisconnectedBanner" class="opponent-disconnected hidden" role="status">
+      Adversaire déconnecté… en attente de sa reconnexion.
+    </div>
 
     <div class="game-main">
       <div class="scoreboard">

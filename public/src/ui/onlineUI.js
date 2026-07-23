@@ -18,6 +18,7 @@ import {
   createGameSession, joinGameSession, pushGameState, subscribeToGameSession,
   cancelGameSession, pushGameActions, clearOnlineActions, hasPendingOnlineActions
 } from '../services/multiplayerService.js';
+import { copyInviteCode, shareInvite } from './inviteShare.js';
 import { showToast } from './dialogs.js';
 
 /**
@@ -36,6 +37,7 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
 
   let onlineSessionId = null;
   let unsubscribeFromSession = null;
+  let currentInviteCode = null; // #264 : code de la partie créée (copier/partager)
 
   function wireOnlineMode() {
     els.createOnlineBtn.addEventListener('click', handleCreateOnlineGame);
@@ -47,6 +49,37 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       if (e.key === 'Enter') handleJoinOnlineGame();
     });
     els.cancelWaitingBtn.addEventListener('click', cancelOnlineWaiting);
+    // #264 — copier / partager le code d'invitation.
+    els.copyInviteCodeBtn?.addEventListener('click', handleCopyInviteCode);
+    els.shareInviteCodeBtn?.addEventListener('click', handleShareInviteCode);
+    installOnlineTestSeam();
+  }
+
+  // #264 — bandeau « adversaire déconnecté ». Piloté par la présence Realtime
+  // (voir subscribeToGameSession) : masqué quand l'adversaire est là, montré
+  // quand il disparaît. Toujours retiré en quittant/annulant la session.
+  function setOpponentPresent(present) {
+    els.opponentDisconnectedBanner?.classList.toggle('hidden', !!present);
+  }
+  function hideOpponentBanner() {
+    els.opponentDisconnectedBanner?.classList.add('hidden');
+  }
+
+  async function handleCopyInviteCode() {
+    if (!currentInviteCode) return;
+    const r = await copyInviteCode(currentInviteCode);
+    showWaitingFeedback(r === 'copied' ? t('Code copié !') : t('Impossible de copier le code.'));
+  }
+
+  async function handleShareInviteCode() {
+    if (!currentInviteCode) return;
+    const r = await shareInvite(currentInviteCode);
+    if (r === 'shared' || r === 'cancelled') { showWaitingFeedback(''); return; }
+    showWaitingFeedback(r === 'copied' ? t('Code copié !') : t('Partage indisponible.'));
+  }
+
+  function showWaitingFeedback(msg) {
+    if (els.waitingFeedback) els.waitingFeedback.textContent = msg;
   }
 
   async function handleCreateOnlineGame() {
@@ -56,12 +89,15 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       const { id, inviteCode } = await createGameSession(initialState);
 
       onlineSessionId = id;
+      currentInviteCode = inviteCode; // #264
       setMyTeam(TEAMS.BLEU); // l'hôte est toujours Bleu
       setGameState(initialState);
 
       els.configScreen.classList.add('hidden');
       els.waitingScreen.classList.remove('hidden');
       els.inviteCodeDisplay.textContent = inviteCode;
+      showWaitingFeedback('');
+      hideOpponentBanner();
 
       unsubscribeFromSession = subscribeToGameSession(id, (newState, status) => {
         const stillWaiting = !els.waitingScreen.classList.contains('hidden');
@@ -80,7 +116,7 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
         if (hasPendingOnlineActions()) return;
         setGameState(newState);
         render();
-      });
+      }, { selfId: TEAMS.BLEU, onPresence: setOpponentPresent }); // #264
     } catch (err) {
       els.onlineError.textContent = err.message || 'Impossible de créer la partie.';
     }
@@ -103,6 +139,7 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
 
       els.configScreen.classList.add('hidden');
       els.gameScreen.classList.remove('hidden');
+      hideOpponentBanner();
       buildBoardGrid(els.boardGrid, handleCellClick);
       render();
 
@@ -110,7 +147,7 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
         if (hasPendingOnlineActions()) return; // écho de nos coups (#260)
         setGameState(newState);
         render();
-      });
+      }, { selfId: TEAMS.ROUGE, onPresence: setOpponentPresent }); // #264
     } catch (err) {
       els.onlineError.textContent = err.message || 'Code invalide ou partie déjà commencée.';
     }
@@ -127,6 +164,8 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       cancelGameSession(onlineSessionId).catch(() => {/* best effort */});
     }
     onlineSessionId = null;
+    currentInviteCode = null;
+    hideOpponentBanner();
     els.waitingScreen.classList.add('hidden');
     els.configScreen.classList.remove('hidden');
   }
@@ -143,7 +182,28 @@ export function initOnline({ els, getGameMode, getGameState, setGameState, setMy
       unsubscribeFromSession = null;
     }
     onlineSessionId = null;
+    currentInviteCode = null;
+    hideOpponentBanner(); // #264 : jamais de bandeau résiduel hors partie en ligne
     clearOnlineActions(); // le journal n'a de sens que pour la session quittée
+  }
+
+  // #264 — seam de test E2E (JAMAIS actif en production) : la présence Realtime
+  // exige un backend, impossible à exercer en e2e statique. Ce hook permet de
+  // constater le bandeau de déconnexion et le retour du code copié/partagé sans
+  // monter deux clients + Supabase. Gated par window.__TM_E2E__, comme le seam
+  // principal de main.js.
+  function installOnlineTestSeam() {
+    if (typeof window === 'undefined' || !window.__TM_E2E__) return;
+    window.__tmOnlineTest = {
+      showWaitingScreen: (code) => {
+        currentInviteCode = code || 'TEST42';
+        if (els.inviteCodeDisplay) els.inviteCodeDisplay.textContent = currentInviteCode;
+        showWaitingFeedback('');
+        els.configScreen?.classList.add('hidden');
+        els.waitingScreen?.classList.remove('hidden');
+      },
+      setOpponentPresent
+    };
   }
 
   /**

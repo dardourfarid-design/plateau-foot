@@ -78,3 +78,39 @@ describe('précache du service worker (#325)', () => {
     expect(redirigees.length).toBe(0);
   });
 });
+
+// #265 — TIMEOUT RÉSEAU (network-first borné). Le fichier tourne dans un
+// contexte ServiceWorkerGlobalScope (self, caches, clients) qu'on ne peut pas
+// instancier en Node sans lourde émulation. On vérifie donc statiquement les
+// invariants de la stratégie, à la manière du garde-fou du précache ci-dessus.
+describe('timeout réseau du service worker (#265)', () => {
+  test('un plafond de latence explicite est défini', () => {
+    const m = sw.match(/const NETWORK_TIMEOUT_MS\s*=\s*(\d+)/);
+    if (!m) throw new Error('NETWORK_TIMEOUT_MS introuvable : le network-first n\'est plus borné.');
+    const ms = parseInt(m[1], 10);
+    // Assez court pour couvrir un lie-fi, assez long pour ne pas doubler un
+    // réseau sain à chaque navigation.
+    expect(ms >= 1000 && ms <= 5000).toBe(true);
+  });
+
+  test('la course réseau/timeout est bien un Promise.race', () => {
+    expect(/Promise\.race\s*\(/.test(sw)).toBe(true);
+  });
+
+  test('le fetch réseau continue de rafraîchir le cache (cache.put conservé)', () => {
+    // Le timeout ne doit PAS annuler le fetch : sa résolution met toujours le
+    // cache à jour, sinon le cache se figerait sur la 1re version après un
+    // épisode de latence.
+    expect(/cache\.put\(/.test(sw)).toBe(true);
+  });
+
+  test('repli cache en cas d\'échec ou de timeout (caches.match conservé)', () => {
+    expect(/caches\.match\(/.test(sw)).toBe(true);
+  });
+
+  test('CACHE_NAME a été bumpé au-delà de v35 (invalidation du cache figé)', () => {
+    const m = sw.match(/const CACHE_NAME\s*=\s*'tactic-master-v(\d+)'/);
+    if (!m) throw new Error('CACHE_NAME introuvable ou format inattendu.');
+    expect(parseInt(m[1], 10) >= 36).toBe(true);
+  });
+});

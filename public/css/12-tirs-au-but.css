@@ -31,7 +31,9 @@
   --pk-title-shadow:none; --pk-cta-shadow:0 10px 24px rgba(0,0,0,.4); --pk-cta-transform:uppercase;
   --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
 
-  width:100%; min-height:calc(100vh - 96px);
+  /* #343 (F11) : fallback vh puis svh (stable pendant le masquage de la
+     barre d'URL mobile — écran de jeu). */
+  width:100%; min-height:calc(100vh - 96px); min-height:calc(100svh - 96px);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:clamp(12px,3vw,20px); padding:clamp(14px,4vw,30px) 12px; box-sizing:border-box;
   background:var(--pk-screen-bg); border-radius:16px;
@@ -121,14 +123,19 @@
    orphelin sur une 2e ligne. On compacte (le retour à la ligne reste possible
    sur les petits écrans, où il tombe alors sur 2 lignes équilibrées). */
 .pk-switcher .pk-theme-btn{ padding:8px 10px; }
-.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:9px; }
+/* #344 (F6) : prix ≥ 12px aussi dans la variante compacte de la modale. */
+.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:12px; }
 .pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
   font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
   transition:all .15s; }
 .pk-theme-btn.active{ background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent); }
 .pk-theme-btn.locked{ opacity:.82; }
-.pk-theme-btn.locked::after{ content:'🔒 ' attr(data-price); margin-left:6px; font-size:10px; font-weight:700; opacity:.95; }
+/* Audit UX 2026-07-23 (F9+F6, #344) : le cadenas est un SVG inline injecté
+   par shootoutUI.js (renderPkLocks) — le ::after ne rend plus QUE le prix,
+   porté à 12px (plancher lisible). */
+.pk-theme-btn.locked::after{ content:attr(data-price); margin-left:4px; font-size:12px; font-weight:700; opacity:.95; }
+.pk-theme-btn .pk-lock{ margin-left:6px; vertical-align:-1px; }
 
 /* ---- Carte ---- */
 .shootout-modal{
@@ -313,3 +320,14 @@
   box-shadow:0 2px 10px rgba(200,132,26,.45), inset 0 1px 0 rgba(255,255,255,.4);
 }
 .founder-badge.hidden{ display:none; }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — décor coupé (pkBob,
+   pkLed, confettis) et screen-shake coupé (déclencheur vestibulaire même
+   en one-shot). pkPulse (anneau de visée) est un feedback fonctionnel :
+   il reste actif. */
+@media (prefers-reduced-motion: reduce){
+  .pk-fan{ animation:none; }
+  .pk-led-sheen{ animation:none; }
+  .pk-stage.shake{ animation:none; }
+  .pk-confetti{ animation:none; opacity:0; }
+}

@@ -189,6 +189,20 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
         ? 'Pas encore de compte ? Créer un compte'
         : 'Déjà un compte ? Se connecter';
       els.authDisplayName.style.display = authMode === 'signup' ? 'block' : 'none';
+      // #342 : le label visible du pseudo suit l'affichage de son input.
+      if (els.authDisplayNameLabel) {
+        els.authDisplayNameLabel.style.display = authMode === 'signup' ? 'block' : 'none';
+      }
+      // #342 : l'autocomplete doit suivre le mode, sinon les gestionnaires de
+      // mots de passe proposent l'existant à l'inscription (et inversement).
+      els.authPassword.setAttribute('autocomplete',
+        authMode === 'signin' ? 'current-password' : 'new-password');
+      // #342 : à chaque (ré)ouverture, le mot de passe repart masqué.
+      els.authPassword.type = 'password';
+      if (els.authPasswordToggle) {
+        els.authPasswordToggle.setAttribute('aria-pressed', 'false');
+        els.authPasswordToggle.textContent = t('Afficher le mot de passe');
+      }
       els.consentBlock.classList.toggle('hidden', authMode !== 'signup');
       els.authError.textContent = '';
     }
@@ -347,6 +361,16 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
     els.accountBtn?.addEventListener('click', () => {
       renderAccountOverlayContent();
       els.accountOverlay.classList.add('show');
+    });
+
+    // #342 : afficher/masquer le mot de passe (taper en aveugle multiplie les
+    // erreurs de saisie — WCAG/HIG recommandent le toggle).
+    els.authPasswordToggle?.addEventListener('click', () => {
+      const show = els.authPassword.type === 'password';
+      els.authPassword.type = show ? 'text' : 'password';
+      els.authPasswordToggle.setAttribute('aria-pressed', String(show));
+      els.authPasswordToggle.textContent =
+        t(show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
     });
 
     els.accountCloseBtn?.addEventListener('click', () => {

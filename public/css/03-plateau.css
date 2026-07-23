@@ -52,23 +52,28 @@
 }
 
 /* ---------- Toggle de langue FR|EN (topbar) ---------- */
+/* Audit UX 2026-07-23 (F5, #340) : segments mesurés à 20px de haut et 0px
+   d'écart — deux pilules séparées (écart réel de 8px entre zones cliquables,
+   zones non chevauchantes) avec cible tactile ≥ 44px. */
 .lang-toggle{
   display:inline-flex;
   align-items:center;
-  border:1px solid rgba(232,160,48,0.35);
-  border-radius:999px;
-  overflow:hidden;
+  gap:8px;
   margin-right:10px;
 }
 .lang-toggle .lang-opt{
   background:transparent;
-  border:none;
+  border:1px solid rgba(232,160,48,0.35);
+  border-radius:999px;
   color:var(--craie-att);
   font:inherit;
   font-size:12px;
   font-weight:700;
   letter-spacing:0.04em;
-  padding:4px 9px;
+  padding:0 12px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
   cursor:pointer;
   line-height:1;
   transition:background .15s, color .15s;
@@ -223,7 +228,9 @@
   left:50%;
   transform: translateX(-50%);
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : nom sur pion — 8px illisible → 10px, contraint par la case de
+     48px (listé < 12px ; vérifier l'absence d'overflow). */
+  font-size:10px;
   font-weight:700;
   white-space:nowrap;
   color: rgba(255,255,255,0.9);

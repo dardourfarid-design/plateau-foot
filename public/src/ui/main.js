@@ -1350,7 +1350,8 @@ function handlePaymentReturn() {
   if (!checkoutResult) return;
 
   if (checkoutResult === 'success') {
-    showPurchaseToast('🎉', t('Achat confirmé ! Ton nouveau contenu est débloqué.'), false);
+    // #344 (F9) : icônes de toast en SVG inline (plus d'emoji au rendu variable).
+    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7l1.8 1.8L9.8 5.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>', t('Achat confirmé ! Ton nouveau contenu est débloqué.'), false);
     // Ouvre directement la boutique avec les données fraîches, pour que
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
@@ -1360,11 +1361,11 @@ function handlePaymentReturn() {
     // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
     // L'activation passe par le webhook Stripe : elle peut prendre quelques
     // secondes — le message le dit pour éviter un rechargement paniqué.
-    showPurchaseToast('🎫', t('Pass Saison activé ! (quelques secondes de délai possibles)'), false);
+    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1.5 5V3.5h11V5a1.5 1.5 0 000 3v1.5h-11V8a1.5 1.5 0 000-3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.5 3.5v7" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.6 1.6"/></svg>', t('Pass Saison activé ! (quelques secondes de délai possibles)'), false);
     els.shopBtn?.click();
     accountModule?.refreshAfterCheckout();
   } else if (checkoutResult === 'cancelled') {
-    showPurchaseToast('↩️', t('Achat annulé — aucun montant n\'a été débité.'), true);
+    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5 3L2.5 5.5 5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 5.5H9a2.5 2.5 0 010 5H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', t('Achat annulé — aucun montant n\'a été débité.'), true);
   }
 
   // Retire le paramètre de l'URL sans recharger la page, pour qu'un
@@ -1376,7 +1377,9 @@ function handlePaymentReturn() {
 
 function showPurchaseToast(icon, text, isCancelled) {
   if (!els.purchaseToast) return;
-  els.purchaseToastIcon.textContent = icon;
+  // #344 (F9) : l'icône est un SVG inline issu de NOS constantes internes
+  // (jamais de contenu utilisateur) — innerHTML nécessaire pour le rendre.
+  els.purchaseToastIcon.innerHTML = icon;
   els.purchaseToastText.textContent = text;
   els.purchaseToast.classList.toggle('cancelled', isCancelled);
   els.purchaseToast.classList.add('show');

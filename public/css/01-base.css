@@ -45,12 +45,23 @@
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
 
+/* Audit UX 2026-07-23 (F12, #343) : supprime le délai de double-tap-zoom sur
+   les taps rapides (plateau notamment). JAMAIS touch-action:none — le
+   pinch-zoom reste possible (accessibilité malvoyants). */
+button, a, input, select, .cell, .token, .lang-opt{
+  touch-action: manipulation;
+}
+
 html,body{
   margin:0; padding:0;
   background: var(--nuit);
   color: var(--craie);
   font-family: 'Space Grotesk', sans-serif;
+  /* Audit UX 2026-07-23 (F11, #343) : svh après le fallback vh — stable
+     pendant le masquage de la barre d'URL mobile (dvh provoquerait un
+     reflow du plateau EN COURS de partie sur Android). */
   min-height:100vh;
+  min-height:100svh;
   overflow-x:hidden;
 }
 
@@ -68,7 +79,9 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
+  /* #343 (F11) : fallback vh puis svh — voir html,body ci-dessus. */
   min-height:100vh;
+  min-height:100svh;
   width:100%;
   padding: 0 20px 48px;
 }

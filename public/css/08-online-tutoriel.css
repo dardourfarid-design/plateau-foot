@@ -94,7 +94,7 @@
 
 .tutorial-link{
   display:block;
-  margin-top:14px;
+  margin-top:6px;
   background:none;
   border:none;
   color: var(--craie-att);
@@ -102,7 +102,10 @@
   text-decoration: underline;
   text-decoration-color: rgba(245,242,232,0.25);
   cursor:pointer;
-  padding:4px 0;
+  /* Audit UX 2026-07-23 (F8, #340) : mesuré à 23px — cible tactile ≥ 44px
+     via le padding (typo inchangée ; margin-top réduit pour compenser). */
+  padding:14px 0;
+  min-height:44px;
 }
 .tutorial-link:hover{ color: var(--craie); }
 
@@ -225,6 +228,9 @@
   border: 1px solid rgba(245,242,232,0.16);
   border-radius:4px;
   padding: 11px 12px;
+  /* Audit UX 2026-07-23 (#342) : hauteur d'input mesurée à 38px → ≥ 44px
+     (touch-friendly-input, Apple HIG). */
+  min-height:44px;
   color: var(--craie);
   font-family:'Space Grotesk', sans-serif;
   font-size:14px;
@@ -232,6 +238,46 @@
 }
 .auth-input:focus{ outline:2px solid var(--terre-vif); outline-offset:1px; }
 .auth-input::placeholder{ color: var(--craie-att); }
+
+/* Audit UX 2026-07-23 (F4, #342) : labels visibles au-dessus des champs (les
+   placeholders disparaissent à la frappe — WCAG 3.3.2). */
+.auth-label{
+  display:block;
+  text-align:left;
+  font-size:12px;
+  font-weight:600;
+  color: var(--craie-att);
+  margin-bottom:4px;
+}
+
+/* #342 : champ mot de passe + bouton afficher/masquer. */
+.pw-field{ position:relative; }
+.pw-toggle{
+  display:block;
+  width:100%;
+  text-align:right;
+  background:none;
+  border:none;
+  color: var(--craie-att);
+  font-family:'Space Grotesk', sans-serif;
+  font-size:12px;
+  text-decoration:underline;
+  text-decoration-color: rgba(245,242,232,0.25);
+  cursor:pointer;
+  padding:12px 0;
+  min-height:44px;
+  margin-top:-6px;
+}
+.pw-toggle:hover{ color: var(--craie); }
+.pw-toggle:focus-visible{ outline:2px solid var(--terre-vif); outline-offset:2px; }
+
+/* #342 : microcopie de réassurance sous le formulaire (levée d'objection). */
+.auth-free-note{
+  font-size:12px;
+  color: var(--craie-att);
+  text-align:left;
+  margin:0 0 8px;
+}
 
 .account-required-note{
   font-size:12px;
@@ -297,3 +343,11 @@
   padding:4px 0;
 }
 .account-danger{ color: var(--rouge-equipe-clair) !important; }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — le halo du tutoriel
+   cesse de pulser (l'anneau statique reste visible) et le spinner devient
+   un anneau statique (l'état de chargement reste perceptible). */
+@media (prefers-reduced-motion: reduce){
+  .tutorial-spotlight{ animation:none; }
+  .waiting-spinner{ animation:none; }
+}

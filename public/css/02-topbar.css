@@ -15,7 +15,12 @@
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding: 18px 2px;
+  /* Audit UX 2026-07-23 (F1) : autoriser le passage sur deux lignes quand la
+     largeur manque — en nowrap, le bouton Boutique sortait du viewport sur
+     mobile ≤ 400px (bord droit mesuré à 444px pour 375px d'écran). */
+  flex-wrap:wrap;
+  row-gap:2px;
+  padding: 12px 2px;
   margin-bottom: 4px;
   border-bottom: 1px solid rgba(200,132,26,0.18);
 }
@@ -29,6 +34,10 @@
   font-weight:600;
   cursor:pointer;
   padding: 6px 10px;
+  /* Audit UX 2026-07-23 (F8) : cible tactile ≥ 44px sans grossir la typo. */
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
   border-radius:6px;
   transition: color 0.15s ease, background 0.15s ease;
 }

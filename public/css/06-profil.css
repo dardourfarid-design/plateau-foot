@@ -189,7 +189,8 @@
 .player-card-name{ font-size:13px; font-weight:700; color: var(--craie); }
 .player-card-style{ font-size:11px; color: var(--craie-att); text-transform:capitalize; margin-top:2px; }
 .player-card-rarity{
-  font-size:9px;
+  /* #341 : badge décoratif — reste < 12px (listé dans la PR), 9px → 10px. */
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:0.05em;
   margin-top:6px;

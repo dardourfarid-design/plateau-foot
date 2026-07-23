@@ -205,7 +205,8 @@
 }
 .player-card-stat-label {
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : micro-label de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -231,7 +232,8 @@
 }
 .player-card-rarity {
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.1em;
   text-transform:uppercase;
@@ -261,7 +263,8 @@
   align-items:center;
   gap:3px;
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.08em;
   text-transform:uppercase;
@@ -277,7 +280,8 @@
   position:absolute;
   top:8px; left:8px;
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.08em;
   text-transform:uppercase;

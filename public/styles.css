@@ -528,7 +528,9 @@ body{
   left:50%;
   transform: translateX(-50%);
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : nom sur pion — 8px illisible → 10px, contraint par la case de
+     48px (listé < 12px ; vérifier l'absence d'overflow). */
+  font-size:10px;
   font-weight:700;
   white-space:nowrap;
   color: rgba(255,255,255,0.9);
@@ -1264,7 +1266,8 @@ body{
 .player-card-name{ font-size:13px; font-weight:700; color: var(--craie); }
 .player-card-style{ font-size:11px; color: var(--craie-att); text-transform:capitalize; margin-top:2px; }
 .player-card-rarity{
-  font-size:9px;
+  /* #341 : badge décoratif — reste < 12px (listé dans la PR), 9px → 10px. */
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:0.05em;
   margin-top:6px;
@@ -1992,7 +1995,8 @@ body{
 }
 .hero-stat-label{
   font-family:'Barlow Condensed', sans-serif;
-  font-size:9px;
+  /* Audit UX 2026-07-23 (F6, #341) : label informatif 9px → 11px. */
+  font-size:11px;
   font-weight:700;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -2356,7 +2360,8 @@ body{
 }
 .end-stat-lbl {
   display:block;
-  font-size:9px;
+  /* Audit UX 2026-07-23 (F6, #341) : label informatif 9px → 11px. */
+  font-size:11px;
   font-family:'Barlow Condensed', sans-serif;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -2588,7 +2593,8 @@ body{
 }
 .player-card-stat-label {
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : micro-label de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.12em;
   text-transform:uppercase;
@@ -2614,7 +2620,8 @@ body{
 }
 .player-card-rarity {
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.1em;
   text-transform:uppercase;
@@ -2644,7 +2651,8 @@ body{
   align-items:center;
   gap:3px;
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.08em;
   text-transform:uppercase;
@@ -2660,7 +2668,8 @@ body{
   position:absolute;
   top:8px; left:8px;
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : badge de carte — 8px illisible → 10px (listé < 12px). */
+  font-size:10px;
   font-weight:700;
   letter-spacing:.08em;
   text-transform:uppercase;
@@ -2791,54 +2800,10 @@ body{
 .shop-tag-limited {
   color: var(--or) !important;
 }
-.founders-counter {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 8px 0;
-}
-.founders-counter-num {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 52px;
-  font-weight: 900;
-  color: var(--or);
-  line-height: 1;
-}
-.founders-counter-label {
-  font-size: 12px;
-  color: var(--craie-att);
-  text-transform: uppercase;
-  font-family: 'Barlow Condensed', sans-serif;
-  letter-spacing: .1em;
-}
-.founders-counter-bar {
-  width: 100%;
-  max-width: 300px;
-  height: 4px;
-  background: rgba(200,132,26,0.15);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.founders-counter-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--ambre), var(--or));
-  border-radius: 2px;
-  transition: width 0.6s ease;
-}
-.founders-perks {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin: 12px 0;
-}
-.founders-perk {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--craie-att);
-}
+/* Audit UX 2026-07-23 (F10, #341) : blocs .founders-counter* / .founders-perk*
+   supprimés — CSS mort de l'ancien gros bloc Fondateurs (zéro référence dans
+   src/, vérifié par grep). .shop-founders-btn et .shop-founders-banner
+   ci-dessous restent VIVANTS (shopUI.js). */
 .shop-founders-btn {
   background: var(--ambre);
   color: var(--noir);
@@ -2887,7 +2852,8 @@ body{
   background: var(--ambre);
   color: var(--noir);
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 9px;
+  /* #341 : badge décoratif — reste < 12px (listé dans la PR), 9px → 10px. */
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: .15em;
   text-transform: uppercase;
@@ -2916,7 +2882,8 @@ body{
   color: var(--craie-att);
 }
 .shop-pass-savings {
-  font-size: 11px;
+  /* Audit UX 2026-07-23 (F6, #341) : info prix 11px → 12px. */
+  font-size: 12px;
   color: var(--succes);
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
@@ -2945,12 +2912,15 @@ body{
 .shop-pass-btn {
   width: 100%;
   padding: 10px;
+  /* Audit UX 2026-07-23 (F2, #341) : 38px mesurés → cible ≥ 44px. */
+  min-height: 44px;
   font-size: 13px;
   font-weight: 800;
   margin-top: auto;
 }
 .shop-pass-active-badge {
-  font-size: 11px;
+  /* Audit UX 2026-07-23 (F6, #341) : statut informatif 11px → 12px. */
+  font-size: 12px;
   color: var(--succes);
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
@@ -3001,12 +2971,15 @@ body{
   color: var(--or);
 }
 .shop-pack-saves {
-  font-size: 10px;
+  /* Audit UX 2026-07-23 (F6, #341) : info prix 10px → 12px. */
+  font-size: 12px;
   color: var(--craie-dim);
 }
-.shop-pack-btn {
+.shop-pack-btn, .shop-kit-pack-btn {
   width: 100%;
   padding: 9px;
+  /* Audit UX 2026-07-23 (F2, #341) : 36-38px mesurés → cible ≥ 44px. */
+  min-height: 44px;
   font-size: 13px;
   font-weight: 800;
 }
@@ -3027,7 +3000,8 @@ body{
   margin-bottom: 12px;
 }
 .shop-coins-hint {
-  font-size: 11px;
+  /* Audit UX 2026-07-23 (F6, #341) : indication informative 11px → 12px. */
+  font-size: 12px;
   color: var(--craie-dim);
   margin-left: 8px;
 }
@@ -3084,18 +3058,25 @@ body{
   margin-bottom: 3px;
 }
 .shop-kit-desc {
-  font-size: 10px;
+  /* Audit UX 2026-07-23 (F6, #341) : descriptif informatif 10px → 12px. */
+  font-size: 12px;
   color: var(--craie-dim);
   margin-bottom: 8px;
   line-height: 1.3;
 }
 .shop-kit-footer { display: flex; flex-direction: column; gap: 4px; }
 .shop-kit-buy-btn, .shop-kit-coin-btn, .shop-kit-select-btn {
-  font-size: 11px;
+  /* Audit UX 2026-07-23 (F2+F6, #341) : boutons d'achat mesurés à 27px de
+     haut / 11px — cible tactile ≥ 44px et prix lisibles (12px plancher ET
+     plafond, cf. garde-fous épic #339 sur la perception du prix). */
+  font-size: 12px;
   padding: 6px 8px;
+  min-height: 44px;
   width: 100%;
   font-weight: 700;
   display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* #goal-gradient — sous-ligne du badge de gain (« X/100 vers ton prochain
@@ -3103,7 +3084,8 @@ body{
 .coin-gain-sub {
   display: block;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 10.5px;
+  /* Audit UX 2026-07-23 (F6, #341) : sous-ligne informative 10.5px → 12px. */
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: .02em;
   margin-top: 2px;
@@ -3177,7 +3159,9 @@ body{
 
 /* Mere exposure : chaque carte de kit payant rappelle le Pass, discrètement. */
 .shop-kit-pass-hint {
-  font-size: 10px;
+  /* #341 : rappel volontairement discret (mere exposure) — 10px → 11px,
+     listé dans la PR comme < 12px assumé. */
+  font-size: 11px;
   letter-spacing: .03em;
   color: var(--craie-dim);
   text-align: center;
@@ -3246,7 +3230,8 @@ body{
 }
 .coin-topup-pack:hover { border-color: var(--or); }
 .coin-topup-tag {
-  font-size: 9px;
+  /* #341 : badge décoratif — reste < 12px (listé dans la PR), 9px → 10px. */
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: .06em;
   color: var(--or);

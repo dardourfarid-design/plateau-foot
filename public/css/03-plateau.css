@@ -228,7 +228,9 @@
   left:50%;
   transform: translateX(-50%);
   font-family:'Barlow Condensed', sans-serif;
-  font-size:8px;
+  /* #341 : nom sur pion — 8px illisible → 10px, contraint par la case de
+     48px (listé < 12px ; vérifier l'absence d'overflow). */
+  font-size:10px;
   font-weight:700;
   white-space:nowrap;
   color: rgba(255,255,255,0.9);

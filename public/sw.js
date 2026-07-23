@@ -28,7 +28,7 @@
 // chargés à la demande (shopUI, profileUI, ai.js…) y figurent AUSSI, sinon le
 // jeu ne fonctionnerait plus hors connexion dès qu'on ouvre un de ces écrans.
 // C'est pourquoi ai.js reste précaché alors qu'il a quitté le graphe statique.
-const CACHE_NAME = 'tactic-master-v36'; // v36 : network-first borné par un timeout (#265)
+const CACHE_NAME = 'tactic-master-v37'; // v37 : précache des modules pub GameMonetize
 
 // #265 — au-delà de ce délai, un réseau qui n'a pas encore répondu est doublé
 // par le cache (si présent). Le fetch réseau n'est PAS annulé : il poursuit et
@@ -67,10 +67,12 @@ const STATIC_ASSETS = [
   './src/services/ads/adAnalytics.js',
   './src/services/ads/adProvider.js',
   './src/services/ads/adService.js',
+  './src/services/ads/gameMonetizeProvider.js',
   './src/services/ads/googleAdSenseProvider.js',
   './src/services/ads/googleCmp.js',
   './src/services/ads/interstitialFrequency.js',
   './src/services/ads/mockAdProvider.js',
+  './src/services/ads/rewardedGrant.js',
   './src/services/advertisingConsentService.js',
   './src/services/analyticsConsentService.js',
   './src/services/consentService.js',

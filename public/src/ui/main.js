@@ -89,6 +89,7 @@ import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
 import { loadConsentMessaging } from '../services/ads/googleCmp.js';
 import { shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
+import { runRewardedGrant } from '../services/ads/rewardedGrant.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
 import { fetchMyProgress, fetchTodayChallenges, fetchLeaderboard } from '../services/progressService.js';
 import { getMyFounderStatus } from '../services/passService.js';
@@ -958,24 +959,20 @@ function wireGameControls() {
   els.watchRewardedBtn?.addEventListener('click', handleWatchRewarded);
 }
 
-// Récompense vidéo opt-in. IMPORTANT : le client ne crédite RIEN. Il affiche
-// la vidéo (via adService), en passant son user_id comme custom_data ; c'est
-// Google qui, après vérification, appellera l'Edge Function rewarded-ssv, seule
-// habilitée à créditer (migration 0036). Ici, après la vue, on se contente de
-// re-lire le solde — qui aura été mis à jour côté serveur par le SSV.
+// Récompense vidéo opt-in. Le client ne crédite JAMAIS : runRewardedGrant émet
+// un nonce serveur, joue la vidéo GameMonetize, puis fait valider/créditer le
+// serveur (modèle nonce, migration 0044). Ici on ne fait que rafraîchir le solde.
 async function handleWatchRewarded() {
   if (!currentUser) return;
   const btn = els.watchRewardedBtn;
   if (btn) { btn.disabled = true; }
   trackRewardedOptIn(); // KPI : taux d'opt-in (gated analytics)
   try {
-    const { completed } = await adService.showRewarded({ userId: currentUser.id });
+    const { completed, granted } = await runRewardedGrant({ userId: currentUser.id });
     trackRewardedCompleted(completed); // KPI : taux de complétion
     if (completed) {
-      // Laisse le temps au SSV de créditer côté serveur, puis rafraîchit.
-      const balance = await getCurrencyBalance();
-      accountModule?.updateCoinDisplay(balance);
-      showToast(t('Récompense en cours de validation…'));
+      accountModule?.updateCoinDisplay(await getCurrencyBalance());
+      showToast(t(granted ? 'Récompense créditée !' : 'Récompense en cours de validation…'));
       if (btn) btn.classList.add('hidden'); // une seule récompense par écran de fin
     } else if (btn) {
       btn.disabled = false;

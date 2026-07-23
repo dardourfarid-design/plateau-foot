@@ -1,25 +1,75 @@
 // ===================== ASSEMBLAGE DE L'AD PROVIDER =====================
-// Seul fichier de l'app qui décide quelle implémentation de régie pub est
-// active. Aujourd'hui : le mock (aucun compte réseau réel avant PR 0 / #25).
+// Seul fichier de l'app qui décide quelle implémentation de régie sert quel
+// format. Tout le reste passe par adService.js ; changer de régie ne touche
+// donc ni l'UI ni le moteur.
 //
-// Pour basculer vers Google plus tard : importer googleAdSenseProvider.js
-// (PR C / #28) ou googleAdManagerProvider.js (PR E / #30) et changer
-// `activeProvider` ici — rien d'autre dans le code n'a à bouger, car tout
-// passe par adService.js.
+// ROUTAGE PAR FORMAT (composite). Chaque format — banner / interstitial /
+// rewarded — peut être servi par une régie différente, choisie dans
+// config.ads.providers. Cela permet de garder AdSense sur les bannières tout en
+// confiant l'interstitiel et le rewarded à GameMonetize « en attendant AdSense »
+// (eCPM jeu supérieur, aucun seuil de trafic). Défaut rétro-compatible : si
+// config.ads.providers est absent, tout va à AdSense (comportement historique).
+//
+// Registre des régies disponibles :
+//   'adsense'      → Display DOM (bannières). Interstitiel/rewarded indisponibles.
+//   'gamemonetize' → Interstitiel + rewarded sur jeu navigateur. Pas de bannière.
+//   'mock'         → Développement hors-ligne (aucune vraie pub, aucun revenu).
 
 import * as mockAdProvider from './mockAdProvider.js';
 import * as googleAdSenseProvider from './googleAdSenseProvider.js';
+import * as gameMonetizeProvider from './gameMonetizeProvider.js';
 
-// Provider actif. AdSense (réel) pour le Display/bannières ; le mock reste
-// disponible pour le développement hors-ligne. Le rewarded réel passera par un
-// provider Ad Manager dédié quand l'unité SSV sera créée (#30).
-const activeProvider = googleAdSenseProvider;
-void mockAdProvider; // conservé comme référence de repli
+const REGISTRY = {
+  adsense: googleAdSenseProvider,
+  gamemonetize: gameMonetizeProvider,
+  mock: mockAdProvider
+};
 
-export const isMockAdActive = activeProvider.isMock;
-export const init = activeProvider.init;
-export const showBanner = activeProvider.showBanner;
-export const hideBanner = activeProvider.hideBanner;
-export const showInterstitial = activeProvider.showInterstitial;
-export const showRewarded = activeProvider.showRewarded;
-export const destroy = activeProvider.destroy;
+// Régie par défaut quand aucun routage n'est précisé (rétro-compatibilité).
+const DEFAULT_PROVIDER = googleAdSenseProvider;
+
+function routing() {
+  if (typeof window === 'undefined') return {};
+  return window.__PLATEAU_FOOT_CONFIG__?.ads?.providers || {};
+}
+
+// Régie servant un format donné. Nom inconnu ou absent → régie par défaut.
+function providerFor(format) {
+  const name = routing()[format];
+  return (name && REGISTRY[name]) || DEFAULT_PROVIDER;
+}
+
+// L'ensemble des régies effectivement mobilisées (routage + défaut), dédupliqué :
+// init() et destroy() doivent toucher chaque régie active une seule fois.
+function activeProviders() {
+  const set = new Set([
+    providerFor('banner'),
+    providerFor('interstitial'),
+    providerFor('rewarded')
+  ]);
+  return [...set];
+}
+
+// isMock : vrai seulement si TOUTES les régies actives sont factices (sert de
+// garde-fou aux tests/diagnostics : « aucune vraie pub en jeu »).
+export const isMockAdActive = activeProviders().every(p => p.isMock === true);
+
+// init : prépare toutes les régies actives. true si AU MOINS une est prête
+// (les autres formats dégraderont proprement en « indisponible »).
+export async function init(context) {
+  const results = await Promise.all(
+    activeProviders().map(p => Promise.resolve().then(() => p.init(context)).catch(() => false))
+  );
+  return results.some(Boolean);
+}
+
+export function showBanner(slot) { return providerFor('banner').showBanner(slot); }
+export function hideBanner(slot) { return providerFor('banner').hideBanner(slot); }
+export function showInterstitial() { return providerFor('interstitial').showInterstitial(); }
+export function showRewarded(context) { return providerFor('rewarded').showRewarded(context); }
+
+export function destroy() {
+  for (const p of activeProviders()) {
+    try { p.destroy(); } catch { /* régie sans destroy : ignorée */ }
+  }
+}

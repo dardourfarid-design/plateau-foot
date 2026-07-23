@@ -75,7 +75,43 @@
   font-size:13px;
   color: var(--craie-att);
   max-width:280px;
-  margin: 0 0 20px;
+  margin: 0 0 16px;
+}
+
+/* #264 — copier / partager le code d'invitation. Deux boutons côte à côte,
+   cibles tactiles ≥ 44px, et un retour texte discret juste en dessous. */
+.waiting-actions{
+  display:flex;
+  gap:10px;
+  width:100%;
+  max-width:320px;
+  margin-bottom:8px;
+}
+.waiting-actions .btn{
+  flex:1;
+  min-height:44px;
+  touch-action:manipulation;
+}
+.waiting-feedback{
+  min-height:18px;
+  margin:0 0 6px;
+  font-size:13px;
+  font-weight:700;
+  color: var(--terre-vif);
+}
+
+/* #264 — bandeau « adversaire déconnecté » (parties en ligne). Bandeau
+   d'alerte discret en haut de l'écran de jeu, masqué par .hidden. */
+.opponent-disconnected{
+  margin:0 0 8px;
+  padding:10px 14px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:700;
+  text-align:center;
+  color:#3a1d0e;
+  background: var(--terre-vif);
+  border:1px solid rgba(0,0,0,0.15);
 }
 
 .waiting-spinner{

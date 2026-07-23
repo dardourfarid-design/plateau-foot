@@ -66,6 +66,10 @@ export function cacheDomRefs(els) {
   els.onlineError = document.getElementById('onlineError');
   els.waitingScreen = document.getElementById('waitingScreen');
   els.inviteCodeDisplay = document.getElementById('inviteCodeDisplay');
+  els.copyInviteCodeBtn = document.getElementById('copyInviteCodeBtn');
+  els.shareInviteCodeBtn = document.getElementById('shareInviteCodeBtn');
+  els.waitingFeedback = document.getElementById('waitingFeedback');
+  els.opponentDisconnectedBanner = document.getElementById('opponentDisconnectedBanner');
   els.cancelWaitingBtn = document.getElementById('cancelWaitingBtn');
   els.startTutorialBtn = document.getElementById('startTutorialBtn');
   els.tutorialVeil = document.getElementById('tutorialVeil');

@@ -163,6 +163,16 @@ registerMessages({
   'Partie créée — invite un ami': 'Match created — invite a friend',
   'Partage ce code. La partie démarre dès que ton adversaire le saisit.':
     'Share this code. The match starts as soon as your opponent enters it.',
+  // #264 — salle d'attente : copier / partager le code + déconnexion adverse
+  'Copier le code': 'Copy the code',
+  'Partager': 'Share',
+  'Code copié !': 'Code copied!',
+  'Impossible de copier le code.': 'Couldn\'t copy the code.',
+  'Partage indisponible.': 'Sharing unavailable.',
+  'Rejoins ma partie sur Tactic Master avec le code {code}.':
+    'Join my game on Tactic Master with code {code}.',
+  'Adversaire déconnecté… en attente de sa reconnexion.':
+    'Opponent disconnected… waiting for them to reconnect.',
 
   // --- Écran de jeu ---
   'Annuler': 'Cancel',

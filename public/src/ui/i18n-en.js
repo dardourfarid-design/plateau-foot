@@ -33,6 +33,11 @@ registerMessages({
   'Caractéristiques du jeu': 'Game features',
   'Jouer maintenant': 'Play now',
   'Jouer': 'Play',
+  // #261 — sous-texte d'état du CTA « Jouer » (mode + difficulté lancés)
+  '2 joueurs, même écran': '2 players, same screen',
+  'Solo vs IA — Facile': 'Solo vs AI — Easy',
+  'Solo vs IA — Moyen': 'Solo vs AI — Medium',
+  'Solo vs IA — Difficile': 'Solo vs AI — Hard',
   'Personnaliser la partie': 'Customize the match',
   '🧩 Puzzle du jour': '🧩 Daily puzzle',
   '⚽ Tirs au but': '⚽ Penalty shootout',

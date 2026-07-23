@@ -822,6 +822,17 @@ body{
   letter-spacing:.02em;
   color: var(--craie-att);
 }
+/* #261 — sous-texte d'état sous le CTA : annonce le mode + la difficulté que
+   « Jouer » lancera réellement. Juste sous le bouton, plus affirmé que la
+   réassurance. `:empty` le masque tant que le JS n'a pas calculé le libellé. */
+.cta-subtext{
+  margin:8px 0 0;
+  font-size:12.5px;
+  font-weight:700;
+  letter-spacing:.03em;
+  color: var(--ambre);
+}
+.cta-subtext:empty{ display:none; }
 /* #204 — bouton secondaire « Personnaliser » sous le « Jouer » immédiat */
 .cta-secondary{
   width:100%;

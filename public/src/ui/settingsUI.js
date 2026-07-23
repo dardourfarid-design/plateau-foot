@@ -17,6 +17,37 @@ import { AI_LEVELS } from '../engine/aiLevels.js';
 
 const CONFIG_KEY = 'tm_lastConfig';
 
+// #261 — libellés FR des trois niveaux d'IA pour le sous-texte du CTA « Jouer ».
+const AI_LEVEL_LABEL = {
+  [AI_LEVELS.FACILE]: 'Facile',
+  [AI_LEVELS.MOYEN]: 'Moyen',
+  [AI_LEVELS.DIFFICILE]: 'Difficile'
+};
+
+/**
+ * #261 — décrit en une ligne ce que le CTA « Jouer » va RÉELLEMENT lancer.
+ *
+ * Reproduit fidèlement la coercition du handler quickPlay de main.js : sans
+ * réglages mémorisés (1re visite) OU en mode online, « Jouer » retombe sur le
+ * solo vs IA (l'online exige un code, non lançable en un clic). Le sous-texte
+ * doit donc annoncer CE qui se lancera, pas le dernier mode brut stocké.
+ *
+ * Fonction PURE (aucun DOM, aucun service) : testable en Node, elle renvoie une
+ * clé française que l'appelant passe à t() pour l'affichage traduit.
+ *
+ * @param {object} p
+ * @param {boolean} p.hasStoredConfig  y a-t-il un tm_lastConfig en stockage ?
+ * @param {string}  p.gameMode         'local' | 'ai' | 'online'
+ * @param {string}  p.aiLevel          'facile' | 'moyen' | 'difficile'
+ * @returns {string} clé FR ('2 joueurs, même écran' ou 'Solo vs IA — <niveau>').
+ */
+export function describeQuickPlay({ hasStoredConfig, gameMode, aiLevel }) {
+  const mode = (!hasStoredConfig || gameMode === 'online') ? 'ai' : gameMode;
+  if (mode === 'local') return '2 joueurs, même écran';
+  const level = AI_LEVEL_LABEL[aiLevel] || AI_LEVEL_LABEL[AI_LEVELS.MOYEN];
+  return 'Solo vs IA — ' + level;
+}
+
 // Valeurs acceptées à la relecture. Un stockage corrompu ou écrit par une
 // version antérieure ne doit jamais injecter une valeur que le moteur ne
 // connaît pas : chaque champ est validé, sinon il garde son défaut.
@@ -90,7 +121,22 @@ export function initSettings({ els, getSettings, applySettings, setSoundEnabled 
     if (els.advancedOptions) {
       els.advancedOptions.open = localStorage.getItem('tm_advancedOpen') === '1';
     }
+
+    updateQuickPlaySubtext(); // #261 : le CTA reflète les mêmes réglages
   }
 
-  return { saveLastConfig, restoreLastConfig, applyConfigToUI };
+  // #261 — met à jour le sous-texte d'état sous le CTA « Jouer » (mode +
+  // difficulté RÉELLEMENT lancés). On écrit la clé FRANÇAISE : la traduction EN
+  // est prise en charge par le système i18n existant (applyTranslations au
+  // changement de langue, MutationObserver pour ce nœud réécrit) — ce module
+  // reste ainsi hors du graphe i18n et testable en Node.
+  function updateQuickPlaySubtext() {
+    if (!els.quickPlaySubtext) return;
+    const s = getSettings();
+    const stored = typeof localStorage !== 'undefined' && localStorage.getItem(CONFIG_KEY);
+    els.quickPlaySubtext.textContent =
+      describeQuickPlay({ hasStoredConfig: !!stored, gameMode: s.gameMode, aiLevel: s.aiLevel });
+  }
+
+  return { saveLastConfig, restoreLastConfig, applyConfigToUI, updateQuickPlaySubtext };
 }

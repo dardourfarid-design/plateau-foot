@@ -895,6 +895,7 @@ function wireSetupScreen() {
     els.configScreen.classList.add('hidden');
     els.setupScreen.classList.remove('hidden');
     markRoute('accueil');
+    settingsModule.updateQuickPlaySubtext(); // #261 : les réglages ont pu changer dans l'écran de config
   });
 
   // Réglages : module extrait (#311). L'état reste dans main.js, le module ne
@@ -919,7 +920,7 @@ function wireSetupScreen() {
     }
   });
 
-  // Restaure les derniers réglages et les reflète dans l'écran de config.
+  // Restaure les réglages et les reflète dans la config (+ sous-texte CTA #261).
   settingsModule.restoreLastConfig();
   settingsModule.applyConfigToUI();
 }

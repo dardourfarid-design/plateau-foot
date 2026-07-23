@@ -56,6 +56,7 @@ export function cacheDomRefs(els) {
   els.soundOptions = document.getElementById('soundOptions');
   els.advancedOptions = document.getElementById('advancedOptions');
   els.quickPlayBtn = document.getElementById('quickPlayBtn');
+  els.quickPlaySubtext = document.getElementById('quickPlaySubtext');
   els.dailyPuzzleBtn = document.getElementById('dailyPuzzleBtn');
   els.localAiBlock = document.getElementById('localAiBlock');
   els.onlineBlock = document.getElementById('onlineBlock');

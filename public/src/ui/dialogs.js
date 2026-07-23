@@ -169,3 +169,76 @@ export function showPurchaseToast(els, iconSvg, text, isCancelled) {
   els.purchaseToast.classList.remove('hidden');
   setTimeout(() => { els.purchaseToast.classList.remove('show'); }, 5000);
 }
+
+// ---------------------------------------------------------------------------
+// #350 — Sémantique de dialogue + gestion de focus pour les overlays existants
+// (pattern ARIA APG « Dialog (Modal) », WCAG 2.4.3). Les 5 modules qui ouvrent
+// ces overlays togglent simplement la classe .show : plutôt que de refactorer
+// chaque appelant, un MutationObserver par overlay détecte l'ouverture et la
+// fermeture. Comportements : mémorise/restaure le focus du déclencheur, focus
+// initial sur le premier focusable visible, piège Tab, Échap = clic sur le
+// contrôle de fermeture SÛR de l'overlay (jamais une action destructrice).
+const MODAL_FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+export function wireModalA11y(overlay, closeSelector) {
+  if (!overlay) return;
+  const isOpen = () => overlay.classList.contains('show');
+  const visibles = () => [...overlay.querySelectorAll(MODAL_FOCUSABLE)]
+    .filter(el => !el.disabled && el.getClientRects().length > 0);
+  let lastFocused = null;
+  let wasOpen = false;
+
+  document.addEventListener('keydown', (e) => {
+    if (!isOpen()) return;
+    if (e.key === 'Escape') {
+      const btn = [...overlay.querySelectorAll(closeSelector)]
+        .find(el => el.getClientRects().length > 0);
+      if (btn) {
+        e.preventDefault();
+        // Si deux overlays se chevauchent (but -> fin de partie), un seul
+        // handler doit consommer l'Échap.
+        e.stopImmediatePropagation();
+        btn.click();
+      }
+      return;
+    }
+    if (e.key === 'Tab') {
+      const list = visibles();
+      if (!list.length) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !overlay.contains(active))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (active === last || !overlay.contains(active))) {
+        e.preventDefault(); first.focus();
+      }
+    }
+  });
+
+  new MutationObserver(() => {
+    if (isOpen() && !wasOpen) {
+      wasOpen = true;
+      lastFocused = document.activeElement;
+      const list = visibles();
+      if (list.length) list[0].focus();
+    } else if (!isOpen() && wasOpen) {
+      wasOpen = false;
+      if (lastFocused && document.contains(lastFocused) &&
+          typeof lastFocused.focus === 'function') lastFocused.focus();
+      lastFocused = null;
+    }
+  }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+}
+
+/** #350 — Câble les 6 overlays historiques (les cibles Échap sont toutes des
+ *  contrôles de fermeture/poursuite SANS effet destructeur). */
+export function wireModalsA11y(els) {
+  wireModalA11y(els.endOverlay, '#backToSetupFromEndBtn');       // avant goal :
+  wireModalA11y(els.goalOverlay, '#continueBtn');                // si les deux
+  // sont ouverts, l'Échap doit servir l'écran de fin (au-dessus).
+  wireModalA11y(els.accountOverlay, '.account-close');
+  wireModalA11y(els.createPlayerOverlay, '#closeCreatePlayerBtn');
+  wireModalA11y(els.mercatoOfferOverlay, '#closeMercatoOfferBtn');
+  wireModalA11y(els.powerTargetOverlay, '#cancelPowerTargetBtn');
+}

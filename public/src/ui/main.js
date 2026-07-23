@@ -82,7 +82,7 @@ function ensureShootout() {
   return _shootoutPromise;
 }
 
-import { showToast, showAlert, showConfirm, showPurchaseToast, PURCHASE_TOAST_ICONS } from './dialogs.js';
+import { showToast, showAlert, showConfirm, showPurchaseToast, PURCHASE_TOAST_ICONS, wireModalsA11y } from './dialogs.js';
 import { getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
@@ -1266,6 +1266,7 @@ function init() {
   lazy(document.getElementById('homeShootoutBtn'), ensureShootout);
   // Règles & FAQ (M11 #252) : overlay autonome, contenu cloné de .seo-about.
   initFaq();
+  wireModalsA11y(els); // #350 : dialogues modaux (focus, piège Tab, Échap)
   const homeLogo = document.getElementById('homeLogoBtn');
   homeLogo?.addEventListener('click', () => confirmAbandonThen(() => overlaysModule.goToLanding()));
   homeLogo?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); confirmAbandonThen(() => overlaysModule.goToLanding()); } });

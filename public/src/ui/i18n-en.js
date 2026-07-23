@@ -321,6 +321,8 @@ registerMessages({
   'Afficher le mot de passe': 'Show password',
   'Masquer le mot de passe': 'Hide password',
   'Gratuit — aucune carte requise.': 'Free — no card required.',
+  // #350 — nom accessible du dialogue compte (les deux vues, sans id de titre)
+  'Compte': 'Account',
   // #345 — plateau au clavier/lecteur d'écran : libellés de cases + annonces
   'Plateau de jeu': 'Game board',
   'Ligne {r}, colonne {c}': 'Row {r}, column {c}',

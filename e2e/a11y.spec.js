@@ -59,6 +59,51 @@ test('partie en cours — aucune violation a11y sérieuse', async ({ page }) => 
   expect(v, v.join('\n')).toEqual([]);
 });
 
+// #345 — le plateau est opérable au clavier : roving tabindex (UN tab-stop),
+// flèches pour naviguer, Entrée pour sélectionner puis jouer un coup légal.
+test('plateau — jouable au clavier seul (#345)', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#goToSetupBtn').click();
+  await page.locator('#startBtn').click();
+  await expect(page.locator('#gameScreen')).toBeVisible();
+  await settle(page, '#gameScreen');
+
+  // UN seul tab-stop pour tout le plateau (jamais 63).
+  await expect(page.locator('.cell[tabindex="0"]')).toHaveCount(1);
+
+  // Les flèches déplacent le focus de case en case (roving).
+  await page.locator('.cell[data-row="0"][data-col="0"]').focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('.cell[data-row="1"][data-col="0"]')).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.cell[data-row="1"][data-col="1"]')).toBeFocused();
+  await expect(page.locator('.cell[tabindex="0"]')).toHaveCount(1);
+
+  // Entrée sélectionne un pion sélectionnable…
+  const selectable = page.locator('.cell:has(.token.selectable)').first();
+  await selectable.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.token.selected')).toHaveCount(1);
+
+  // …et les coups légaux sont exposés puis jouables à l'Entrée.
+  // NB : `.cell.dest-move` est un locator VIVANT — après le coup il se
+  // re-résout vers les destinations de la phase suivante. On fige donc les
+  // coordonnées de la case AVANT de jouer, et on vérifie sur celles-ci.
+  const dest = page.locator('.cell.dest-move').first();
+  await expect(dest).toBeVisible();
+  const destPos = await dest.evaluate(el => ({ r: el.dataset.row, c: el.dataset.col }));
+  await dest.focus();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.locator(`.cell[data-row="${destPos.r}"][data-col="${destPos.c}"] .token`)
+  ).toHaveCount(1); // le pion a bougé ici
+
+  // Libellés parlants + annonceur d'état présent (changements seulement).
+  await expect(page.locator('.cell[data-row="0"][data-col="0"]'))
+    .toHaveAttribute('aria-label', /Ligne 1, colonne 1/);
+  await expect(page.locator('#gameAnnouncer')).toHaveAttribute('aria-live', 'polite');
+});
+
 test('modale de compte — aucune violation a11y sérieuse', async ({ page }) => {
   await page.goto('/');
   await page.locator('#accountBtn').click();

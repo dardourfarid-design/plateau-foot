@@ -320,7 +320,22 @@ registerMessages({
   // #342 — formulaire compte : toggle mot de passe + microcopie de réassurance
   'Afficher le mot de passe': 'Show password',
   'Masquer le mot de passe': 'Hide password',
-  'Gratuit — aucune carte requise.': 'Free — no card required.'
+  'Gratuit — aucune carte requise.': 'Free — no card required.',
+  // #345 — plateau au clavier/lecteur d'écran : libellés de cases + annonces
+  'Plateau de jeu': 'Game board',
+  'Ligne {r}, colonne {c}': 'Row {r}, column {c}',
+  'pion bleu': 'blue piece',
+  'pion rouge': 'red piece',
+  '(gardien)': '(goalkeeper)',
+  'sélectionné': 'selected',
+  'sélectionnable': 'selectable',
+  'ballon': 'ball',
+  'déplacement possible': 'move available',
+  'passe possible': 'pass available',
+  'case couverte': 'covered square',
+  'cage bleue': 'blue goal',
+  'cage rouge': 'red goal',
+  'But ! Score : {b} — {r}': 'Goal! Score: {b} — {r}'
 });
 
 // --- Chaînes dynamiques (JS) : jeu, overlays, auth, données, pouvoirs ---

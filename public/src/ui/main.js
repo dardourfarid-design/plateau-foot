@@ -82,7 +82,7 @@ function ensureShootout() {
   return _shootoutPromise;
 }
 
-import { showToast, showAlert, showConfirm } from './dialogs.js';
+import { showToast, showAlert, showConfirm, showPurchaseToast, PURCHASE_TOAST_ICONS } from './dialogs.js';
 import { getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
@@ -321,6 +321,14 @@ function updateRulesReminder(state) {
   }
 }
 
+// #345 : annonces lecteur d'écran des CHANGEMENTS d'état de jeu (but, tour,
+// fin de partie) — jamais le focus, jamais chaque render (sinon spam).
+let lastAnnouncedTurn = null;
+let lastAnnouncedGameOver = false;
+function announceGameState(text) {
+  if (els.gameAnnouncer) els.gameAnnouncer.textContent = text;
+}
+
 function render() {
   const lineupsByTeam = myResolvedLineup ? { bleu: myResolvedLineup } : null;
   renderBoard(els.boardGrid, gameState, lineupsByTeam);
@@ -360,6 +368,21 @@ function render() {
   updateCancelButton();
   updateEndTurnButton();
   updatePowerButton();
+
+  // #345 : annonces d'état (après mise à jour visuelle, mêmes sources de vérité).
+  const bleuScored = gameState.score[TEAMS.BLEU] > prevBleu;
+  const rougeScored = gameState.score[TEAMS.ROUGE] > prevRouge;
+  if (bleuScored || rougeScored) {
+    announceGameState(t('But ! Score : {b} — {r}', {
+      b: gameState.score[TEAMS.BLEU], r: gameState.score[TEAMS.ROUGE]
+    }));
+  } else if (gameState.gameOver && !lastAnnouncedGameOver) {
+    announceGameState(t('Partie terminée'));
+  } else if (!gameState.gameOver && gameState.turn !== lastAnnouncedTurn && lastAnnouncedTurn !== null) {
+    announceGameState(gameState.turn === TEAMS.BLEU ? t('Au tour de bleu') : t('Au tour de rouge'));
+  }
+  lastAnnouncedTurn = gameState.turn;
+  lastAnnouncedGameOver = gameState.gameOver;
 }
 
 function updateHint() {
@@ -1351,7 +1374,7 @@ function handlePaymentReturn() {
 
   if (checkoutResult === 'success') {
     // #344 (F9) : icônes de toast en SVG inline (plus d'emoji au rendu variable).
-    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7l1.8 1.8L9.8 5.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>', t('Achat confirmé ! Ton nouveau contenu est débloqué.'), false);
+    showPurchaseToast(els, PURCHASE_TOAST_ICONS.success, t('Achat confirmé ! Ton nouveau contenu est débloqué.'), false);
     // Ouvre directement la boutique avec les données fraîches, pour que
     // l'utilisateur voie immédiatement son achat débloqué sans action
     // supplémentaire de sa part.
@@ -1361,11 +1384,11 @@ function handlePaymentReturn() {
     // Retour d'un abonnement Pass Saison (URL dédiée côté Edge Function).
     // L'activation passe par le webhook Stripe : elle peut prendre quelques
     // secondes — le message le dit pour éviter un rechargement paniqué.
-    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1.5 5V3.5h11V5a1.5 1.5 0 000 3v1.5h-11V8a1.5 1.5 0 000-3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.5 3.5v7" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.6 1.6"/></svg>', t('Pass Saison activé ! (quelques secondes de délai possibles)'), false);
+    showPurchaseToast(els, PURCHASE_TOAST_ICONS.pass, t('Pass Saison activé ! (quelques secondes de délai possibles)'), false);
     els.shopBtn?.click();
     accountModule?.refreshAfterCheckout();
   } else if (checkoutResult === 'cancelled') {
-    showPurchaseToast('<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5 3L2.5 5.5 5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 5.5H9a2.5 2.5 0 010 5H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>', t('Achat annulé — aucun montant n\'a été débité.'), true);
+    showPurchaseToast(els, PURCHASE_TOAST_ICONS.cancelled, t('Achat annulé — aucun montant n\'a été débité.'), true);
   }
 
   // Retire le paramètre de l'URL sans recharger la page, pour qu'un
@@ -1373,21 +1396,6 @@ function handlePaymentReturn() {
   params.delete('checkout');
   const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : '');
   window.history.replaceState({}, '', cleanUrl);
-}
-
-function showPurchaseToast(icon, text, isCancelled) {
-  if (!els.purchaseToast) return;
-  // #344 (F9) : l'icône est un SVG inline issu de NOS constantes internes
-  // (jamais de contenu utilisateur) — innerHTML nécessaire pour le rendre.
-  els.purchaseToastIcon.innerHTML = icon;
-  els.purchaseToastText.textContent = text;
-  els.purchaseToast.classList.toggle('cancelled', isCancelled);
-  els.purchaseToast.classList.add('show');
-  els.purchaseToast.classList.remove('hidden');
-
-  setTimeout(() => {
-    els.purchaseToast.classList.remove('show');
-  }, 5000);
 }
 
 /**

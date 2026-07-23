@@ -148,3 +148,24 @@ export function showConsentDialog(defaults = {}) {
     };
   });
 }
+
+// ---------------------------------------------------------------------------
+// #345 (extraction #311) : toast de retour d'achat Stripe. Vivait dans main.js
+// — déplacé ici (foyer des toasts) pour rester sous le plafond de taille de
+// main.js. Les icônes sont des SVG inline (#344, F9) : constantes INTERNES
+// uniquement, d'où le innerHTML.
+export const PURCHASE_TOAST_ICONS = {
+  success: '<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 7l1.8 1.8L9.8 5.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  pass: '<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1.5 5V3.5h11V5a1.5 1.5 0 000 3v1.5h-11V8a1.5 1.5 0 000-3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.5 3.5v7" stroke="currentColor" stroke-width="1.3" stroke-dasharray="1.6 1.6"/></svg>',
+  cancelled: '<svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5 3L2.5 5.5 5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 5.5H9a2.5 2.5 0 010 5H7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+};
+
+export function showPurchaseToast(els, iconSvg, text, isCancelled) {
+  if (!els.purchaseToast) return;
+  els.purchaseToastIcon.innerHTML = iconSvg;
+  els.purchaseToastText.textContent = text;
+  els.purchaseToast.classList.toggle('cancelled', isCancelled);
+  els.purchaseToast.classList.add('show');
+  els.purchaseToast.classList.remove('hidden');
+  setTimeout(() => { els.purchaseToast.classList.remove('show'); }, 5000);
+}

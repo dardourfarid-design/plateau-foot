@@ -12,6 +12,8 @@ import {
   isAdjacent, canSelectToken, PHASES, isCellCoveredBy, tokenAt
 } from '../engine/gameEngine.js';
 import { displayNameForToken } from './playerIdentity.js';
+import { t } from './i18n.js';
+import { TEAMS as TEAMS_A11Y } from '../engine/constants.js';
 
 /**
  * Construit la grille de cellules vide une seule fois (structure statique).
@@ -19,12 +21,19 @@ import { displayNameForToken } from './playerIdentity.js';
  */
 export function buildBoardGrid(container, onCellClick) {
   container.innerHTML = '';
+  // #345 (F3) : plateau opérable au clavier/lecteur d'écran. Le conteneur est
+  // un groupe nommé ; chaque case est un bouton nommé (aria-label posé à
+  // chaque render). Roving tabindex : UN seul tab-stop pour tout le plateau.
+  container.setAttribute('role', 'group');
+  container.setAttribute('aria-label', t('Plateau de jeu'));
   for (let r = 0; r < BOARD_ROWS; r++) {
     for (let c = 0; c < BOARD_COLS; c++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.dataset.row = r;
       cell.dataset.col = c;
+      cell.setAttribute('role', 'button');
+      cell.tabIndex = (r === 0 && c === 0) ? 0 : -1;
       if (r === GOAL_ROW_TOP && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-rouge');
       if (r === GOAL_ROW_BOTTOM && GOAL_COLS.includes(c)) cell.classList.add('goal-zone-bleu');
       // #201 : les reperes des cases speciales (ailes / points de penalty) ne
@@ -34,6 +43,85 @@ export function buildBoardGrid(container, onCellClick) {
       container.appendChild(cell);
     }
   }
+  attachBoardKeyboardNav(container);
+}
+
+/**
+ * #345 — Navigation clavier du plateau (délégation sur le conteneur) :
+ * flèches = déplacer le focus de case en case (roving tabindex : l'ancienne
+ * case repasse à -1, la nouvelle à 0), Entrée/Espace = jouer la case
+ * (même chemin que le clic), Début/Fin = extrémités de la ligne.
+ * Un seul listener pour les 63 cases — rien à nettoyer au re-render.
+ */
+function attachBoardKeyboardNav(container) {
+  container.addEventListener('keydown', (e) => {
+    const cell = e.target && e.target.closest ? e.target.closest('.cell') : null;
+    if (!cell) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      cell.click();
+      return;
+    }
+    let r = parseInt(cell.dataset.row, 10);
+    let c = parseInt(cell.dataset.col, 10);
+    if (e.key === 'ArrowUp') r--;
+    else if (e.key === 'ArrowDown') r++;
+    else if (e.key === 'ArrowLeft') c--;
+    else if (e.key === 'ArrowRight') c++;
+    else if (e.key === 'Home') c = 0;
+    else if (e.key === 'End') c = BOARD_COLS - 1;
+    else return;
+    e.preventDefault();
+    r = Math.max(0, Math.min(BOARD_ROWS - 1, r));
+    c = Math.max(0, Math.min(BOARD_COLS - 1, c));
+    const next = container.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+    if (next && next !== cell) {
+      cell.tabIndex = -1;
+      next.tabIndex = 0;
+      next.focus();
+    }
+  });
+}
+
+/**
+ * #345 — Libellé accessible d'une case : position, contenu (pion/ballon/cage)
+ * et affordances de la phase en cours (sélectionnable, déplacement/passe
+ * possible, case couverte). Fonction PURE vis-à-vis du DOM (les marqueurs de
+ * destination arrivent via `flags`) pour rester testable en Node.
+ */
+export function cellA11yLabel(state, r, c, flags = {}, lineupsByTeam = null) {
+  const parts = [t('Ligne {r}, colonne {c}', { r: r + 1, c: c + 1 })];
+  if (r === GOAL_ROW_TOP && GOAL_COLS.includes(c)) parts.push(t('cage rouge'));
+  if (r === GOAL_ROW_BOTTOM && GOAL_COLS.includes(c)) parts.push(t('cage bleue'));
+  const tok = tokenAt(state, r, c);
+  if (tok) {
+    let desc = tok.team === TEAMS_A11Y.BLEU ? t('pion bleu') : t('pion rouge');
+    if (tok.isGK) desc += ' ' + t('(gardien)');
+    const name = displayNameForToken(tok.id, lineupsByTeam);
+    if (name) desc += ', ' + name;
+    parts.push(desc);
+    if (tok.id === state.selectedTokenId) parts.push(t('sélectionné'));
+    else if (canSelectToken(state, tok)) parts.push(t('sélectionnable'));
+  }
+  if (isBallAt(state, r, c)) parts.push(t('ballon'));
+  if (flags.move) parts.push(t('déplacement possible'));
+  if (flags.pass) parts.push(t('passe possible'));
+  if (flags.covered) parts.push(t('case couverte'));
+  return parts.join(', ');
+}
+
+/** #345 — Pose l'aria-label de chaque case après un render complet. */
+function applyCellA11y(container, state, lineupsByTeam) {
+  container.querySelectorAll('.cell').forEach(cell => {
+    const r = parseInt(cell.dataset.row, 10);
+    const c = parseInt(cell.dataset.col, 10);
+    const flags = {
+      move: cell.classList.contains('dest-move'),
+      pass: cell.classList.contains('dest-pass'),
+      covered: cell.classList.contains('covered-cell')
+    };
+    cell.setAttribute('aria-label', cellA11yLabel(state, r, c, flags, lineupsByTeam));
+  });
 }
 
 /**
@@ -79,6 +167,9 @@ export function renderBoard(container, state, lineupsByTeam = null) {
 
   renderCoverageMarkers(container, state);
   renderDestinationMarkers(container, state);
+  // #345 : après la pose des marqueurs (dest-move/dest-pass/covered-cell),
+  // pour que les libellés reflètent les affordances de la phase en cours.
+  applyCellA11y(container, state, lineupsByTeam);
 }
 
 /**

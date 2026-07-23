@@ -30,6 +30,7 @@ await import('./router.test.js');
 await import('./moduleSize.test.js');
 await import('./cssBuild.test.js');
 await import('./puzzles.test.js');
+await import('./boardA11y.test.js');
 await import('./houseAds.test.js');
 await import('./swPrecache.test.js');
 await import('./enLandingGenerated.test.js');

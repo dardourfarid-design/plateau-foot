@@ -118,3 +118,11 @@ body:has(#setupScreen.hidden) .seo-about{ display:none; }
 
 /* Accès FAQ dans la barre latérale de jeu (sous le rappel des règles) */
 .sidebar-faq-link{ margin-top:10px; font-size:13px; }
+
+/* Audit UX 2026-07-23 (F8, #340) : liens du footer legal mesures a 16px de
+   haut - zone tactile portee au plancher WCAG 2.5.8 (>= 24px) via padding,
+   typo et rendu inline conserves. */
+.legal-footer a{
+  display:inline-block;
+  padding:8px 4px;
+}

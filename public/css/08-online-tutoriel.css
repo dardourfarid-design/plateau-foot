@@ -94,7 +94,7 @@
 
 .tutorial-link{
   display:block;
-  margin-top:14px;
+  margin-top:6px;
   background:none;
   border:none;
   color: var(--craie-att);
@@ -102,7 +102,10 @@
   text-decoration: underline;
   text-decoration-color: rgba(245,242,232,0.25);
   cursor:pointer;
-  padding:4px 0;
+  /* Audit UX 2026-07-23 (F8, #340) : mesuré à 23px — cible tactile ≥ 44px
+     via le padding (typo inchangée ; margin-top réduit pour compenser). */
+  padding:14px 0;
+  min-height:44px;
 }
 .tutorial-link:hover{ color: var(--craie); }
 

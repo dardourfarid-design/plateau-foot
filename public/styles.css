@@ -137,7 +137,12 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding: 18px 2px;
+  /* Audit UX 2026-07-23 (F1) : autoriser le passage sur deux lignes quand la
+     largeur manque — en nowrap, le bouton Boutique sortait du viewport sur
+     mobile ≤ 400px (bord droit mesuré à 444px pour 375px d'écran). */
+  flex-wrap:wrap;
+  row-gap:2px;
+  padding: 12px 2px;
   margin-bottom: 4px;
   border-bottom: 1px solid rgba(200,132,26,0.18);
 }
@@ -151,6 +156,10 @@ body{
   font-weight:600;
   cursor:pointer;
   padding: 6px 10px;
+  /* Audit UX 2026-07-23 (F8) : cible tactile ≥ 44px sans grossir la typo. */
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
   border-radius:6px;
   transition: color 0.15s ease, background 0.15s ease;
 }
@@ -343,23 +352,28 @@ body{
 }
 
 /* ---------- Toggle de langue FR|EN (topbar) ---------- */
+/* Audit UX 2026-07-23 (F5, #340) : segments mesurés à 20px de haut et 0px
+   d'écart — deux pilules séparées (écart réel de 8px entre zones cliquables,
+   zones non chevauchantes) avec cible tactile ≥ 44px. */
 .lang-toggle{
   display:inline-flex;
   align-items:center;
-  border:1px solid rgba(232,160,48,0.35);
-  border-radius:999px;
-  overflow:hidden;
+  gap:8px;
   margin-right:10px;
 }
 .lang-toggle .lang-opt{
   background:transparent;
-  border:none;
+  border:1px solid rgba(232,160,48,0.35);
+  border-radius:999px;
   color:var(--craie-att);
   font:inherit;
   font-size:12px;
   font-weight:700;
   letter-spacing:0.04em;
-  padding:4px 9px;
+  padding:0 12px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
   cursor:pointer;
   line-height:1;
   transition:background .15s, color .15s;
@@ -1662,7 +1676,7 @@ body{
 
 .tutorial-link{
   display:block;
-  margin-top:14px;
+  margin-top:6px;
   background:none;
   border:none;
   color: var(--craie-att);
@@ -1670,7 +1684,10 @@ body{
   text-decoration: underline;
   text-decoration-color: rgba(245,242,232,0.25);
   cursor:pointer;
-  padding:4px 0;
+  /* Audit UX 2026-07-23 (F8, #340) : mesuré à 23px — cible tactile ≥ 44px
+     via le padding (typo inchangée ; margin-top réduit pour compenser). */
+  padding:14px 0;
+  min-height:44px;
 }
 .tutorial-link:hover{ color: var(--craie); }
 
@@ -1906,6 +1923,13 @@ body{
   color: var(--or);
 }
 .topbar-link{ display:flex; align-items:center; gap:5px; }
+
+/* Audit UX 2026-07-23 (F1) : quand la topbar passe sur deux lignes (mobile),
+   la rangée d'actions (profil / pièces / Boutique) reste alignée à droite et
+   resserre ses écarts pour tenir sur 375px sans rien couper. */
+@media (max-width: 620px){
+  .topbar-right{ margin-left:auto; gap:10px; }
+}
 
 /* --- Hero : bandeau saison --- */
 .hero-season-tag{
@@ -3679,3 +3703,11 @@ body:has(#setupScreen.hidden) .seo-about{ display:none; }
 
 /* Accès FAQ dans la barre latérale de jeu (sous le rappel des règles) */
 .sidebar-faq-link{ margin-top:10px; font-size:13px; }
+
+/* Audit UX 2026-07-23 (F8, #340) : liens du footer legal mesures a 16px de
+   haut - zone tactile portee au plancher WCAG 2.5.8 (>= 24px) via padding,
+   typo et rendu inline conserves. */
+.legal-footer a{
+  display:inline-block;
+  padding:8px 4px;
+}

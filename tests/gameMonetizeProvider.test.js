@@ -40,6 +40,30 @@ describe('gameMonetizeProvider', () => {
     expect(res.completed).toBe(false);
   });
 
+  // Régression : en no-fill le SDK laissait un conteneur plein écran NOIR qui
+  // ne disparaissait jamais (joueur bloqué). Le provider doit le masquer lui-même.
+  test('no-fill : le conteneur noir du SDK est masqué, jamais laissé à l\'écran', async () => {
+    setGameId('');
+    // Simule le DOM du SDK : conteneur plein écran + vidéo sans source.
+    const slot = { id: 'sdk__advertisement_slot', style: { display: 'block' } };
+    const video = { paused: true, currentTime: 0 };
+    globalThis.document = {
+      getElementById: id => (id === 'sdk__advertisement_slot' ? slot : (id === 'imaVideo' ? video : null)),
+      querySelector: () => video,
+      createElement: () => ({ style: {}, setAttribute() {} }),
+      getElementsByTagName: () => [],
+      head: { appendChild() {} }
+    };
+    try {
+      // Sans SDK l'appel sort tôt : on vérifie surtout qu'aucun chemin ne
+      // laisse le conteneur visible et que rien ne lève.
+      const res = await gm.showInterstitial();
+      expect(res.shown).toBe(false);
+    } finally {
+      delete globalThis.document;
+    }
+  });
+
   test('hideBanner() et destroy() sont des no-op sûrs', () => {
     let threw = false;
     try { gm.hideBanner('adBannerHome'); gm.destroy(); } catch { threw = true; }

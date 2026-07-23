@@ -46,6 +46,16 @@ const SCRIPT_ID = 'gamemonetize-sdk';
 // couvrir une vidéo rewarded longue (les vues observées durent ~10-15 s).
 const AD_TIMEOUT_MS = 45000;
 
+// GARDE-FOU ANTI-ÉCRAN NOIR (constaté en production). Le SDK insère un
+// conteneur plein écran `#sdk__advertisement_slot` au fond NOIR *avant* de
+// savoir s'il aura une pub à y mettre. En cas de no-fill (pas de consentement
+// TCF, domaine non approuvé, inventaire vide), il ne le retire JAMAIS : la
+// vidéo reste sans source et le joueur est bloqué sur un écran noir définitif.
+// On ne peut pas compter sur le SDK pour nettoyer — on le fait nous-mêmes.
+// Délai laissé à une vraie pub pour démarrer (démarrage observé : < 1 s).
+const FILL_TIMEOUT_MS = 6000;
+const AD_SLOT_ID = 'sdk__advertisement_slot';
+
 export const isMock = false;
 
 let _sdk = null;
@@ -67,6 +77,49 @@ function gameId() {
 
 function hasDom() {
   return typeof document !== 'undefined' && !!document.getElementById;
+}
+
+// ---- Garde-fou anti-écran noir -------------------------------------------
+
+function adSlotEl() {
+  return hasDom() ? document.getElementById(AD_SLOT_ID) : null;
+}
+
+/**
+ * Une VRAIE pub est-elle en train de jouer ? On se fie à l'état observable de
+ * la vidéo plutôt qu'aux seuls événements du SDK : en no-fill, la balise reste
+ * sans source (readyState 0) et en pause — signature exacte de l'écran noir.
+ */
+function adIsPlaying() {
+  if (!hasDom()) return false;
+  const v = document.querySelector(`#${AD_SLOT_ID} video`) || document.getElementById('imaVideo');
+  return !!(v && !v.paused && v.currentTime > 0);
+}
+
+/** Masque le conteneur du SDK. Réversible : réaffiché au prochain affichage. */
+function hideAdSlot() {
+  const el = adSlotEl();
+  if (el) el.style.display = 'none';
+}
+
+/** Réaffiche le conteneur (il a pu être masqué par un no-fill précédent). */
+function restoreAdSlot() {
+  const el = adSlotEl();
+  if (el) el.style.display = '';
+}
+
+/**
+ * Arme le garde-fou : si aucune pub n'a démarré au bout de FILL_TIMEOUT_MS,
+ * on considère qu'il n'y a pas d'inventaire, on retire le conteneur noir et
+ * on solde l'affichage. Retourne l'id du minuteur, à annuler si la pub démarre.
+ */
+function armFillWatchdog(onNoFill) {
+  return setTimeout(() => {
+    if (!adIsPlaying()) {
+      hideAdSlot();
+      onNoFill();
+    }
+  }, FILL_TIMEOUT_MS);
 }
 
 // Aiguillage central des événements SDK vers les affichages en attente.
@@ -160,12 +213,18 @@ export async function showInterstitial() {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      clearTimeout(watchdog);
+      // Filet systématique : si aucune pub ne joue au moment de solder, le
+      // conteneur noir ne doit pas survivre à l'appel.
+      if (!adIsPlaying()) hideAdSlot();
       _pendingInterstitial = null;
       resolve(res);
     };
     const timer = setTimeout(() => finish({ shown: false }), AD_TIMEOUT_MS);
+    const watchdog = armFillWatchdog(() => finish({ shown: false }));
     _pendingInterstitial = { sawAd: false, settle: finish };
     try {
+      restoreAdSlot(); // un no-fill précédent a pu masquer le conteneur
       _sdk.showBanner();
     } catch {
       finish({ shown: false });
@@ -187,12 +246,16 @@ export async function showRewarded() {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      clearTimeout(watchdog);
+      if (!adIsPlaying()) hideAdSlot();
       const completed = !!(_pendingRewarded && _pendingRewarded.completed);
       _pendingRewarded = null;
       resolve({ completed });
     };
     const timer = setTimeout(finish, AD_TIMEOUT_MS);
+    const watchdog = armFillWatchdog(finish);
     _pendingRewarded = { completed: false, settle: finish };
+    restoreAdSlot();
 
     // Ce build n'a que showBanner(). completed ne devient true que si
     // SDK_REWARDED_WATCH_COMPLETE est émis pendant la pub (inventaire rewarded

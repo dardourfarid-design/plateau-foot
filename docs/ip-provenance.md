@@ -55,8 +55,10 @@ sonore tierce.
    ces avatars ; le reste du produit (code, design, marque d'usage) n'est pas
    affecté.
 2. **Conditions des outils** : OpenAI (ChatGPT) cède au client les droits sur
-   les sorties et en autorise l'usage commercial ; **à vérifier et archiver**
-   pour Flow (capturer la version des CGU en vigueur à la date de génération).
+   les sorties ; Google (Flow) ne revendique pas la propriété du contenu.
+   CGU en vigueur aux dates de génération **archivées** (permaliens Wayback
+   datés) : voir [`legal-archive/cgu-avatars-ia.md`](legal-archive/cgu-avatars-ia.md).
+   Les prompts de génération n'ont pas été conservés (constat acté).
 3. **Style** : la v1 présentait un style shōnen proche d'une œuvre existante ;
    la v2 a retiré les signaux identifiables (kits recolorés aux couleurs du
    jeu, flocage propre). Risque résiduel faible, documenté.
@@ -80,6 +82,8 @@ d'antériorité puis dépôt dans les classes pertinentes (jeux, logiciels).
 
 ## Actions ouvertes
 
-- [ ] Archiver les CGU de Flow (et d'OpenAI) en vigueur aux dates de
-      génération des avatars, avec les prompts si disponibles.
+- [x] Archiver les CGU de Flow et d'OpenAI en vigueur aux dates de
+      génération des avatars — fait le 2026-07-23, voir
+      [`legal-archive/cgu-avatars-ia.md`](legal-archive/cgu-avatars-ia.md).
+      Prompts non conservés (constat acté par le propriétaire).
 - [ ] Recherche d'antériorité + dépôt de la marque « Tactic Master ».

@@ -104,6 +104,41 @@ test('plateau — jouable au clavier seul (#345)', async ({ page }) => {
   await expect(page.locator('#gameAnnouncer')).toHaveAttribute('aria-live', 'polite');
 });
 
+// #350 — les 6 overlays historiques sont de vrais dialogues modaux.
+test('overlays — role=dialog + aria-modal posés sur les 6 cartes (#350)', async ({ page }) => {
+  await page.goto('/');
+  for (const id of ['accountOverlay', 'endOverlay', 'goalOverlay',
+    'createPlayerOverlay', 'mercatoOfferOverlay', 'powerTargetOverlay']) {
+    const card = page.locator(`#${id} .overlay-card`);
+    await expect(card).toHaveAttribute('role', 'dialog');
+    await expect(card).toHaveAttribute('aria-modal', 'true');
+  }
+});
+
+test('overlay compte — focus initial, piège Tab, Échap, restitution (#350)', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#accountBtn').click();
+  await expect(page.locator('#accountOverlay')).toBeVisible();
+
+  // Focus initial DANS le dialogue (premier focusable visible = email).
+  await expect(page.locator('#authEmail')).toBeFocused();
+
+  // Piège Tab : Shift+Tab depuis le premier focusable boucle vers le dernier,
+  // puis Tab revient au premier — le focus ne sort jamais du dialogue.
+  await page.keyboard.press('Shift+Tab');
+  const inOverlay = await page.evaluate(() =>
+    document.getElementById('accountOverlay').contains(document.activeElement));
+  expect(inOverlay).toBe(true);
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#authEmail')).toBeFocused();
+
+  // Échap ferme (via le contrôle « Fermer » sûr) et RESTITUE le focus au
+  // déclencheur.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#accountOverlay')).not.toHaveClass(/show/);
+  await expect(page.locator('#accountBtn')).toBeFocused();
+});
+
 test('modale de compte — aucune violation a11y sérieuse', async ({ page }) => {
   await page.goto('/');
   await page.locator('#accountBtn').click();

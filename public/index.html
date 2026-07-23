@@ -700,7 +700,7 @@
 
     <!-- OVERLAY CIBLAGE POUVOIR (Repli adverse) -->
     <div class="overlay" id="powerTargetOverlay">
-      <div class="overlay-card">
+      <div class="overlay-card" role="dialog" aria-modal="true" aria-label="Choisis un pion adverse">
         <div class="overlay-title" style="font-size:20px;">Choisis un pion adverse</div>
         <p class="overlay-sub">Le pouvoir Repli adverse va le faire reculer d'une case.</p>
         <div id="powerTargetList" class="mercato-player-select" style="max-height:260px;"></div>
@@ -826,7 +826,7 @@
 
     <!-- OVERLAY CRÉATION DE JOUEUR PERSONNALISÉ -->
     <div class="overlay" id="createPlayerOverlay">
-      <div class="overlay-card create-player-card">
+      <div class="overlay-card create-player-card" role="dialog" aria-modal="true" aria-label="Créer un joueur">
         <div class="overlay-title create-player-title">Créer un joueur</div>
         <p class="overlay-sub create-player-sub" id="createPlayerError"></p>
         <p class="create-player-quota-note" id="createPlayerQuotaNote"></p>
@@ -914,7 +914,7 @@
 
     <!-- OVERLAY PROPOSITION D'ÉCHANGE -->
     <div class="overlay" id="mercatoOfferOverlay">
-      <div class="overlay-card mercato-offer-card">
+      <div class="overlay-card mercato-offer-card" role="dialog" aria-modal="true" aria-label="Proposer un échange">
         <div class="overlay-title" style="font-size:22px;">Proposer un échange</div>
         <p class="overlay-sub" id="mercatoOfferError"></p>
 
@@ -960,7 +960,7 @@
 
 <!-- OVERLAY BUT -->
 <div class="overlay goal-overlay-bg" id="goalOverlay">
-  <div class="overlay-card goal-card">
+  <div class="overlay-card goal-card" role="dialog" aria-modal="true" aria-labelledby="goalTitle">
     <!-- Lignes de vitesse japonaises (décoratives) -->
     <div class="goal-speedlines" aria-hidden="true">
       <div class="goal-sl"></div><div class="goal-sl"></div><div class="goal-sl"></div>
@@ -982,7 +982,7 @@
 
 <!-- OVERLAY FIN DE PARTIE -->
 <div class="overlay" id="endOverlay">
-  <div class="overlay-card end-card">
+  <div class="overlay-card end-card" role="dialog" aria-modal="true" aria-labelledby="endTitle">
     <!-- Trophée SVG -->
     <div class="end-trophy" aria-hidden="true">
       <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
@@ -1026,7 +1026,7 @@
 
 <!-- OVERLAY COMPTE (connexion / inscription / déconnexion) -->
 <div class="overlay" id="accountOverlay">
-  <div class="overlay-card account-card">
+  <div class="overlay-card account-card" role="dialog" aria-modal="true" aria-label="Compte">
     <div id="accountLoggedOutView">
       <div class="overlay-title account-title" id="authTitle">Connexion</div>
       <!-- #342 : role=alert posé dès le DOM (une région créée au moment de

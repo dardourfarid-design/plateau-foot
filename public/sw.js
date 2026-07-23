@@ -32,7 +32,7 @@
 // modifiée dans vercel.json reste donc masquée par l'ancienne version cachée
 // tant que CACHE_NAME n'est pas bumpé. Toute évolution d'en-tête HTTP doit
 // s'accompagner d'un bump ici (v37 → v38 : CSP élargie à GameMonetize/IMA).
-const CACHE_NAME = 'tactic-master-v38'; // v38 : libère l'index.html à l'ancienne CSP
+const CACHE_NAME = 'tactic-master-v39'; // v39 : CSP GPT/doubleclick + unsafe-eval
 
 // #265 — au-delà de ce délai, un réseau qui n'a pas encore répondu est doublé
 // par le cache (si présent). Le fetch réseau n'est PAS annulé : il poursuit et

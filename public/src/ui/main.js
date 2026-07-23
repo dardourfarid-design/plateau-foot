@@ -594,7 +594,9 @@ function handlePostActionEffects(previousState) {
       // Départage : second point d'entrée de la séance, sans clic — d'où le
       // ensureShootout() explicite (#324). Le chargement démarre tout de suite,
       // la temporisation de 450 ms le couvre presque toujours.
-      setTimeout(() => { ensureShootout().then(m => m?.startShootoutDepartage()); }, 450);
+      // #228 : le départage hérite de l'adversaire réel — 2 joueurs en 'local',
+      // CPU sinon ('online' inclus : pas de séance synchronisée entre clients).
+      setTimeout(() => { ensureShootout().then(m => m?.startShootoutDepartage(gameMode === 'local' ? 'human' : 'cpu')); }, 450);
     } else {
       setTimeout(() => overlaysModule.showEndOverlay(gameState.winner), 350);
     }

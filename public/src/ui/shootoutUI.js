@@ -49,7 +49,7 @@ const PK_SKIN_PRICE_CENTS = 199;
  *                                     le module y ajoute ses propres clés pk*.
  * @param {() => object|null} deps.getCurrentUser  utilisateur connecté ou null.
  * @param {() => void} deps.promptSignIn  ouvre l'overlay de connexion.
- * @returns {{ openShootout: () => void, startShootoutDepartage: () => void }}
+ * @returns {{ openShootout: () => void, startShootoutDepartage: (opponent?: string) => void }}
  */
 export function initShootout({ els, getCurrentUser, promptSignIn }) {
 
@@ -270,12 +270,20 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
   }
 
   function openShootout() { launchShootout('standalone', 'Séance de tirs au but'); }
-  function startShootoutDepartage() { launchShootout('departage', 'Départage aux tirs au but'); }
 
-  function launchShootout(mode, title) {
-    // #228 : le départage hérite du contexte (toujours face à l'ordinateur, comme
-    // la partie qu'il tranche) ; l'amical suit le choix fait à l'écran.
-    const opponent = mode === 'departage' ? 'cpu' : soOpponent;
+  /**
+   * #228 — le départage hérite de l'adversaire RÉEL de la partie qu'il tranche :
+   * 'human' si elle se jouait à 2 sur le même écran, 'cpu' sinon. C'est main.js
+   * qui connaît le gameMode et le traduit (voir handlePostActionEffects).
+   */
+  function startShootoutDepartage(opponent) {
+    launchShootout('departage', 'Départage aux tirs au but', opponent === 'human' ? 'human' : 'cpu');
+  }
+
+  function launchShootout(mode, title, forcedOpponent) {
+    // #228 : le départage hérite du contexte de la partie (adversaire imposé) ;
+    // l'amical suit le choix fait à l'écran.
+    const opponent = mode === 'departage' ? forcedOpponent : soOpponent;
     so = {
       phase: 'ready', mode, opponent,
       engine: createShootout({ difficulty: soDifficulty }),
@@ -549,6 +557,8 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     if (phase === 'over') {
       const w = shootoutWinner(s);
       if (so.mode === 'departage') return w === TEAMS.BLEU ? t('Bleu remporte le match !') : t('Rouge remporte le match !');
+      // #228 : en 2 joueurs, personne n'est « toi » — on nomme le vainqueur.
+      if (so.opponent === 'human') return w === TEAMS.BLEU ? t('Joueur 1 gagne la séance !') : t('Joueur 2 gagne la séance !');
       return w === TEAMS.BLEU ? t('Tu gagnes la séance !') : t('Séance perdue…');
     }
     // #228 : en 2 joueurs, on nomme qui doit agir (le duel est en pass-and-play).

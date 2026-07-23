@@ -562,6 +562,8 @@ registerMessages({
   'Arrête le tir : choisis où plonger': 'Save it: pick where to dive',
   'Tu gagnes la séance !': 'You win the shootout!',
   'Séance perdue…': 'Shootout lost…',
+  'Joueur 1 gagne la séance !': 'Player 1 wins the shootout!',
+  'Joueur 2 gagne la séance !': 'Player 2 wins the shootout!',
   'Arrêt !': 'Saved!',
 });
 

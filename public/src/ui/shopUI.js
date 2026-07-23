@@ -80,7 +80,9 @@ const PACKS = [
     description: 'Choisis 3 kits dans le catalogue, quand tu veux.',
     price_cents: 549,
     saves: '(—27 % vs 7,47 €)',
-    icon: '🎨'
+    // #344 (F9) : icônes SVG inline (stroke currentColor) au lieu d'emojis —
+    // rendu identique sur tous les OS, cohérent avec le kit topbar/avatars.
+    icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 100 18h1.5a2 2 0 001.4-3.4c-.9-.9-.3-2.6 1-2.6H18a3 3 0 003-3c0-5-4-9-9-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="10" r="1.2" fill="currentColor"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/><circle cx="16" cy="10" r="1.2" fill="currentColor"/></svg>'
   },
   {
     id: 'pack-academie',
@@ -88,7 +90,7 @@ const PACKS = [
     description: '3 joueurs Rares avec pouvoir, à intégrer directement dans ton équipe.',
     price_cents: 499,
     saves: '(vs 8,97 €)',
-    icon: '⚡'
+    icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L5 13h6l-1 9 8-11h-6l1-9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
   },
   {
     id: 'pack-legendes',
@@ -96,7 +98,7 @@ const PACKS = [
     description: '2 joueurs Légendaires — les plus puissants du catalogue.',
     price_cents: 799,
     saves: '(vs 9,98 €)',
-    icon: '👑'
+    icon: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8l4 4 4-6 4 6 4-4v9H4V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
   }
 ];
 

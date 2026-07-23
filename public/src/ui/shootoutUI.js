@@ -82,13 +82,23 @@ export function initShootout({ els, getCurrentUser, promptSignIn }) {
     return id === 'stade' || ownedPkSkins.has(id);
   }
 
+  // #344 (F9) : cadenas SVG inline (stroke currentColor — suit le thème actif)
+  // au lieu de l'emoji 🔒 au rendu variable selon l'OS. Le PRIX reste rendu
+  // par le ::after CSS via attr(data-price) — ne pas le supprimer.
+  const PK_LOCK_SVG = '<svg class="pk-lock" width="11" height="12" viewBox="0 0 11 12" fill="none" aria-hidden="true"><rect x="1" y="5" width="9" height="6" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M3 5V3.5a2.5 2.5 0 015 0V5" stroke="currentColor" stroke-width="1.3"/></svg>';
+
   function renderPkLocks() {
     const price = (PK_SKIN_PRICE_CENTS / 100).toFixed(2).replace('.', ',') + ' €';
     els.pkSwitcher?.querySelectorAll('.pk-theme-btn').forEach(b => {
       const locked = !isPkThemeUnlocked(b.dataset.theme);
       b.classList.toggle('locked', locked);
-      if (locked) b.dataset.price = price;   // affiché via ::after (cadenas + prix)
-      else delete b.dataset.price;
+      if (locked) {
+        b.dataset.price = price;   // affiché via ::after (prix seul, cf. #344)
+        if (!b.querySelector('.pk-lock')) b.insertAdjacentHTML('beforeend', PK_LOCK_SVG);
+      } else {
+        delete b.dataset.price;
+        b.querySelector('.pk-lock')?.remove();
+      }
     });
   }
 

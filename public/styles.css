@@ -3460,14 +3460,19 @@ body{
    orphelin sur une 2e ligne. On compacte (le retour à la ligne reste possible
    sur les petits écrans, où il tombe alors sur 2 lignes équilibrées). */
 .pk-switcher .pk-theme-btn{ padding:8px 10px; }
-.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:9px; }
+/* #344 (F6) : prix ≥ 12px aussi dans la variante compacte de la modale. */
+.pk-switcher .pk-theme-btn.locked::after{ margin-left:4px; font-size:12px; }
 .pk-theme-btn{ padding:8px 16px; border-radius:999px; cursor:pointer; font-family:var(--pk-font);
   font-weight:700; font-size:clamp(11px,2.6vw,13px); letter-spacing:.02em;
   border:1.5px solid transparent; background:rgba(255,255,255,.06); color:var(--pk-sub);
   transition:all .15s; }
 .pk-theme-btn.active{ background:var(--pk-accent); color:var(--pk-on-accent); border-color:var(--pk-accent); }
 .pk-theme-btn.locked{ opacity:.82; }
-.pk-theme-btn.locked::after{ content:'🔒 ' attr(data-price); margin-left:6px; font-size:10px; font-weight:700; opacity:.95; }
+/* Audit UX 2026-07-23 (F9+F6, #344) : le cadenas est un SVG inline injecté
+   par shootoutUI.js (renderPkLocks) — le ::after ne rend plus QUE le prix,
+   porté à 12px (plancher lisible). */
+.pk-theme-btn.locked::after{ content:attr(data-price); margin-left:4px; font-size:12px; font-weight:700; opacity:.95; }
+.pk-theme-btn .pk-lock{ margin-left:6px; vertical-align:-1px; }
 
 /* ---- Carte ---- */
 .shootout-modal{

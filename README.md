@@ -7,6 +7,14 @@
 
 > Santé du projet en un coup d'œil. Détails et rejeu : **[Santé & non-régression](#santé--non-régression)**.
 
+## Propriété intellectuelle
+
+© 2026 Farid Dardour — **tous droits réservés**. Le dépôt est public à des
+fins de consultation (source-available) : aucune licence de réutilisation
+n'est accordée — voir [`LICENSE`](LICENSE). Provenance détaillée de chaque
+composant (dépendances, polices, sons, images, marque) :
+[`docs/ip-provenance.md`](docs/ip-provenance.md).
+
 ## Lancer l'app en local
 
 Les modules JavaScript (ES modules) ne fonctionnent pas en ouvrant le fichier

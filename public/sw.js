@@ -25,7 +25,7 @@
 // chargés à la demande (shopUI, profileUI, ai.js…) y figurent AUSSI, sinon le
 // jeu ne fonctionnerait plus hors connexion dès qu'on ouvre un de ces écrans.
 // C'est pourquoi ai.js reste précaché alors qu'il a quitté le graphe statique.
-const CACHE_NAME = 'tactic-master-v34'; // v34 : ajout de src/ui/shopConstants.js au précache (refonte boutique)
+const CACHE_NAME = 'tactic-master-v35'; // v35 : notice MIT en tête du bundle Supabase vendorisé (audit PI)
 const STATIC_ASSETS = [
   // Seulement './' : le manifest a start_url "/" (#184), et une navigation
   // hors-ligne vers / est servie par cette entrée (match exact sur l'URL, qui

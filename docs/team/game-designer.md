@@ -92,3 +92,46 @@ Nouvelles règles (détail exact, cas limites et intentions dans
   heuristique n'exploite pas encore activement le une‑deux ni les cases
   spéciales — piste d'amélioration.
 
+## Décision — économie pièces / prix des kits (#262, M12)
+
+**Statut : décision arrêtée le 2026‑07‑23, activation conditionnée au go‑live
+commercial réel (M1 #58 Stripe Live).** Tant qu'aucun revenu n'est encaissé,
+rien n'est modifié en prod ; ce qui suit est prêt à ratifier et à livrer dans
+la release du go‑live.
+
+### Problème constaté
+
+Économie actuelle : un « kit du jour » coûte **2,49 € en direct** ou
+**100 pièces** ; le pack de pièces vaut **1,99 € / 100 pièces**
+(`COIN_KIT_COST = 100`, aligné serveur sur `unlock_theme_with_coins`). Deux
+effets se cumulent contre la monétisation :
+
+1. **Arbitrage inversé** : payer un kit *via* un pack de pièces (1,99 €) revient
+   **20 % moins cher** que l'achat direct (2,49 €). Le pack, censé être un SKU
+   d'appoint, devient un canal de remise qui cannibalise la vente directe.
+2. **Kits quasi gratuits** : les gains de base (+10/+3/+15, crédités serveur)
+   rendent un kit accessible en ~1 h de jeu actif. Excellent pour la rétention,
+   mais dilue la valeur perçue de tout achat.
+
+### Décision
+
+1. **Porter le prix pièces du kit de 100 → 150 pièces.** Un kit reste atteignable
+   en ~1,5–2 h de jeu (généreux, la rétention est préservée) mais l'arbitrage
+   disparaît : 150 pièces exigent désormais 2 packs (3,98 €) ou davantage de jeu,
+   donc l'achat direct à 2,49 € redevient le chemin payant rationnel.
+2. **Conserver le pack à 1,99 € / 100 pièces** (ne PAS le monter à 2,49 €) : un
+   SKU d'entrée bon marché sert la première conversion ; c'est le prix du KIT,
+   pas celui du pack, qui referme l'arbitrage.
+3. **Conserver les gains de base (+10/+3/+15) inchangés.** Ils portent l'habitude
+   quotidienne ; les réduire au profit des défis nuirait à la rétention pour un
+   gain de revenu non mesurable aujourd'hui.
+
+### Mise en œuvre (au go‑live, pas avant)
+
+- `COIN_KIT_COST` 100 → 150 dans `shopConstants.js` **et** alignement de la RPC
+  serveur `unlock_theme_with_coins` (qui fait foi au débit) via une migration ;
+  constat en boutique (`dod-verifie`).
+- **Garde‑fou réversible** : après activation, suivre la répartition kit
+  direct/pièces, la conversion des packs et la rétention D1/D7. Si la rétention
+  baisse, revenir à 100 pièces — le changement est un seul nombre + une migration.
+

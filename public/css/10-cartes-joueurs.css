@@ -300,3 +300,9 @@
   transition: border-color 0.2s ease;
 }
 .progress-stat:hover { border-left-color: var(--ambre); }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — le skeleton cesse de
+   balayer mais reste visible (l'état de chargement demeure perceptible). */
+@media (prefers-reduced-motion: reduce){
+  .skeleton{ animation:none; }
+}

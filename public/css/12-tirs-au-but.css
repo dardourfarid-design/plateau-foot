@@ -31,7 +31,9 @@
   --pk-title-shadow:none; --pk-cta-shadow:0 10px 24px rgba(0,0,0,.4); --pk-cta-transform:uppercase;
   --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
 
-  width:100%; min-height:calc(100vh - 96px);
+  /* #343 (F11) : fallback vh puis svh (stable pendant le masquage de la
+     barre d'URL mobile — écran de jeu). */
+  width:100%; min-height:calc(100vh - 96px); min-height:calc(100svh - 96px);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:clamp(12px,3vw,20px); padding:clamp(14px,4vw,30px) 12px; box-sizing:border-box;
   background:var(--pk-screen-bg); border-radius:16px;
@@ -313,3 +315,14 @@
   box-shadow:0 2px 10px rgba(200,132,26,.45), inset 0 1px 0 rgba(255,255,255,.4);
 }
 .founder-badge.hidden{ display:none; }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — décor coupé (pkBob,
+   pkLed, confettis) et screen-shake coupé (déclencheur vestibulaire même
+   en one-shot). pkPulse (anneau de visée) est un feedback fonctionnel :
+   il reste actif. */
+@media (prefers-reduced-motion: reduce){
+  .pk-fan{ animation:none; }
+  .pk-led-sheen{ animation:none; }
+  .pk-stage.shake{ animation:none; }
+  .pk-confetti{ animation:none; opacity:0; }
+}

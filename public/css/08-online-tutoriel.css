@@ -343,3 +343,11 @@
   padding:4px 0;
 }
 .account-danger{ color: var(--rouge-equipe-clair) !important; }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — le halo du tutoriel
+   cesse de pulser (l'anneau statique reste visible) et le spinner devient
+   un anneau statique (l'état de chargement reste perceptible). */
+@media (prefers-reduced-motion: reduce){
+  .tutorial-spotlight{ animation:none; }
+  .waiting-spinner{ animation:none; }
+}

@@ -56,12 +56,23 @@
 
 *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
 
+/* Audit UX 2026-07-23 (F12, #343) : supprime le délai de double-tap-zoom sur
+   les taps rapides (plateau notamment). JAMAIS touch-action:none — le
+   pinch-zoom reste possible (accessibilité malvoyants). */
+button, a, input, select, .cell, .token, .lang-opt{
+  touch-action: manipulation;
+}
+
 html,body{
   margin:0; padding:0;
   background: var(--nuit);
   color: var(--craie);
   font-family: 'Space Grotesk', sans-serif;
+  /* Audit UX 2026-07-23 (F11, #343) : svh après le fallback vh — stable
+     pendant le masquage de la barre d'URL mobile (dvh provoquerait un
+     reflow du plateau EN COURS de partie sur Android). */
   min-height:100vh;
+  min-height:100svh;
   overflow-x:hidden;
 }
 
@@ -79,7 +90,9 @@ body{
   display:flex;
   flex-direction:column;
   align-items:center;
+  /* #343 (F11) : fallback vh puis svh — voir html,body ci-dessus. */
   min-height:100vh;
+  min-height:100svh;
   width:100%;
   padding: 0 20px 48px;
 }
@@ -1929,6 +1942,14 @@ body{
 }
 .account-danger{ color: var(--rouge-equipe-clair) !important; }
 
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — le halo du tutoriel
+   cesse de pulser (l'anneau statique reste visible) et le spinner devient
+   un anneau statique (l'état de chargement reste perceptible). */
+@media (prefers-reduced-motion: reduce){
+  .tutorial-spotlight{ animation:none; }
+  .waiting-spinner{ animation:none; }
+}
+
 /* =====================================================================
    REFONTE ACCUEIL ET PLATEAU (SPRINTS D2/D3)
    ---------------------------------------------------------------------
@@ -2429,6 +2450,19 @@ body{
   50%      { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.55), 0 0 0 2px rgba(240,230,211,0.15); }
 }
 
+/* Audit UX 2026-07-23 (F7, #343) : sensibilité vestibulaire — coupe les
+   animations DÉCORATIVES uniquement. token-invite (nudge attentionnel) et
+   ball-spin (déco hover) ne sont coupés QUE sous la préférence ; les
+   feedbacks porteurs de sens (pulse-ring, goal-flash…) restent actifs
+   (voir 03-plateau.css). */
+@media (prefers-reduced-motion: reduce){
+  .goal-overlay-bg.show .goal-speedlines{ animation:none; }
+  .turn-banner.active-bleu,
+  .turn-banner.active-rouge{ animation:none; }
+  .cell:has(.ball):hover .ball{ animation:none; }
+  .token.selectable:not(.selected):not(:hover){ animation:none; }
+}
+
 /* =====================================================================
    CARTES JOUEURS TCG, ONGLETS ET SKELETONS
    ---------------------------------------------------------------------
@@ -2731,6 +2765,12 @@ body{
   transition: border-color 0.2s ease;
 }
 .progress-stat:hover { border-left-color: var(--ambre); }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — le skeleton cesse de
+   balayer mais reste visible (l'état de chargement demeure perceptible). */
+@media (prefers-reduced-motion: reduce){
+  .skeleton{ animation:none; }
+}
 
 /* =====================================================================
    BOUTIQUE ET PIÈCES (SPRINTS E1/E2)
@@ -3328,7 +3368,9 @@ body{
   --pk-title-shadow:none; --pk-cta-shadow:0 10px 24px rgba(0,0,0,.4); --pk-cta-transform:uppercase;
   --pk-result-shadow:0 4px 0 rgba(0,0,0,.5);
 
-  width:100%; min-height:calc(100vh - 96px);
+  /* #343 (F11) : fallback vh puis svh (stable pendant le masquage de la
+     barre d'URL mobile — écran de jeu). */
+  width:100%; min-height:calc(100vh - 96px); min-height:calc(100svh - 96px);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:clamp(12px,3vw,20px); padding:clamp(14px,4vw,30px) 12px; box-sizing:border-box;
   background:var(--pk-screen-bg); border-radius:16px;
@@ -3610,6 +3652,17 @@ body{
   box-shadow:0 2px 10px rgba(200,132,26,.45), inset 0 1px 0 rgba(255,255,255,.4);
 }
 .founder-badge.hidden{ display:none; }
+
+/* Audit UX 2026-07-23 (F7, #343) : reduced-motion — décor coupé (pkBob,
+   pkLed, confettis) et screen-shake coupé (déclencheur vestibulaire même
+   en one-shot). pkPulse (anneau de visée) est un feedback fonctionnel :
+   il reste actif. */
+@media (prefers-reduced-motion: reduce){
+  .pk-fan{ animation:none; }
+  .pk-led-sheen{ animation:none; }
+  .pk-stage.shake{ animation:none; }
+  .pk-confetti{ animation:none; opacity:0; }
+}
 
 /* =====================================================================
    CONTENU ÉDITORIAL INDEXABLE ET OVERLAY RÈGLES & FAQ

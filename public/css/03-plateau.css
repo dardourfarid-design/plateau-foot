@@ -43,6 +43,13 @@
 }
 
 .cell{ position:relative; display:flex; align-items:center; justify-content:center; }
+/* #345 (WCAG 2.4.7) : anneau de focus clavier des cases — le :focus-visible
+   existant ne couvrait que .btn/.topbar-link/.mode-card/.auth-input. */
+.cell:focus-visible{
+  outline:2px solid var(--or);
+  outline-offset:-2px;
+  z-index:5;
+}
 
 .cell::after{
   content:'';

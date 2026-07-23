@@ -652,6 +652,9 @@
 
   <!-- ECRAN DE JEU -->
   <div id="gameScreen" class="hidden game-layout">
+    <!-- #345 : annonces d'état de jeu pour lecteurs d'écran (but, tour,
+         fin de partie) — les CHANGEMENTS d'état uniquement, jamais le focus. -->
+    <div id="gameAnnouncer" class="sr-only" aria-live="polite"></div>
 
     <div class="game-main">
       <div class="scoreboard">

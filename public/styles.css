@@ -98,6 +98,17 @@ body{
 }
 
 .hidden{display:none !important;}
+
+/* #345 : visible des seuls lecteurs d'écran (pattern clip standard). */
+.sr-only{
+  position:absolute;
+  width:1px; height:1px;
+  padding:0; margin:-1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+  border:0;
+}
 .screen-col{display:flex; flex-direction:column; align-items:center; width:100%;}
 
 /* ---------- TOAST DE CONFIRMATION D'ACHAT ---------- */
@@ -356,6 +367,13 @@ body{
 }
 
 .cell{ position:relative; display:flex; align-items:center; justify-content:center; }
+/* #345 (WCAG 2.4.7) : anneau de focus clavier des cases — le :focus-visible
+   existant ne couvrait que .btn/.topbar-link/.mode-card/.auth-input. */
+.cell:focus-visible{
+  outline:2px solid var(--or);
+  outline-offset:-2px;
+  z-index:5;
+}
 
 .cell::after{
   content:'';

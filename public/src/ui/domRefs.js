@@ -33,6 +33,7 @@ export function cacheDomRefs(els) {
   els.sidebarRules = document.getElementById('sidebarRules');
   els.rulesPalierBadge = document.getElementById('rulesPalierBadge');
   els.turnBanner = document.getElementById('turnBanner');
+  els.gameAnnouncer = document.getElementById('gameAnnouncer');
   els.hintBar = document.getElementById('hintBar');
   els.cancelBtn = document.getElementById('cancelBtn');
   els.endTurnBtn = document.getElementById('endTurnBtn');

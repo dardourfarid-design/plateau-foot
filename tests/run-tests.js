@@ -34,6 +34,7 @@ await import('./boardA11y.test.js');
 await import('./houseAds.test.js');
 await import('./swPrecache.test.js');
 await import('./quickPlayDescriptor.test.js');
+await import('./moveFeedback.test.js');
 await import('./enLandingGenerated.test.js');
 
 // Les imports ci-dessus ne font qu'ENREGISTRER les tests ; on les exécute

@@ -60,8 +60,22 @@ window.__PLATEAU_FOOT_CONFIG__ = {
     //   experiments: { interstitialEveryN: [3, 5] }
     // Laisser vide = pas d'expérience (valeurs de config/défaut utilisées).
     experiments: {},
+    // ---- Consentement (CMP certifié) ----
+    // Google EXIGE un CMP certifié pour diffuser en EEE/UK/Suisse depuis
+    // janvier 2024. Sans chaîne TCF, GameMonetize (qui sert via GPT/IMA) ne
+    // remplit RIEN — constaté en prod. On passe donc sur InMobi CMP, certifié
+    // et INDÉPENDANT d'AdSense : il débloque GameMonetize tout de suite et
+    // couvrira AUSSI AdSense une fois validé.
+    // ⚠️ UN SEUL CMP À LA FOIS : ne pas repasser sur 'google' (Funding Choices)
+    // quand AdSense sera validé — deux CMP = deux bandeaux, consentement invalide.
     cmp: {
-      enabled: true,      // CMP certifié Google publié (message RGPD AdSense)
+      enabled: true,
+      provider: 'inmobi',  // 'inmobi' (certifié, indépendant) | 'google' (historique)
+      inmobi: {
+        propertyId: '',    // ⚠️ à renseigner depuis le tableau de bord InMobi CMP
+        scriptUrl: ''      // optionnel : coller l'URL exacte du snippet fourni
+                           // (évite tout blocage CSP dû à un domaine deviné)
+      },
       publisherId: 'ca-pub-2881855045042521' // ads.txt: pub-2881855045042521
     }
   }

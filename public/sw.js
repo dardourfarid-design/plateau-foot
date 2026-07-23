@@ -32,7 +32,7 @@
 // modifiée dans vercel.json reste donc masquée par l'ancienne version cachée
 // tant que CACHE_NAME n'est pas bumpé. Toute évolution d'en-tête HTTP doit
 // s'accompagner d'un bump ici (v37 → v38 : CSP élargie à GameMonetize/IMA).
-const CACHE_NAME = 'tactic-master-v39'; // v39 : CSP GPT/doubleclick + unsafe-eval
+const CACHE_NAME = 'tactic-master-v40'; // v40 : CSP CMP InMobi + modules consentement
 
 // #265 — au-delà de ce délai, un réseau qui n'a pas encore répondu est doublé
 // par le cache (si présent). Le fetch réseau n'est PAS annulé : il poursuit et
@@ -71,12 +71,15 @@ const STATIC_ASSETS = [
   './src/services/ads/adAnalytics.js',
   './src/services/ads/adProvider.js',
   './src/services/ads/adService.js',
+  './src/services/ads/cmpProvider.js',
   './src/services/ads/gameMonetizeProvider.js',
   './src/services/ads/googleAdSenseProvider.js',
   './src/services/ads/googleCmp.js',
+  './src/services/ads/inmobiCmp.js',
   './src/services/ads/interstitialFrequency.js',
   './src/services/ads/mockAdProvider.js',
   './src/services/ads/rewardedGrant.js',
+  './src/services/ads/tcfConsent.js',
   './src/services/advertisingConsentService.js',
   './src/services/analyticsConsentService.js',
   './src/services/consentService.js',

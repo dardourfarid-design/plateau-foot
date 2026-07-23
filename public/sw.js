@@ -28,7 +28,11 @@
 // chargés à la demande (shopUI, profileUI, ai.js…) y figurent AUSSI, sinon le
 // jeu ne fonctionnerait plus hors connexion dès qu'on ouvre un de ces écrans.
 // C'est pourquoi ai.js reste précaché alors qu'il a quitté le graphe statique.
-const CACHE_NAME = 'tactic-master-v37'; // v37 : précache des modules pub GameMonetize
+// ⚠️ Le document HTML est mis en cache AVEC ses en-têtes de réponse : une CSP
+// modifiée dans vercel.json reste donc masquée par l'ancienne version cachée
+// tant que CACHE_NAME n'est pas bumpé. Toute évolution d'en-tête HTTP doit
+// s'accompagner d'un bump ici (v37 → v38 : CSP élargie à GameMonetize/IMA).
+const CACHE_NAME = 'tactic-master-v38'; // v38 : libère l'index.html à l'ancienne CSP
 
 // #265 — au-delà de ce délai, un réseau qui n'a pas encore répondu est doublé
 // par le cache (si présent). Le fetch réseau n'est PAS annulé : il poursuit et

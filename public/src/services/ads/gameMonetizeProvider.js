@@ -109,17 +109,40 @@ function restoreAdSlot() {
 }
 
 /**
- * Arme le garde-fou : si aucune pub n'a démarré au bout de FILL_TIMEOUT_MS,
- * on considère qu'il n'y a pas d'inventaire, on retire le conteneur noir et
- * on solde l'affichage. Retourne l'id du minuteur, à annuler si la pub démarre.
+ * Moniteur d'affichage. GameMonetize NE nettoie PAS son conteneur noir tout
+ * seul, et émet SDK_GAME_START très tardivement après la fin visuelle de la
+ * vidéo (constaté : 20-30 s d'écran sombre). On ne dépend donc PAS de cet
+ * événement : on observe l'état réel de la vidéo et on solde l'affichage dès
+ * que la situation est tranchée. Trois issues :
+ *   - NO-FILL : aucune pub n'a démarré avant FILL_TIMEOUT_MS → il n'y a pas
+ *     d'inventaire, on retire le conteneur.
+ *   - FIN     : une pub a démarré PUIS ne joue plus (deux relevés consécutifs,
+ *     pour ignorer une micro-pause de buffering) → la pub est finie.
+ *   - FILET   : au-delà de AD_TIMEOUT_MS on tranche quoi qu'il arrive.
+ * Retourne une fonction d'annulation (deux minuteurs à libérer).
  */
-function armFillWatchdog(onNoFill) {
-  return setTimeout(() => {
-    if (!adIsPlaying()) {
-      hideAdSlot();
-      onNoFill();
+function armAdMonitor(onDone) {
+  const POLL_MS = 500;
+  let started = false;
+  let misses = 0;
+  let elapsed = 0;
+
+  const interval = setInterval(() => {
+    elapsed += POLL_MS;
+    if (adIsPlaying()) { started = true; misses = 0; return; }
+    if (!started) {
+      // Fenêtre de remplissage : rien n'a démarré → no-fill.
+      if (elapsed >= FILL_TIMEOUT_MS) { cancel(); onDone('no-fill'); }
+      return;
     }
-  }, FILL_TIMEOUT_MS);
+    // A démarré puis s'est arrêté : fin de pub, confirmée sur 2 relevés (~1 s).
+    if (++misses >= 2) { cancel(); onDone('ended'); }
+  }, POLL_MS);
+
+  const hardStop = setTimeout(() => { cancel(); onDone('timeout'); }, AD_TIMEOUT_MS);
+
+  function cancel() { clearInterval(interval); clearTimeout(hardStop); }
+  return cancel;
 }
 
 // Aiguillage central des événements SDK vers les affichages en attente.
@@ -212,16 +235,15 @@ export async function showInterstitial() {
     const finish = (res) => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
-      clearTimeout(watchdog);
-      // Filet systématique : si aucune pub ne joue au moment de solder, le
-      // conteneur noir ne doit pas survivre à l'appel.
+      cancelMonitor();
+      // Le conteneur noir ne doit jamais survivre à la résolution.
       if (!adIsPlaying()) hideAdSlot();
       _pendingInterstitial = null;
       resolve(res);
     };
-    const timer = setTimeout(() => finish({ shown: false }), AD_TIMEOUT_MS);
-    const watchdog = armFillWatchdog(() => finish({ shown: false }));
+    // Le moniteur solde dès que la vidéo est finie (indépendant du tardif
+    // SDK_GAME_START, cause des 20-30 s d'écran sombre).
+    const cancelMonitor = armAdMonitor((reason) => finish({ shown: reason === 'ended' }));
     _pendingInterstitial = { sawAd: false, settle: finish };
     try {
       restoreAdSlot(); // un no-fill précédent a pu masquer le conteneur
@@ -245,15 +267,13 @@ export async function showRewarded() {
     const finish = () => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
-      clearTimeout(watchdog);
+      cancelMonitor();
       if (!adIsPlaying()) hideAdSlot();
       const completed = !!(_pendingRewarded && _pendingRewarded.completed);
       _pendingRewarded = null;
       resolve({ completed });
     };
-    const timer = setTimeout(finish, AD_TIMEOUT_MS);
-    const watchdog = armFillWatchdog(finish);
+    const cancelMonitor = armAdMonitor(finish);
     _pendingRewarded = { completed: false, settle: finish };
     restoreAdSlot();
 

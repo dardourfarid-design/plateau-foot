@@ -189,3 +189,87 @@ laisse `completed:false`, donc aucun crédit indu.
 > ⚠️ Empiler AdSense + GameMonetize sur la **même page** peut heurter les CGU
 > AdSense. Ici les formats sont **disjoints** (bannière = AdSense ; interstitiel
 > plein écran / rewarded = GameMonetize), pas superposés sur un même emplacement.
+
+## État live de la chaîne pub (2026-07-24)
+
+Récapitulatif de bout en bout de ce qui tourne **en production**, dans l'ordre
+où les verrous s'enchaînent. Chaque brique a été livrée par une PR distincte.
+
+### Consentement — CMP InMobi (certifié Google, indépendant d'AdSense)
+
+Google **exige un CMP certifié** pour diffuser en EEE/UK/Suisse depuis janvier
+2024. Sans chaîne de consentement TCF, la pile Google (GPT/IMA) — utilisée par
+GameMonetize — se charge en `gdpr=1` sans signal et **ne remplit rien**. Le CMP
+historique (Funding Choices) dépend d'un compte AdSense validé : impasse tant
+qu'AdSense n'est pas approuvé. On est donc passé à **InMobi CMP** (ex-Quantcast
+Choice), certifié, gratuit, indépendant d'AdSense — il couvre GameMonetize
+maintenant **et** AdSense plus tard.
+
+- Assemblage : `services/ads/cmpProvider.js` (garantit **un seul CMP actif** —
+  deux CMP = deux bandeaux + chaînes TCF concurrentes = consentement invalide).
+- Pont TCF→signal interne : `services/ads/tcfConsent.js` (mapping pur ;
+  finalité 1 ou vendeur Google 755 refusé ⇒ refus ; données incomplètes ⇒
+  indécis, jamais un faux accord).
+- Chargeur : `services/ads/inmobiCmp.js`. Le snippet officiel est **inline**
+  (interdit par la CSP) → transposé en module. Il installe **deux stubs**, TCF
+  **et GPP** (`choice.js` appelle `window.__gpp` avant sa vraie implémentation —
+  oublier le stub GPP lève `TypeError: window.__gpp is not a function`), chacun
+  avec son iframe locator (`__tcfapiLocator`, `__gppLocator`) que GPT/IMA
+  recherchent depuis leurs propres iframes.
+- Config : `ads.cmp = { enabled: true, provider: 'inmobi', inmobi: { propertyId,
+  scriptUrl } }`. propertyId **`pLpA6AsDPtRE3`** (tag V3).
+- Gating durci (#364) : **accord positif requis** avant de charger tout SDK pub
+  (`areAdsAllowed` → `hasAdvertisingConsent()` ; plus « CMP fait autorité »).
+  Corollaire : `onAdvertisingConsentChange(GRANTED)` **relance `initAds()`**.
+
+⚠️ **À ne jamais faire** : rallumer Funding Choices (`provider: 'google'`) quand
+AdSense sera validé. InMobi couvre les deux — deux CMP casseraient le consentement.
+
+### Zéro pub pour les abonnés (#367)
+
+Un pass actif ⇒ **aucune pub, tous formats**. Le statut `_adFree` (cache) est
+**re-vérifié à froid juste avant CHAQUE affichage** (`isFreshlyAdFree()`) pour
+fermer la fenêtre d'un cache périmé (webhook Stripe lent, autre onglet). Bon
+marché en anonyme (aucun aller-retour backend). Point d'injection de test :
+`setActivePassResolver()`. Vérifié en prod : abonné simulé → 3 formats bloqués.
+
+### Robustesse d'affichage GameMonetize (#366, #369)
+
+Le SDK **ne nettoie jamais** son conteneur plein écran noir
+(`#sdk__advertisement_slot`) et émet `SDK_GAME_START` très tardivement. Le
+provider **ne dépend pas** de cet événement : `armAdMonitor` observe l'état réel
+de la vidéo (poll 300 ms) et solde l'affichage dès que — no-fill à 6 s, ou pub
+démarrée puis arrêtée (2 relevés). Sans ce garde-fou : **écran sombre 20-30 s**,
+joueur bloqué.
+
+Pendant la fenêtre de chargement (règle UX `loading-states`), un indicateur
+**« Publicité en cours… »** (spinner marqué, `role=status`, reduced-motion) est
+inséré en **premier enfant** du conteneur — l'iframe pub passe **par-dessus**,
+donc zéro risque de masquer une pub servie ; retiré dès qu'une vraie pub joue.
+
+### CSP (rappel des domaines requis par la chaîne)
+
+`script-src` doit inclure `'unsafe-eval'` (GPT/IMA), `securepubads.g.doubleclick.net`
++ `*.doubleclick.net` + `www.googletagservices.com` (GPT), `gamemonetize.com`
+(apex) + `api.gamemonetize.com` + `*.gamemonetize.com`, `imasdk.googleapis.com`,
+`*.2mdn.net`, et les domaines CMP (`cmp.inmobi.com`, `*.inmobi.com`,
+`*.quantcast.mgr.consensu.org`). Plus `media-src` (la vidéo des pubs) et les
+`frame-src`/`connect-src` équivalents. **`*.domaine` ne matche PAS l'apex.**
+
+> ⚠️ **Service worker** : le HTML est mis en cache **avec ses en-têtes**. Toute
+> modification de CSP (ou d'en-tête) dans `vercel.json` reste **masquée** tant
+> que `CACHE_NAME` n'est pas bumpé dans `sw.js`. Réflexe systématique.
+
+## Action restante côté toi — langue du bandeau InMobi
+
+Le bandeau de consentement s'affiche dans la **langue du visiteur** (Accept-Language
+/ géo), pas dans celle du document. `<html lang="fr">` est déjà correct, mais
+InMobi ne sert le français que s'il est **activé dans la propriété**.
+
+À faire dans le dashboard InMobi CMP (propriété `pLpA6AsDPtRE3`) :
+1. Section **Languages / Localisation** → activer **Français** (et le laisser en
+   langue par défaut ou fallback).
+2. Republier la configuration de consentement.
+3. Vérifier depuis un navigateur en locale FR : le bandeau doit s'afficher en
+   français (un opt-in en langue maternelle **augmente le taux d'acceptation**,
+   donc le remplissage publicitaire).

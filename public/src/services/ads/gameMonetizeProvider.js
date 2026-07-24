@@ -96,16 +96,42 @@ function adIsPlaying() {
   return !!(v && !v.paused && v.currentTime > 0);
 }
 
-/** Masque le conteneur du SDK. Réversible : réaffiché au prochain affichage. */
-function hideAdSlot() {
-  const el = adSlotEl();
-  if (el) el.style.display = 'none';
+/**
+ * Masque le conteneur du SDK. La pub étant TERMINÉE à ce stade (fin détectée ou
+ * no-fill), on adoucit le retour au jeu par un fondu court (règle UX de
+ * continuité spatiale) plutôt qu'un cut brutal du plein écran. `prefers-reduced-
+ * motion` ou absence de matchMedia → masquage direct. Réversible via restoreAdSlot.
+ */
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** Réaffiche le conteneur (il a pu être masqué par un no-fill précédent). */
+function hideAdSlot() {
+  const el = adSlotEl();
+  if (!el) return;
+  if (prefersReducedMotion()) { el.style.display = 'none'; return; }
+  el.style.transition = 'opacity 220ms ease';
+  // Reflow forcé : fige l'état de départ (opacity 1) AVANT de passer à 0, sinon
+  // le navigateur applique les deux dans le même recalcul et saute l'animation.
+  void el.offsetHeight;
+  el.style.opacity = '0';
+  const done = () => {
+    el.style.display = 'none';
+    el.style.transition = '';
+    el.removeEventListener('transitionend', done);
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 300); // filet si transitionend ne se déclenche pas (idempotent)
+}
+
+/** Réaffiche le conteneur (il a pu être masqué/estompé par un affichage précédent). */
 function restoreAdSlot() {
   const el = adSlotEl();
-  if (el) el.style.display = '';
+  if (!el) return;
+  el.style.display = '';
+  el.style.opacity = '';
+  el.style.transition = '';
 }
 
 // ---- Indicateur de chargement (#367 UX : « loading-states ») --------------

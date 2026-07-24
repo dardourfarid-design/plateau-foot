@@ -108,6 +108,53 @@ function restoreAdSlot() {
   if (el) el.style.display = '';
 }
 
+// ---- Indicateur de chargement (#367 UX : « loading-states ») --------------
+// Pendant la fenêtre de chargement, le conteneur du SDK est un rectangle NOIR
+// vide — perçu comme un plantage. On y insère un libellé « Publicité en cours… »
+// accessible, RETIRÉ dès qu'une vraie pub joue. Insertion en PREMIER enfant du
+// conteneur : l'iframe pub, ajoutée ensuite par le SDK, se dessine PAR-DESSUS —
+// l'indicateur ne masque donc jamais une pub servie (aucun risque viewability).
+const LOADING_HINT_CLASS = 'tm-ad-loading';
+const LOADING_STYLE_ID = 'tm-ad-loading-style';
+
+function ensureLoadingStyle() {
+  if (!hasDom() || document.getElementById(LOADING_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = LOADING_STYLE_ID;
+  // style-src 'unsafe-inline' est autorisé par la CSP → keyframes inline OK.
+  style.textContent =
+    `.${LOADING_HINT_CLASS}{position:absolute;inset:0;display:flex;flex-direction:column;` +
+    `align-items:center;justify-content:center;gap:14px;background:#0C0A07;` +
+    `color:rgba(242,232,213,.72);font:600 14px/1.4 'Barlow Condensed',system-ui,sans-serif;` +
+    `letter-spacing:.08em;text-transform:uppercase;z-index:0}` +
+    `.${LOADING_HINT_CLASS} i{width:26px;height:26px;border-radius:50%;` +
+    `border:3px solid rgba(200,132,26,.25);border-top-color:#C8841A;` +
+    `animation:tm-ad-spin .8s linear infinite}` +
+    `@keyframes tm-ad-spin{to{transform:rotate(360deg)}}` +
+    `@media (prefers-reduced-motion:reduce){.${LOADING_HINT_CLASS} i{animation:none}}`;
+  document.head.appendChild(style);
+}
+
+/** Insère l'indicateur de chargement dans le conteneur (idempotent). */
+function ensureLoadingHint() {
+  const slot = adSlotEl();
+  if (!slot || slot.querySelector(`.${LOADING_HINT_CLASS}`)) return;
+  ensureLoadingStyle();
+  const hint = document.createElement('div');
+  hint.className = LOADING_HINT_CLASS;
+  hint.setAttribute('role', 'status');
+  hint.setAttribute('aria-live', 'polite');
+  hint.innerHTML = '<i aria-hidden="true"></i><span>Publicité en cours…</span>';
+  slot.insertBefore(hint, slot.firstChild); // derrière l'iframe pub à venir
+}
+
+/** Retire l'indicateur de chargement (sûr si absent). */
+function removeLoadingHint() {
+  const slot = adSlotEl();
+  const hint = slot && slot.querySelector(`.${LOADING_HINT_CLASS}`);
+  if (hint) hint.remove();
+}
+
 /**
  * Moniteur d'affichage. GameMonetize NE nettoie PAS son conteneur noir tout
  * seul, et émet SDK_GAME_START très tardivement après la fin visuelle de la
@@ -122,20 +169,22 @@ function restoreAdSlot() {
  * Retourne une fonction d'annulation (deux minuteurs à libérer).
  */
 function armAdMonitor(onDone) {
-  const POLL_MS = 500;
+  const POLL_MS = 300; // assez court pour un indicateur réactif (< 300 ms perçu)
   let started = false;
   let misses = 0;
   let elapsed = 0;
 
   const interval = setInterval(() => {
     elapsed += POLL_MS;
-    if (adIsPlaying()) { started = true; misses = 0; return; }
+    if (adIsPlaying()) { started = true; misses = 0; removeLoadingHint(); return; }
     if (!started) {
-      // Fenêtre de remplissage : rien n'a démarré → no-fill.
+      // Fenêtre de remplissage : on montre « Publicité en cours… » puis, si rien
+      // n'a démarré à temps, no-fill.
+      ensureLoadingHint();
       if (elapsed >= FILL_TIMEOUT_MS) { cancel(); onDone('no-fill'); }
       return;
     }
-    // A démarré puis s'est arrêté : fin de pub, confirmée sur 2 relevés (~1 s).
+    // A démarré puis s'est arrêté : fin de pub, confirmée sur 2 relevés (~600 ms).
     if (++misses >= 2) { cancel(); onDone('ended'); }
   }, POLL_MS);
 
@@ -237,6 +286,7 @@ export async function showInterstitial() {
       done = true;
       cancelMonitor();
       // Le conteneur noir ne doit jamais survivre à la résolution.
+      removeLoadingHint();
       if (!adIsPlaying()) hideAdSlot();
       _pendingInterstitial = null;
       resolve(res);
@@ -268,6 +318,7 @@ export async function showRewarded() {
       if (done) return;
       done = true;
       cancelMonitor();
+      removeLoadingHint();
       if (!adIsPlaying()) hideAdSlot();
       const completed = !!(_pendingRewarded && _pendingRewarded.completed);
       _pendingRewarded = null;

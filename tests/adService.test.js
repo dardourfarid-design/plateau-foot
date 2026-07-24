@@ -86,9 +86,9 @@ describe('adService — verrous de diffusion', () => {
     expect((await ads.showRewarded()).completed).toBeFalsy();
   });
 
-  test('indécis (CMP fait autorité) : pub autorisée après un accord', async () => {
-    // Le modèle autorise le chargement sauf refus explicite ; ici on repasse à
-    // « accordé » pour lever le refus posé par le test précédent.
+  test('accord positif : pub autorisée', async () => {
+    // Accord positif requis (#367) ; ici on repasse à « accordé » pour lever le
+    // refus posé par le test précédent.
     enableAds();
     await setAdvertisingConsent(true);
     ads.resetAds();
@@ -132,5 +132,88 @@ describe('adService — verrous de diffusion', () => {
     await setAdvertisingConsent(false); // -> 'denied' : déclenche le listener resetAds()
     expect(ads.areAdsAllowed()).toBeFalsy();
     expect((await ads.showRewarded()).completed).toBeFalsy();
+  });
+});
+
+// #367 — Garantie « zéro pub pour les abonnés ». Un pass actif doit bloquer
+// TOUS les formats, même quand tout le reste (kill switch, consentement, format)
+// est au vert. On injecte un résolveur de pass pour simuler un abonné sans
+// backend, et on couvre en particulier la re-vérification À FROID des formats
+// intrusifs (le cache _adFree pourrait être périmé au moment de l'affichage).
+describe('adService — zéro pub pour les abonnés (#367)', () => {
+  const asSubscriber = () => ads.setActivePassResolver(async () => ({ pass_type: 'monthly' }));
+  const asAnonymous = () => ads.setActivePassResolver(null); // rétablit le défaut
+
+  test('refreshAdFreeStatus reflète le pass actif', async () => {
+    asSubscriber();
+    try {
+      await ads.refreshAdFreeStatus();
+      expect(ads.isAdFree()).toBeTruthy();
+    } finally { asAnonymous(); }
+  });
+
+  test('un abonné ne reçoit NI bannière NI interstitiel NI rewarded (tout au vert)', async () => {
+    enableAds();
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    asSubscriber(); // cache _adFree encore false : chaque format se rattrape à froid
+    try {
+      // La garantie qui compte : aucun format ne s'affiche.
+      expect(await ads.showBanner('slot')).toBeFalsy();
+      expect((await ads.showInterstitial()).shown).toBeFalsy();
+      expect((await ads.showRewarded()).completed).toBeFalsy();
+    } finally { asAnonymous(); }
+  });
+
+  // Fenêtre dangereuse : cache _adFree = false (dernier refresh fait en anonyme),
+  // puis l'abonnement s'active « entre-temps ». La re-vérification à froid doit
+  // rattraper AVANT tout affichage — sinon un abonné verrait une pub plein écran.
+  test('cache périmé + abonnement actif : l\'interstitiel est rattrapé à froid', async () => {
+    enableAds();
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    asAnonymous();
+    await ads.refreshAdFreeStatus();       // cache : pas d'abonnement
+    expect(ads.isAdFree()).toBeFalsy();
+    asSubscriber();                         // l'abonnement s'active
+    try {
+      expect((await ads.showInterstitial()).shown).toBeFalsy(); // rattrapé à froid
+      expect(ads.isAdFree()).toBeTruthy();  // cache mis à jour au passage
+    } finally { asAnonymous(); }
+  });
+
+  test('cache périmé + abonnement actif : le rewarded est rattrapé à froid (reason ad-free)', async () => {
+    enableAds();
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    asAnonymous();
+    await ads.refreshAdFreeStatus();
+    expect(ads.isAdFree()).toBeFalsy();
+    asSubscriber();
+    try {
+      const r = await ads.showRewarded();
+      expect(r.completed).toBeFalsy();
+      expect(r.reason).toBe('ad-free');     // bloqué par la re-vérification à froid
+    } finally { asAnonymous(); }
+  });
+
+  test('cache périmé + abonnement actif : la bannière est rattrapée à froid', async () => {
+    enableAds();
+    await setAdvertisingConsent(true);
+    ads.resetAds();
+    asAnonymous();
+    await ads.refreshAdFreeStatus();
+    expect(ads.isAdFree()).toBeFalsy();
+    asSubscriber();
+    try {
+      expect(await ads.showBanner('slot')).toBeFalsy(); // rattrapé à froid
+      expect(ads.isAdFree()).toBeTruthy();
+    } finally { asAnonymous(); }
+  });
+
+  test('setActivePassResolver(null) rétablit le résolveur backend (isolation)', async () => {
+    asAnonymous();
+    await ads.refreshAdFreeStatus(); // backend indisponible en test → aucun pass
+    expect(ads.isAdFree()).toBeFalsy();
   });
 });

@@ -126,6 +126,17 @@ registerMessages({
   'Peut-on installer Tactic Master sur mobile ?': 'Can Tactic Master be installed on mobile?',
   "Oui. C'est une application web (PWA) : ouvrez le site dans votre navigateur puis « Ajouter à l'écran d'accueil » sur iOS ou Android. Les modes locaux fonctionnent même hors connexion.":
     'Yes. It is a web app (PWA): open the site in your browser, then "Add to Home Screen" on iOS or Android. Local modes even work offline.',
+  // FAQ — 3 dernières questions/réponses (étaient en FR côté EN). lookupEn
+  // normalise les espaces : clés mono-ligne, elles matchent le HTML multi-ligne.
+  'Quelle est la différence avec les dames ?': 'What is the difference with checkers?',
+  "Le tour est aussi simple qu'aux dames — un pion, une case — mais on ne capture jamais de pion adverse. L'objectif n'est pas d'éliminer l'adversaire mais de pousser le ballon dans sa cage, et un gardien limité aux déplacements latéraux garde la ligne de but.":
+    "The turn is as simple as in checkers — one piece, one square — but you never capture an opponent's piece. The goal isn't to eliminate your opponent but to push the ball into their net, and a keeper limited to sideways moves guards the goal line.",
+  'Y a-t-il une part de hasard ?': 'Is there any luck involved?',
+  "Aucune. Il n'y a ni dé, ni carte, ni tirage : comme aux échecs ou aux dames, les deux joueurs voient tout le plateau et le résultat ne dépend que du placement et de l'anticipation.":
+    'None. No dice, no cards, no draw: like chess or checkers, both players see the whole board and the outcome depends only on positioning and anticipation.',
+  'Faut-il créer un compte pour jouer ?': 'Do you need an account to play?',
+  'Non, le jeu est jouable sans compte. Un compte sert au multijoueur en ligne, à la boutique, à la gestion de son équipe et aux amis.':
+    'No, the game is playable without an account. An account is for online multiplayer, the shop, managing your team and friends.',
   'TERRAIN OFFICIEL · 7×9': 'OFFICIAL PITCH · 7×9',
   'Stratégie pure': 'Pure strategy',
   "Un pion, une case, dans n'importe quelle direction. 6 joueurs par équipe, un ballon à pousser.":
@@ -224,6 +235,10 @@ registerMessages({
   '— tous les kits actuels + 1 Légendaire exclusif + badge doré + Pass S1 inclus ·':
     '— all current kits + 1 exclusive Legendary + gold badge + Pass S1 included ·',
   'places restantes sur 200': 'spots left of 200',
+  // Section « Kits du jour » — libellés statiques (les compteurs interpolés/
+  // pluralisés restent FR → suivi #371, nécessitent un passage par t()).
+  '· rotation quotidienne · ton solde :': '· daily rotation · your balance:',
+  '+10 par victoire, +3 par défaite, +15 par défi': '+10 per win, +3 per loss, +15 per challenge',
   // Ligne d'ancrage de prix (fragments statiques autour des valeurs dynamiques)
   'Un kit seul :': 'A single kit:',
   '· Le Pass : les': '· The Pass:',

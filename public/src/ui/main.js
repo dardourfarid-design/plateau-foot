@@ -87,7 +87,7 @@ import { showToast, showAlert, showConfirm, showPurchaseToast, PURCHASE_TOAST_IC
 import { getAdvertisingConsent } from '../services/advertisingConsentService.js';
 import * as adService from '../services/ads/adService.js';
 import { trackRewardedOptIn, trackRewardedCompleted } from '../services/ads/adAnalytics.js';
-import { loadConsentMessaging } from '../services/ads/googleCmp.js';
+import { loadCmp } from '../services/ads/cmpProvider.js';
 import { shouldShowInterstitial, markInterstitialShown } from '../services/ads/interstitialFrequency.js';
 import { runRewardedGrant } from '../services/ads/rewardedGrant.js';
 import { fetchMyCollection, fetchMyLineup, ensureStarterPack, fetchPlayerCatalog, saveLineup } from '../services/playerCollectionService.js';
@@ -697,7 +697,7 @@ function initAdsEarly() {
   const ads = window.__PLATEAU_FOOT_CONFIG__?.ads || {};
   if (ads.enabled !== true) return;
   if (getAdvertisingConsent() === 'denied') return; // opt-out dur : rien
-  if (ads.cmp?.enabled && ads.cmp?.publisherId) loadConsentMessaging(ads.cmp.publisherId);
+  loadCmp(ads.cmp); // CMP certifié (routage vendeur dans cmpProvider.js)
   // Charge le tag AdSense au plus tôt (respecte le gating payant/consentement
   // en interne). Le message AdSense a besoin de ce tag présent sur la page.
   adService.initAds().catch(() => {});

@@ -64,6 +64,15 @@ describe('gameMonetizeProvider', () => {
     }
   });
 
+  // Régression (écran sombre persistant) : Google IMA crée SES conteneurs noirs
+  // plein écran (#imaContainer, #imaContainer_new, numérotés) sur <body>, en plus
+  // du slot GameMonetize. Le garde-fou DOIT les cibler tous, sinon ils restent à
+  // l'écran en no-fill. On verrouille la couverture du sélecteur.
+  test('le sélecteur de conteneurs couvre les conteneurs IMA (pas seulement le slot)', () => {
+    expect(gm.AD_CONTAINER_SELECTOR.includes('imaContainer')).toBe(true);
+    expect(gm.AD_CONTAINER_SELECTOR.includes('sdk__advertisement_slot')).toBe(true);
+  });
+
   test('hideBanner() et destroy() sont des no-op sûrs', () => {
     let threw = false;
     try { gm.hideBanner('adBannerHome'); gm.destroy(); } catch { threw = true; }

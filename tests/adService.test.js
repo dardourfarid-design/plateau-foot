@@ -26,6 +26,21 @@ describe('adService — décision pure evaluateAdsAllowed', () => {
     expect(ads.evaluateAdsAllowed(true, false, true)).toBeFalsy();    // payant (pass)
   });
 
+  // Durcissement : un consentement INDÉCIS ne suffit plus. Avant, seul un refus
+  // explicite bloquait, si bien que la régie se chargeait avant toute réponse au
+  // bandeau — en contradiction avec la règle d'or de advertisingConsentService.
+  test('consentement indécis : aucune pub (accord positif exigé)', async () => {
+    enableAds();
+    ads.resetAds();
+    // Refus puis « pas encore accordé » : dans les deux cas, rien ne se charge.
+    await setAdvertisingConsent(false);
+    expect(ads.areAdsAllowed()).toBeFalsy();
+    expect(ads.isFormatAllowed('interstitial')).toBeFalsy();
+
+    await setAdvertisingConsent(true);   // l'utilisateur accepte
+    expect(ads.areAdsAllowed()).toBeTruthy();
+  });
+
   test('le perk payant l\'emporte même sans refus de consentement', () => {
     // Un détenteur de pass (adFree=true) ne voit JAMAIS de pub, quel que soit
     // son consentement.

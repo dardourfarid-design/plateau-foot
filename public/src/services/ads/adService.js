@@ -16,7 +16,7 @@
 // Aucun SDK pub n'est chargé tant que ces conditions ne sont pas réunies.
 
 import * as provider from './adProvider.js';
-import { getAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
+import { getAdvertisingConsent, hasAdvertisingConsent, AD_CONSENT, onAdvertisingConsentChange } from '../advertisingConsentService.js';
 import { getMyActivePass } from '../passService.js';
 import { trackAdImpression, track } from './adAnalytics.js';
 import { bucket } from './abTest.js';
@@ -60,28 +60,33 @@ export async function refreshAdFreeStatus() {
 /**
  * Décision pure « la pub est-elle autorisée ? » à partir des trois entrées
  * booléennes. Extraite pour être testable sans backend ni DOM.
- * @param {boolean} enabled       kill switch global (config.ads.enabled)
- * @param {boolean} consentDenied refus explicite chez nous (opt-out dur)
- * @param {boolean} adFree        droit payant actif (pass) => aucune pub
+ * @param {boolean} enabled        kill switch global (config.ads.enabled)
+ * @param {boolean} consentBlocked le consentement fait-il obstacle ?
+ * @param {boolean} adFree         droit payant actif (pass) => aucune pub
  */
-export function evaluateAdsAllowed(enabled, consentDenied, adFree) {
-  return enabled === true && !consentDenied && !adFree;
+export function evaluateAdsAllowed(enabled, consentBlocked, adFree) {
+  return enabled === true && !consentBlocked && !adFree;
 }
 
 /**
  * Le prédicat central : la pub est-elle autorisée à l'instant T ?
  * Synchrone, sûr, sans effet de bord — appelable avant chaque affichage.
  *
- * Modèle « CMP Google fait autorité » : c'est le CMP certifié (message RGPD
- * publié côté AdSense) qui recueille le consentement TCF et bride le
- * personnalisé jusqu'à accord. Côté app, on autorise le chargement SAUF si
- * l'utilisateur a explicitement refusé chez nous (opt-out dur) ou s'il est
- * payant. `null` (indécis) = autorisé : le CMP prend le relais.
+ * CONSENTEMENT REQUIS (durci). Auparavant on n'excluait que le refus EXPLICITE,
+ * en déléguant au CMP Google le soin de brider — un modèle hérité de Funding
+ * Choices. Il contredisait la règle d'or de advertisingConsentService (« ne
+ * JAMAIS charger un SDK pub tant que hasAdvertisingConsent() n'est pas true ») :
+ * un état indécis suffisait à charger la régie AVANT toute réponse au bandeau.
+ *
+ * Depuis le passage à un CMP certifié dont le verdict TCF est reflété dans le
+ * signal interne (tcfConsent.js), on exige un accord POSITIF. Conséquences :
+ * aucun SDK publicitaire n'est chargé avant consentement (conformité), et
+ * quand il l'est, le consentement est déjà disponible pour la requête d'annonce.
  */
 export function areAdsAllowed() {
   return evaluateAdsAllowed(
     adsConfig().enabled === true,
-    getAdvertisingConsent() === AD_CONSENT.DENIED,
+    !hasAdvertisingConsent(),
     _adFree
   ) && isInRollout();
 }
@@ -120,7 +125,10 @@ export async function initAds() {
   if (adsConfig().enabled !== true) return false;   // kill switch global
   await refreshAdFreeStatus();
   if (_adFree) return false;                          // payant : on n'initialise rien
-  if (getAdvertisingConsent() === AD_CONSENT.DENIED) return false; // opt-out dur
+  // Accord POSITIF exigé : ni refus, ni indécis. Au premier chargement le
+  // bandeau n'a pas encore été traité → on n'initialise rien, et c'est
+  // l'abonnement au consentement (bas de fichier) qui relancera après accord.
+  if (!hasAdvertisingConsent()) return false;
   if (_initialized) return true;
   // Dégradation gracieuse : si le SDK ne charge pas (bloqueur de pub, réseau,
   // no-fill), on ne se marque PAS initialisé — un prochain appel pourra
@@ -192,9 +200,13 @@ export function resetAds() {
   _adFree = false;
 }
 
-// Refus explicite en cours de session (opt-out dur) → on coupe immédiatement.
-// Passer à « accordé » ou « indécis » n'exige rien de spécial : le prochain
-// showX/refreshHomeBanner ré-initialisera au besoin.
+// Réaction au consentement en cours de session.
+//  - refus  → on coupe immédiatement (opt-out dur).
+//  - accord → on initialise MAINTENANT. Indispensable depuis que l'accord
+//    positif est requis : au chargement de la page le bandeau n'a pas encore
+//    été traité, donc initAds() a renoncé. Sans ce rappel, plus aucune pub ne
+//    se chargerait de la session, même après acceptation.
 onAdvertisingConsentChange((value) => {
-  if (value === AD_CONSENT.DENIED) resetAds();
+  if (value === AD_CONSENT.DENIED) { resetAds(); return; }
+  if (value === AD_CONSENT.GRANTED) initAds().catch(() => { /* jamais bloquant */ });
 });

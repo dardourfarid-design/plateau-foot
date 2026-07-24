@@ -252,7 +252,10 @@
 
 /* ---------- COMPTE / AUTH ---------- */
 
-.account-card{ max-width: 360px; text-align:left; }
+/* #371 — la carte scrolle si elle dépasse la hauteur du viewport (le mode
+   inscription — pseudo + 4 consentements — est haut) : les onglets en haut
+   restent atteignables, et le contenu ne déborde plus hors écran. */
+.account-card{ max-width: 360px; text-align:left; max-height: calc(100dvh - 24px); overflow-y: auto; }
 .account-title{ font-size:28px; text-align:left; }
 
 /* #371 — Onglets Connexion / Créer un compte : deux choix d'égale importance

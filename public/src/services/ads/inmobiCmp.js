@@ -137,6 +137,92 @@ function makeTcfStub() {
   }
 }
 
+// ---- Stub GPP (Global Privacy Platform) ------------------------------------
+//
+// choice.js d'InMobi appelle window.__gpp AVANT d'installer sa vraie
+// implémentation ; sans stub, il lève « __gpp is not a function » (constaté en
+// prod). On porte donc AUSSI le stub GPP du snippet officiel (locator + file
+// d'attente + réponses minimales), même transposition hors inline que le TCF.
+function makeGppStub() {
+  if (typeof window === 'undefined' || !hasDom()) return;
+  if ('__gpp' in window && typeof window.__gpp === 'function') return;
+
+  const CMP_ID = 10;
+  const SUPPORTED_APIS = [
+    '2:tcfeuv2', '6:uspv1', '7:usnatv1', '8:usca',
+    '9:usvav1', '10:uscov1', '11:usutv1', '12:usctv1'
+  ];
+  const pingData = () => ({
+    gppVersion: '1.1', cmpStatus: 'stub', cmpDisplayStatus: 'hidden',
+    signalStatus: 'not ready', supportedAPIs: SUPPORTED_APIS, cmpId: CMP_ID,
+    sectionList: [], applicableSections: [-1], gppString: '', parsedSections: {}
+  });
+
+  function addGppFrame(name) {
+    if (window.frames[name]) return;
+    if (document.body) {
+      const i = document.createElement('iframe');
+      i.style.cssText = 'display:none';
+      i.name = name;
+      document.body.appendChild(i);
+    } else {
+      setTimeout(() => addGppFrame(name), 10);
+    }
+  }
+
+  const gpp = function gppStub(...b) {
+    const q = gpp; // porte la file/les events sur la fonction elle-même
+    q.queue = q.queue || [];
+    q.events = q.events || [];
+    if (!b.length || (b.length === 1 && b[0] === 'queue')) return q.queue;
+    if (b.length === 1 && b[0] === 'events') return q.events;
+
+    const cmd = b[0];
+    const clb = b.length > 1 ? b[1] : null;
+    const par = b.length > 2 ? b[2] : null;
+
+    if (cmd === 'ping') {
+      clb(pingData(), true);
+    } else if (cmd === 'addEventListener') {
+      if (!('lastId' in q)) q.lastId = 0;
+      q.lastId++;
+      const id = q.lastId;
+      q.events.push({ id, callback: clb, parameter: par });
+      clb({ eventName: 'listenerRegistered', listenerId: id, data: true, pingData: pingData() }, true);
+    } else if (cmd === 'removeEventListener') {
+      let removed = false;
+      for (let i = 0; i < q.events.length; i++) {
+        if (q.events[i].id == par) { q.events.splice(i, 1); removed = true; break; }
+      }
+      clb({ eventName: 'listenerRemoved', listenerId: par, data: removed, pingData: pingData() }, true);
+    } else if (cmd === 'hasSection') {
+      clb(false, true);
+    } else if (cmd === 'getSection' || cmd === 'getField') {
+      clb(null, true);
+    } else {
+      q.queue.push([].slice.apply(b));
+    }
+  };
+
+  function gppMsgHandler(event) {
+    const msgIsString = typeof event.data === 'string';
+    let json = null;
+    try { json = msgIsString ? JSON.parse(event.data) : event.data; } catch { json = null; }
+    if (typeof json !== 'object' || json === null || !('__gppCall' in json)) return;
+    const i = json.__gppCall;
+    window.__gpp(i.command, (returnValue, success) => {
+      const returnMsg = { __gppReturn: { returnValue, success, callId: i.callId } };
+      event.source.postMessage(msgIsString ? JSON.stringify(returnMsg) : returnMsg, '*');
+    }, 'parameter' in i ? i.parameter : null, 'version' in i ? i.version : '1.1');
+  }
+
+  window.__gpp = gpp;
+  if (typeof window.addEventListener === 'function') {
+    window.addEventListener('message', gppMsgHandler, false);
+  }
+  addGppFrame('__gppLocator');
+}
+
 /** Attend l'apparition de window.__tcfapi puis branche le pont de consentement. */
 function whenTcfApiReady(onReady, timeoutMs = TCFAPI_TIMEOUT_MS) {
   if (typeof window === 'undefined') return;
@@ -160,8 +246,11 @@ export function loadInMobiCmp(cfg) {
   const url = cmpScriptUrl(cfg);
   if (!url) return false; // pas d'identifiant : aucun CMP (échec propre)
 
-  // 1. Stub AVANT le script : locator en place et file d'attente ouverte.
+  // 1. Stubs AVANT le script : locators TCF + GPP en place, files ouvertes.
+  //    choice.js interroge les deux ; sans le stub GPP il lève « __gpp is not
+  //    a function » (constaté en prod).
   makeTcfStub();
+  makeGppStub();
 
   // 2. Script distant du CMP (seul élément injecté : pas d'inline, cf. CSP).
   const s = document.createElement('script');

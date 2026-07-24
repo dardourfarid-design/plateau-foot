@@ -19,16 +19,13 @@ window.__PLATEAU_FOOT_CONFIG__ = {
     // Flags par format (n'ont d'effet que si enabled=true). Absent ou true =
     // format actif ; false = format désactivé (rollout progressif, A/B).
     banner: true,         // bannières AdSense hors-jeu (PR C / #28) — ACTIF
-    interstitial: false,  // ⚠️ COUPÉ : en prod le SDK n'obtient AUCUNE pub
-                          // (aucune chaîne de consentement TCF — le CMP Google
-                          // dépend d'AdSense, non validé — et domaine pas encore
-                          // approuvé par GameMonetize). Il laissait alors un
-                          // conteneur plein écran NOIR qui ne disparaissait
-                          // jamais : joueur bloqué. Un garde-fou existe
-                          // désormais dans gameMonetizeProvider, mais tant
-                          // qu'il n'y a pas d'inventaire, l'afficher n'apporte
-                          // que du noir. Repasser à true APRÈS avoir constaté
-                          // une vraie pub qui joue (consentement + domaine OK).
+    interstitial: true,   // RÉACTIVÉ : les deux blocages du no-fill sont levés
+                          // — consentement TCF (CMP InMobi certifié, ci-dessous)
+                          // et domaine approuvé par GameMonetize (« Verify Game »).
+                          // Filet de sécurité conservé : le garde-fou de
+                          // gameMonetizeProvider retire le conteneur noir au bout
+                          // de 6 s s'il n'y a toujours pas d'inventaire, donc
+                          // plus aucun risque de joueur bloqué.
     rewarded: false,      // rewarded servi par GameMonetize (modèle nonce serveur,
                           // migration 0044 + REWARDED_CLIENT_ENABLED=true, déjà
                           // posés). ⚠️ EN ATTENTE de vérif : ce build de SDK
@@ -72,9 +69,9 @@ window.__PLATEAU_FOOT_CONFIG__ = {
       enabled: true,
       provider: 'inmobi',  // 'inmobi' (certifié, indépendant) | 'google' (historique)
       inmobi: {
-        propertyId: '',    // ⚠️ à renseigner depuis le tableau de bord InMobi CMP
-        scriptUrl: ''      // optionnel : coller l'URL exacte du snippet fourni
-                           // (évite tout blocage CSP dû à un domaine deviné)
+        propertyId: 'pLpA6AsDPtRE3', // tableau de bord InMobi CMP (tag V3)
+        scriptUrl: ''      // override optionnel ; vide = URL officielle construite
+                           // depuis propertyId + hostname (…/choice.js?tag_version=V3)
       },
       publisherId: 'ca-pub-2881855045042521' // ads.txt: pub-2881855045042521
     }

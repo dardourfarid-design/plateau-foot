@@ -209,9 +209,8 @@ function _renderFoundersPack(deps) {
   section.innerHTML = `
     <span class="shop-section-tag shop-tag-limited">ÉDITION LIMITÉE</span>
     <div class="shop-founders-banner-text">
-      <strong>Pack Fondateurs</strong> — tous les kits actuels + 1 Légendaire
-      exclusif + badge doré + Pass S1 inclus ·
-      <span class="shop-founders-left" id="foundersNum">${spotsLeft} places restantes sur 200</span>
+      <strong>Pack Fondateurs</strong> <span class="shop-founders-desc">— tous les kits actuels + 1 Légendaire exclusif + badge doré + Pass S1 inclus ·</span>
+      <span class="shop-founders-left"><span id="foundersNum">${spotsLeft}</span> places restantes sur 200</span>
     </div>
     <button class="btn shop-founders-btn" id="buyFoundersPack">
       Devenir Fondateur — 9,99 €
@@ -254,9 +253,9 @@ function _renderPasses(deps) {
         bonus XP +20% sur chaque partie. Annulable à tout moment.
       </p>
       ${hasPass
-        ? `<p class="shop-pass-compare">Ton pass débloque ${paidKits.length} kits en ce moment.</p>`
+        ? `<p class="shop-pass-compare"><span>Ton pass débloque</span> ${paidKits.length} <span>kits en ce moment.</span></p>`
         : minKitPrice
-        ? `<p class="shop-pass-compare">Un kit seul : ${minKitPrice} · Le Pass : les ${paidKits.length} kits pour 1,99 €/mois.</p>`
+        ? `<p class="shop-pass-compare"><span>Un kit seul :</span> ${minKitPrice} <span>· Le Pass : les</span> ${paidKits.length} <span>kits pour 1,99 €/mois.</span></p>`
         : ''}
     </div>
     <div class="shop-passes-grid">
@@ -281,7 +280,7 @@ function _renderPasses(deps) {
         <!-- #psycho — Mental accounting : ramener au prix mensuel rend l'écart
              avec le mensuel (1,99 €) tangible. -->
         <div class="shop-pass-permonth">soit 1,33 €/mois</div>
-        <div class="shop-pass-savings">Économise 35% vs mensuel</div>
+        <div class="shop-pass-savings">Économise 33% vs mensuel</div>
         <ul class="shop-pass-perks">
           <li>Tous les kits Saison 1</li>
           <li>1 joueur Rare offert</li>

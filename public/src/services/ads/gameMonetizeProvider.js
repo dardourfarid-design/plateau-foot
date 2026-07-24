@@ -81,57 +81,75 @@ function hasDom() {
 
 // ---- Garde-fou anti-écran noir -------------------------------------------
 
+// TOUS les conteneurs plein écran de la pub. LEÇON (régression écran sombre) :
+// le SDK GameMonetize insère #sdk__advertisement(_slot), MAIS Google IMA ajoute
+// SES PROPRES conteneurs noirs (#imaContainer, #imaContainer_new — NUMÉROTÉS)
+// directement sur <body>, en z-index 10000. En no-fill, ce sont EUX qui
+// restaient à l'écran : l'ancien garde-fou ne masquait que le slot du SDK.
+// On cible donc tous les conteneurs par motif, et on détecte la lecture sur
+// TOUTES les vidéos pub (IMA les numérote aussi : imaVideo, imaVideo2…).
+// Exporté pour un garde-fou de non-régression : ce bug venait de ne cibler QUE
+// le slot du SDK, en oubliant les conteneurs IMA — la couverture est testée.
+export const AD_CONTAINER_SELECTOR = '#sdk__advertisement_slot, #sdk__advertisement, [id^="imaContainer"]';
+const AD_VIDEO_SELECTOR = '#sdk__advertisement_slot video, [id^="imaContainer"] video, [id^="imaVideo"]';
+
 function adSlotEl() {
   return hasDom() ? document.getElementById(AD_SLOT_ID) : null;
 }
 
+function adContainers() {
+  return hasDom() ? [...document.querySelectorAll(AD_CONTAINER_SELECTOR)] : [];
+}
+
 /**
- * Une VRAIE pub est-elle en train de jouer ? On se fie à l'état observable de
- * la vidéo plutôt qu'aux seuls événements du SDK : en no-fill, la balise reste
+ * Une VRAIE pub est-elle en train de jouer ? On se fie à l'état observable des
+ * vidéos plutôt qu'aux seuls événements du SDK : en no-fill, les balises restent
  * sans source (readyState 0) et en pause — signature exacte de l'écran noir.
  */
 function adIsPlaying() {
   if (!hasDom()) return false;
-  const v = document.querySelector(`#${AD_SLOT_ID} video`) || document.getElementById('imaVideo');
-  return !!(v && !v.paused && v.currentTime > 0);
+  return [...document.querySelectorAll(AD_VIDEO_SELECTOR)].some(v => !v.paused && v.currentTime > 0);
 }
 
-/**
- * Masque le conteneur du SDK. La pub étant TERMINÉE à ce stade (fin détectée ou
- * no-fill), on adoucit le retour au jeu par un fondu court (règle UX de
- * continuité spatiale) plutôt qu'un cut brutal du plein écran. `prefers-reduced-
- * motion` ou absence de matchMedia → masquage direct. Réversible via restoreAdSlot.
- */
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * Masque TOUS les conteneurs pub. La pub étant TERMINÉE à ce stade (fin détectée
+ * ou no-fill), on adoucit le retour au jeu par un fondu court (continuité
+ * spatiale) plutôt qu'un cut brutal. `prefers-reduced-motion` → masquage direct.
+ * Réversible via restoreAdSlot.
+ */
 function hideAdSlot() {
-  const el = adSlotEl();
-  if (!el) return;
-  if (prefersReducedMotion()) { el.style.display = 'none'; return; }
-  el.style.transition = 'opacity 220ms ease';
-  // Reflow forcé : fige l'état de départ (opacity 1) AVANT de passer à 0, sinon
-  // le navigateur applique les deux dans le même recalcul et saute l'animation.
-  void el.offsetHeight;
-  el.style.opacity = '0';
-  const done = () => {
-    el.style.display = 'none';
-    el.style.transition = '';
-    el.removeEventListener('transitionend', done);
-  };
-  el.addEventListener('transitionend', done);
-  setTimeout(done, 300); // filet si transitionend ne se déclenche pas (idempotent)
+  const els = adContainers();
+  if (!els.length) return;
+  const reduce = prefersReducedMotion();
+  els.forEach((el) => {
+    if (reduce) { el.style.display = 'none'; return; }
+    el.style.transition = 'opacity 220ms ease';
+    // Reflow forcé : fige l'état de départ (opacity 1) AVANT de passer à 0,
+    // sinon le navigateur applique les deux dans le même recalcul et saute l'anim.
+    void el.offsetHeight;
+    el.style.opacity = '0';
+    const done = () => {
+      el.style.display = 'none';
+      el.style.transition = '';
+      el.removeEventListener('transitionend', done);
+    };
+    el.addEventListener('transitionend', done);
+    setTimeout(done, 300); // filet si transitionend ne se déclenche pas (idempotent)
+  });
 }
 
-/** Réaffiche le conteneur (il a pu être masqué/estompé par un affichage précédent). */
+/** Réaffiche tous les conteneurs (masqués/estompés par un affichage précédent). */
 function restoreAdSlot() {
-  const el = adSlotEl();
-  if (!el) return;
-  el.style.display = '';
-  el.style.opacity = '';
-  el.style.transition = '';
+  adContainers().forEach((el) => {
+    el.style.display = '';
+    el.style.opacity = '';
+    el.style.transition = '';
+  });
 }
 
 // ---- Indicateur de chargement (#367 UX : « loading-states ») --------------

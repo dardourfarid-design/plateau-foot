@@ -1891,8 +1891,44 @@ body{
 
 /* ---------- COMPTE / AUTH ---------- */
 
-.account-card{ max-width: 360px; text-align:left; }
+/* #371 — la carte scrolle si elle dépasse la hauteur du viewport (le mode
+   inscription — pseudo + 4 consentements — est haut) : les onglets en haut
+   restent atteignables, et le contenu ne déborde plus hors écran. */
+.account-card{ max-width: 360px; text-align:left; max-height: calc(100dvh - 24px); overflow-y: auto; }
 .account-title{ font-size:28px; text-align:left; }
+
+/* #371 — Onglets Connexion / Créer un compte : deux choix d'égale importance
+   (avant, la création de compte était un lien texte enterré en bas). */
+.auth-tabs{
+  display:flex;
+  gap:6px;
+  background: var(--nuit);
+  border: 1px solid rgba(245,242,232,0.14);
+  border-radius:12px;
+  padding:4px;
+  margin-bottom:18px;
+}
+.auth-tab{
+  flex:1;
+  appearance:none;
+  border:none;
+  background:transparent;
+  color: rgba(245,242,232,0.62);
+  font: 700 14px/1 'Barlow Condensed', system-ui, sans-serif;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  padding:11px 8px;
+  min-height:44px;
+  border-radius:9px;
+  cursor:pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.auth-tab:hover{ color: var(--craie); }
+.auth-tab[aria-selected="true"]{
+  background: var(--or);
+  color: var(--nuit);
+}
+.auth-tab:focus-visible{ outline:2px solid var(--or); outline-offset:2px; }
 .account-sub{ text-align:left; min-height:14px; }
 .account-sub:not(:empty){ color: var(--rouge-equipe-clair); }
 #accountEmailDisplay{ text-align:left; color: var(--craie-att); margin-bottom:4px; }
@@ -2001,7 +2037,6 @@ body{
 }
 
 .account-submit{ width:100%; margin-top:4px; }
-.account-switch{ display:block; margin: 14px auto 0; text-align:center; width:100%; }
 .account-close{ display:block; margin: 18px auto 0; text-align:center; width:100%; }
 
 .account-privacy-actions{

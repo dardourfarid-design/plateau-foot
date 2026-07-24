@@ -16,16 +16,18 @@ test('bascule connexion ⇄ inscription : consentements et pseudo apparaissent',
   await expect(page.locator('#consentBlock')).toBeHidden();
   await expect(page.locator('#authDisplayName')).toBeHidden();
 
-  await page.locator('#authSwitchBtn').click();
-  await expect(page.locator('#authTitle')).toHaveText('Créer un compte');
+  // #371 : la bascule se fait désormais par onglets (l'onglet actif porte
+  // aria-selected=true ; l'ancien lien #authSwitchBtn a été supprimé).
+  await page.locator('#authTabSignup').click();
+  await expect(page.locator('#authTabSignup')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#consentBlock')).toBeVisible();
   await expect(page.locator('#authDisplayName')).toBeVisible();
   // Les 4 cases de consentement sont présentes et décochées par défaut.
   await expect(page.locator('#consentBlock input[type="checkbox"]')).toHaveCount(4);
   await expect(page.locator('#consentAnalytics')).not.toBeChecked();
 
-  await page.locator('#authSwitchBtn').click();
-  await expect(page.locator('#authTitle')).toHaveText('Connexion');
+  await page.locator('#authTabSignin').click();
+  await expect(page.locator('#authTabSignin')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#consentBlock')).toBeHidden();
 });
 

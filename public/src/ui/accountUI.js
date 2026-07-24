@@ -185,9 +185,9 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
       els.forgotPasswordView.classList.add('hidden'); // toujours repartir sur le formulaire de connexion, pas la récupération
       els.authTitle.textContent = authMode === 'signin' ? 'Connexion' : 'Créer un compte';
       els.authSubmitBtn.textContent = authMode === 'signin' ? 'Se connecter' : 'Créer mon compte';
-      els.authSwitchBtn.textContent = authMode === 'signin'
-        ? 'Pas encore de compte ? Créer un compte'
-        : 'Déjà un compte ? Se connecter';
+      // Onglets : reflète le mode actif (aria-selected pilote aussi le style CSS).
+      els.authTabSignin?.setAttribute('aria-selected', String(authMode === 'signin'));
+      els.authTabSignup?.setAttribute('aria-selected', String(authMode === 'signup'));
       els.authDisplayName.style.display = authMode === 'signup' ? 'block' : 'none';
       // #342 : le label visible du pseudo suit l'affichage de son input.
       if (els.authDisplayNameLabel) {
@@ -305,7 +305,8 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
         authMode = 'signin';
         els.authTitle.textContent = 'Connexion';
         els.authSubmitBtn.textContent = 'Se connecter';
-        els.authSwitchBtn.textContent = 'Pas encore de compte ? Créer un compte';
+        els.authTabSignin?.setAttribute('aria-selected', 'true');
+        els.authTabSignup?.setAttribute('aria-selected', 'false');
         els.authDisplayName.style.display = 'none';
         els.consentBlock.classList.add('hidden');
         return;
@@ -377,10 +378,14 @@ export function initAccount({ els, getUser, setUser, refreshAdsForSession, refre
       els.accountOverlay.classList.remove('show');
     });
 
-    els.authSwitchBtn?.addEventListener('click', () => {
-      authMode = authMode === 'signin' ? 'signup' : 'signin';
+    // Onglets Connexion / Créer un compte : chacun bascule vers son mode.
+    const selectAuthMode = (mode) => {
+      if (authMode === mode) return;
+      authMode = mode;
       renderAccountOverlayContent();
-    });
+    };
+    els.authTabSignin?.addEventListener('click', () => selectAuthMode('signin'));
+    els.authTabSignup?.addEventListener('click', () => selectAuthMode('signup'));
 
     els.authSubmitBtn?.addEventListener('click', handleAuthSubmit);
 

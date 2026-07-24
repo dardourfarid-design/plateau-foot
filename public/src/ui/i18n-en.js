@@ -352,8 +352,12 @@ registerMessages({
     'I agree to receive emails about news and offers (optional)',
   "J'accepte que mes données soient partagées avec des partenaires sélectionnés (optionnel)":
     'I agree that my data may be shared with selected partners (optional)',
+  "J'accepte l'affichage de publicités, y compris personnalisées (optionnel)":
+    'I agree to see ads, including personalized ones (optional)',
   'Lire la politique de confidentialité': 'Read the privacy policy',
   'Se connecter': 'Sign in',
+  'Créer un compte': 'Create account',
+  'Créer mon compte': 'Create my account',
   'Mot de passe oublié ?': 'Forgot password?',
   'Pas encore de compte ? Créer un compte': "No account yet? Create one",
   'Mot de passe oublié': 'Forgot password',

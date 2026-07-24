@@ -1056,7 +1056,14 @@
 <div class="overlay" id="accountOverlay">
   <div class="overlay-card account-card" role="dialog" aria-modal="true" aria-label="Compte">
     <div id="accountLoggedOutView">
-      <div class="overlay-title account-title" id="authTitle">Connexion</div>
+      <!-- #371 : onglets équilibrés (avant, « Créer un compte » était un lien
+           texte enterré — le nouvel utilisateur est celui qu'on veut convertir). -->
+      <div class="auth-tabs" role="tablist" aria-label="Connexion ou création de compte">
+        <button type="button" class="auth-tab" id="authTabSignin" role="tab" aria-selected="true">Se connecter</button>
+        <button type="button" class="auth-tab" id="authTabSignup" role="tab" aria-selected="false">Créer un compte</button>
+      </div>
+      <!-- Titre conservé pour les lecteurs d'écran ; l'onglet actif fait office de titre visuel. -->
+      <div class="overlay-title account-title sr-only" id="authTitle">Connexion</div>
       <!-- #342 : role=alert posé dès le DOM (une région créée au moment de
            l'erreur n'est pas annoncée de façon fiable aux lecteurs d'écran). -->
       <p class="overlay-sub account-sub" id="authError" role="alert"></p>
@@ -1103,7 +1110,6 @@
 
       <button class="btn primary account-submit" id="authSubmitBtn">Se connecter</button>
       <button class="topbar-link account-switch" id="forgotPasswordBtn">Mot de passe oublié ?</button>
-      <button class="topbar-link account-switch" id="authSwitchBtn">Pas encore de compte ? Créer un compte</button>
     </div>
 
     <div id="forgotPasswordView" class="hidden">

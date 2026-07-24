@@ -120,8 +120,9 @@ test('overlay compte — focus initial, piège Tab, Échap, restitution (#350)',
   await page.locator('#accountBtn').click();
   await expect(page.locator('#accountOverlay')).toBeVisible();
 
-  // Focus initial DANS le dialogue (premier focusable visible = email).
-  await expect(page.locator('#authEmail')).toBeFocused();
+  // Focus initial DANS le dialogue (premier focusable visible = l'onglet
+  // « Se connecter » depuis #371 ; avant c'était le champ email).
+  await expect(page.locator('#authTabSignin')).toBeFocused();
 
   // Piège Tab : Shift+Tab depuis le premier focusable boucle vers le dernier,
   // puis Tab revient au premier — le focus ne sort jamais du dialogue.
@@ -130,7 +131,7 @@ test('overlay compte — focus initial, piège Tab, Échap, restitution (#350)',
     document.getElementById('accountOverlay').contains(document.activeElement));
   expect(inOverlay).toBe(true);
   await page.keyboard.press('Tab');
-  await expect(page.locator('#authEmail')).toBeFocused();
+  await expect(page.locator('#authTabSignin')).toBeFocused();
 
   // Échap ferme (via le contrôle « Fermer » sûr) et RESTITUE le focus au
   // déclencheur.

@@ -8,10 +8,13 @@
 // ils ne décident jamais.
 //
 // Verrous cumulatifs, tous requis pour qu'une pub s'affiche :
-//   1. kill switch      : config.ads.enabled === true
-//   2. consentement     : pas de refus explicite (CMP Google autoritaire, #26)
-//   3. non payant       : !isAdFree() (pass actif = zéro pub, PR F / #31)
-//   4. rollout           : client dans le pourcentage déployé (PR I / #34)
+//   1. kill switch : config.ads.enabled === true
+//   2. consentement: accord POSITIF requis (CMP certifié → tcfConsent, #367)
+//   3. non payant  : !isAdFree() (pass actif = zéro pub, PR F / #31). Ce droit
+//                    est RE-VÉRIFIÉ à froid juste avant CHAQUE affichage, tous
+//                    formats (#367) : un abonné ne voit jamais de pub, même si
+//                    le cache est périmé (autre onglet, webhook Stripe lent).
+//   4. rollout     : client dans le pourcentage déployé (PR I / #34)
 //
 // Aucun SDK pub n'est chargé tant que ces conditions ne sont pas réunies.
 
@@ -23,6 +26,19 @@ import { bucket } from './abTest.js';
 
 let _initialized = false;
 let _adFree = false;
+
+// Résolveur du pass actif. Point d'injection unique : par défaut le backend
+// (passService), remplaçable pour les tests ou une future source alternative,
+// sans imposer Supabase à ce module.
+let _resolveActivePass = getMyActivePass;
+
+/**
+ * Injecte le résolveur du pass actif (doit renvoyer une Promise du pass ou null).
+ * Sans argument (ou non-fonction), rétablit le résolveur backend par défaut.
+ */
+export function setActivePassResolver(resolver) {
+  _resolveActivePass = typeof resolver === 'function' ? resolver : getMyActivePass;
+}
 
 function adsConfig() {
   if (typeof window === 'undefined') return {};
@@ -50,10 +66,22 @@ export function isAdFree() {
  */
 export async function refreshAdFreeStatus() {
   try {
-    _adFree = !!(await getMyActivePass());
+    _adFree = !!(await _resolveActivePass());
   } catch {
     _adFree = false;
   }
+  return _adFree;
+}
+
+/**
+ * Re-vérifie le droit payant À FROID juste avant CHAQUE affichage (tous formats)
+ * et renvoie l'état frais. Ferme la fenêtre où le cache _adFree serait périmé —
+ * abonnement activé sur un autre onglet, ou webhook Stripe plus lent que les
+ * rappels de session — pour qu'un abonné ne voie JAMAIS de pub. Bon marché pour
+ * un visiteur anonyme (aucun aller-retour backend, cf. passService).
+ */
+async function isFreshlyAdFree() {
+  await refreshAdFreeStatus();
   return _adFree;
 }
 
@@ -151,6 +179,10 @@ async function ensureReady() {
  */
 export async function showBanner(slot) {
   if (!isFormatAllowed('banner')) return false;
+  // Même filet anti-abonné que les formats intrusifs : un client payant ne voit
+  // AUCUNE pub, y compris la bannière d'accueil, même si le cache est périmé
+  // (bon marché en anonyme — aucun aller-retour backend).
+  if (await isFreshlyAdFree()) return false;
   if (!(await ensureReady())) return false;
   const ok = await provider.showBanner(slot);
   if (ok) trackAdImpression('banner', slot); // gated par le consentement analytics
@@ -169,6 +201,8 @@ export function hideBanner(slot) {
  */
 export async function showInterstitial() {
   if (!isFormatAllowed('interstitial')) return { shown: false };
+  // Filet anti-abonné : re-vérifie le droit payant à froid avant un plein écran.
+  if (await isFreshlyAdFree()) return { shown: false };
   if (!(await ensureReady())) return { shown: false };
   const res = await provider.showInterstitial();
   if (res?.shown) trackAdImpression('interstitial', null);
@@ -183,6 +217,8 @@ export async function showInterstitial() {
  */
 export async function showRewarded(context = {}) {
   if (!isFormatAllowed('rewarded')) return { completed: false, reason: 'ads-not-allowed' };
+  // Filet anti-abonné : un client payant ne se voit jamais proposer de rewarded.
+  if (await isFreshlyAdFree()) return { completed: false, reason: 'ad-free' };
   if (!(await ensureReady())) return { completed: false, reason: 'init-failed' };
   // context.userId sera transmis au réseau comme `custom_data` : c'est ce que
   // le SSV renverra pour identifier le joueur à créditer côté serveur.

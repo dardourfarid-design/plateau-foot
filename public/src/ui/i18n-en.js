@@ -200,6 +200,15 @@ registerMessages({
     'The keeper only slides along its goal line.',
   'Premier arrivé au nombre de buts fixé gagne la partie.':
     'First to reach the target number of goals wins the match.',
+  // Regles avancees (rappel du 1er match, selon paliers actifs)
+  "Un défenseur adverse coupe les cases voisines : une passe ne les traverse pas (hachures rouges).":
+    "An enemy defender covers the neighbouring squares: a pass can't pass through them (red hatching).",
+  "Une passe qui tombe à côté d'un coéquipier t'offre un déplacement bonus (une‑deux).":
+    "A pass landing next to a teammate gives you a bonus move (one-two).",
+  "Une passe partant d'une aile (colonne de bord) ignore la couverture adverse.":
+    "A pass from a wing (edge column) ignores enemy coverage.",
+  "Un pion marqué ★ porte un pouvoir à usage unique.":
+    "A piece marked ★ carries a single-use power.",
   'Résultats de la partie': 'Match results',
 
   // --- Boutique ---

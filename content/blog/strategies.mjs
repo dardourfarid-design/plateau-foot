@@ -79,14 +79,18 @@ ramener vers cette case est rarement une mauvaise décision.</p>
 
 <h2>Le piège classique, pour finir</h2>
 
-<p>Ton tour se déroule en deux temps : tu déplaces un pion d'une case, et
-<em>seulement si ce pion arrive au contact du ballon</em>, tu peux enchaîner par
-une passe. Un pion déjà collé au ballon en début de tour ne peut pas le pousser
-sans avoir bougé.</p>
+<p>Un tour vaut <strong>une</strong> action. Soit tu déplaces un pion d'une case
+— et s'il arrive au contact du ballon, tu peux enchaîner par une passe. Soit tu
+pousses directement le ballon avec un pion qui est déjà à son contact, sans le
+déplacer.</p>
 
-<p>Beaucoup de joueurs perdent un tour entier à comprendre pourquoi « ça ne marche
-pas ». Anticipe-le : le pion que tu prépares doit <strong>arriver</strong> à côté
-du ballon, pas y être déjà.</p>
+<p>Ce qui est impossible, c'est de <strong>passer deux fois dans le même
+tour</strong>. Le piège est donc l'inverse de ce qu'on croit : ce n'est pas la
+passe sans déplacement qui manque, c'est le second coup après la passe.</p>
+
+<p>Anticipe-le : quand ton pion est déjà collé au ballon, ton tour se résume à
+choisir la case d'arrivée. Si tu voulais <em>aussi</em> repositionner un pion, il
+fallait le faire avant.</p>
 
 <h2>Bonus : les pouvoirs, et quand les garder</h2>
 
@@ -101,10 +105,10 @@ justement ce qui rend le moment du déclenchement important. Les cinq pouvoirs :
   <li><strong>Sprint</strong> — ce pion se déplace de 2 cases en ligne droite au
       lieu d'1. Le meilleur outil pour arriver au contact d'un ballon que tu
       croyais hors de portée.</li>
-  <li><strong>Mur</strong> — pendant ce tour, ce pion bloque aussi les
-      trajectoires diagonales qui le traversent. Le seul moyen de fermer une
-      diagonale, donc le contre direct de la stratégie n° 2 quand c'est
-      l'adversaire qui l'emploie.</li>
+  <li><strong>Mur</strong> — pendant le tour adverse suivant, ce pion coupe
+      aussi les passes diagonales qui contournent son coin. Le seul moyen de
+      fermer une diagonale, donc le contre direct de la stratégie n° 2 quand
+      c'est l'adversaire qui l'emploie.</li>
   <li><strong>Relais</strong> — après une passe, tu déplaces immédiatement un
       second pion. Sert à récupérer le contrôle d'un ballon que tu viens
       d'envoyer loin.</li>

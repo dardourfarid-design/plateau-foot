@@ -61,6 +61,18 @@ body:has(#setupScreen.hidden) .seo-about{ display:none; }
   .seo-facts{ grid-template-columns:1fr; gap:2px; }
   .seo-facts dd{ margin:0 0 8px; }
 }
+/* Liens vers les pages de référence servies à part (/regles, /faq, /glossaire,
+   /blog). L'overlay Règles & FAQ garde son rôle en cours de partie ; ces liens
+   existent pour les visiteurs et les robots qui arrivent sur la landing. */
+.seo-links{
+  margin:18px 0 0;
+  padding-top:14px;
+  border-top:1px solid rgba(240,230,211,0.08);
+  font-size:14px;
+  line-height:2;
+}
+.seo-links a{ color:var(--or); font-weight:600; }
+
 .seo-about details{
   border-bottom:1px solid rgba(240,230,211,0.08);
   padding:8px 0;

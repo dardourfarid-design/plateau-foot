@@ -1,0 +1,256 @@
+// Page /en/rules. Contrepartie anglaise de content/pages/regles.mjs.
+// Écrit en anglais, pas traduit mot à mot : la page FR s'adresse à quelqu'un qui
+// a déjà le vocabulaire du site, celle-ci à quelqu'un qui découvre le jeu.
+// Règles vérifiées dans public/src/engine/ (2026-08-04) — mêmes sources.
+
+export const EN_RULES = `
+<p class="page-lead">Tactic Master plays like checkers and is won like a football
+match: move one piece one square, push the ball in a straight line, score in the
+opposing goal. No dice, no cards, no reflexes. This page is the complete
+reference — how a turn works, the edge cases, the three rule tiers and the five
+powers.</p>
+
+<h2>The board</h2>
+
+<p>The pitch is <strong>7 columns by 9 rows</strong>, 63 squares in total. It is
+deliberately narrower than a checkerboard: with six pieces a side, a bigger board
+would produce slack games where nobody ever meets.</p>
+
+<p>Each side defends a <strong>three-square goal</strong> — the three central
+squares of its back row. Blue occupies the bottom of the pitch and attacks
+upwards; red does the opposite. The two halves mirror each other exactly, so
+neither side starts with a positional advantage.</p>
+
+<p>The <strong>ball starts at the centre</strong> of the board, and blue kicks
+off.</p>
+
+<h3>The starting position</h3>
+
+<p>Numbering rows 1 (red back line) to 9 (blue back line), and columns 1 to 7
+from left to right:</p>
+
+<div class="table-scroll">
+<table class="rules-board">
+  <caption>Standard formation at kick-off. G = goalkeeper, D = defender,
+  F = forward, ● = ball.</caption>
+  <thead>
+    <tr><th scope="col">Row</th><th scope="col">1</th><th scope="col">2</th>
+        <th scope="col">3</th><th scope="col">4</th><th scope="col">5</th>
+        <th scope="col">6</th><th scope="col">7</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">1</th><td></td><td></td><td class="cage">goal</td><td class="cage">G</td><td class="cage">goal</td><td></td><td></td></tr>
+    <tr><th scope="row">2</th><td></td><td>D</td><td></td><td></td><td></td><td>D</td><td></td></tr>
+    <tr><th scope="row">3</th><td></td><td>F</td><td></td><td>F</td><td></td><td>F</td><td></td></tr>
+    <tr><th scope="row">4</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><th scope="row">5</th><td></td><td></td><td></td><td>●</td><td></td><td></td><td></td></tr>
+    <tr><th scope="row">6</th><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><th scope="row">7</th><td></td><td>F</td><td></td><td>F</td><td></td><td>F</td><td></td></tr>
+    <tr><th scope="row">8</th><td></td><td>D</td><td></td><td></td><td></td><td>D</td><td></td></tr>
+    <tr><th scope="row">9</th><td></td><td></td><td class="cage">goal</td><td class="cage">G</td><td class="cage">goal</td><td></td><td></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>The pieces</h2>
+
+<p>Each team fields <strong>six pieces</strong>: one goalkeeper, two defenders and
+three forwards. Those names describe starting positions, not abilities — a
+defender and a forward move in exactly the same way, and either can score. Only
+the goalkeeper has rules of its own.</p>
+
+<p>The <strong>tactical</strong> formation adds one defender and one forward per
+side, for eight against eight. The pitch gets denser and passing lanes become
+much harder to open. It is the default formation of the Expert tier.</p>
+
+<h3>The goalkeeper</h3>
+
+<p>The goalkeeper follows two special rules, and nothing else:</p>
+
+<ul>
+  <li>It only moves along <strong>the three squares of its own goal line</strong>,
+      sliding sideways. It never advances, and never leaves the back row.</li>
+  <li>It <strong>covers no square at all</strong> (see defensive cover below). It
+      defends purely by physically standing on one square of the goal.</li>
+</ul>
+
+<p>That second rule is deliberate. If the keeper projected a cover zone like every
+other piece, the goal would be mathematically impossible to breach and the game
+would have no point. A keeper plugs one hole: the one it is standing on.</p>
+
+<h2>How a turn works</h2>
+
+<p>Blue moves first, then the sides alternate. On your turn you take
+<strong>one</strong> action, and only one:</p>
+
+<ol>
+  <li><strong>Move a piece.</strong> Your turn ends there — unless that piece
+      lands next to the ball, in which case you may follow up with a pass (still
+      optional).</li>
+  <li><strong>Push the ball with a piece already touching it.</strong> Select the
+      piece, click a square along the path. No prior move is needed.</li>
+</ol>
+
+<p>So a turn is worth either a move, or a pass, or a move <em>followed by</em> a
+pass when the moved piece ends up beside the ball. You can never pass twice in
+the same turn.</p>
+
+<h2>Moving</h2>
+
+<p>A piece moves <strong>one square in any of the eight directions</strong>,
+diagonals included. The destination square must be empty — of friendly pieces, of
+enemy pieces, and <strong>of the ball</strong>. You never step onto the ball,
+never capture it, never carry it. You step beside it in order to push it.</p>
+
+<p>There are <strong>no captures</strong> in Tactic Master. No piece ever leaves
+the pitch. All sixteen (or twenty) pieces are still there at the final whistle.</p>
+
+<h2>Passing</h2>
+
+<p>A piece <strong>adjacent to the ball</strong> — in any of the eight directions,
+diagonals included — can push it. The ball travels in a straight line in the
+chosen direction and slides until it meets the first obstacle: a piece of either
+colour, or the edge of the pitch.</p>
+
+<p>The point that most new players miss: <strong>every free square along the path
+is a valid destination</strong>. The ball does not have to travel all the way.
+You decide where it stops, and a one-square push is a perfectly legal move —
+often the best one.</p>
+
+<p>The ball never passes through a piece. That is why a well-placed opposing
+piece is worth a wall: it does not need to intercept anything, it just needs to
+be on the line.</p>
+
+<h2>Defensive cover</h2>
+
+<p>This is the mechanic that turns the game into a tactical one, and the only
+rule that takes a little thought.</p>
+
+<p>A square is <strong>covered</strong> by a team if an outfield piece of that
+team stands <strong>orthogonally adjacent</strong> to it — directly above, below,
+left or right. An opposing pass can neither stop on a covered square nor travel
+through it.</p>
+
+<p>Three details decide a great many games:</p>
+
+<ul>
+  <li>Cover is <strong>strictly orthogonal</strong>. The four diagonal squares
+      around a piece are never covered. A defence that looks airtight head-on is
+      almost always porous at an angle.</li>
+  <li>The <strong>goalkeeper covers nothing</strong>, as noted above.</li>
+  <li>Only your opponent's cover blocks your passes. Your own pieces never
+      obstruct you by cover — only by physically sitting on the path.</li>
+</ul>
+
+<h2>The two special squares</h2>
+
+<h3>Crossing from a wing</h3>
+
+<p>When the ball sits on an <strong>edge column</strong> (the first or the
+seventh), the pass leaving it <strong>ignores enemy cover entirely</strong>. This
+is the game's cross: the direct counter to a defence packed into the middle.</p>
+
+<h3>The penalty spot</h3>
+
+<p>The penalty spot is the <strong>central square two rows from the opposing
+goal</strong>. A shot fired from there towards the goal gets two effects: it
+<strong>ignores cover</strong>, and it <strong>pierces one outfield
+defender</strong> — one only, and never the goalkeeper, nor one of your own
+pieces.</p>
+
+<p>Getting the ball there usually costs two or three turns of build-up. That is
+exactly the intent: the game rewards preparation, not luck.</p>
+
+<h2>The one-two</h2>
+
+<p>After a pass, if the ball comes to rest <strong>orthogonally adjacent to one
+of your own outfield pieces</strong>, your team immediately plays again — but a
+<strong>move only</strong>, never a second pass.</p>
+
+<p>The bonus does not stack: a one-two cannot trigger another one, and it does
+not combine with the Relay power. It is a tempo gained, not a chain reaction.</p>
+
+<h2>Scoring</h2>
+
+<p>A goal is scored the moment the ball comes to rest on <strong>any of the three
+squares of the opposing goal</strong>. Nothing else is required — no minimum
+distance, no number of passes, no piece in the box.</p>
+
+<p>After a goal, everything resets as at kick-off: <strong>ball at the centre, all
+pieces back to their starting squares</strong>. The team that conceded restarts
+play. The first team to <strong>three goals</strong> wins the match.</p>
+
+<h2>Draws and shoot-outs</h2>
+
+<p>In time-limited formats the game stops after a fixed number of turns. If the
+scores are level, the match is a <strong>draw</strong> and is settled by a
+<strong>penalty shoot-out</strong> — a separate arcade mode with aiming and a
+power gauge. In a free game there is no turn limit: you play to the third goal.</p>
+
+<h2>The stall rule</h2>
+
+<p>Two cautious players could in theory shuffle pieces forever. The engine steps
+in: after <strong>eight consecutive turns without a single pass</strong> — four
+per side — the ball is returned to the centre for a neutral restart, provided the
+centre square is free. The pieces are not moved. The threshold is deliberately
+high; it never fires in a game that is actually progressing.</p>
+
+<h2>The three rule tiers</h2>
+
+<div class="table-scroll">
+<table class="rules-table">
+  <thead>
+    <tr><th scope="col">Tier</th><th scope="col">Cover</th>
+        <th scope="col">One-two</th><th scope="col">Crosses</th>
+        <th scope="col">Penalty spot</th><th scope="col">Pieces</th>
+        <th scope="col">Powers</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Discovery</th><td>no</td><td>no</td><td>no</td><td>no</td><td>6</td><td>no</td></tr>
+    <tr><th scope="row">Classic</th><td>yes</td><td>yes</td><td>no</td><td>no</td><td>6</td><td>yes</td></tr>
+    <tr><th scope="row">Expert</th><td>yes</td><td>yes</td><td>yes</td><td>yes</td><td>8</td><td>yes</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>Classic</strong> is the default. In <strong>Discovery</strong> no pass
+is ever intercepted — the ball only stops against a piece or an edge, which makes
+the game instantly readable for a child or a first try. In
+<strong>Expert</strong>, all four mechanics are live on an eight-piece board.
+Advanced options let you switch each mechanic on or off individually.</p>
+
+<h2>The powers</h2>
+
+<p>When powered players are enabled, one randomly chosen outfield piece per team
+receives an ability, usable <strong>once per match</strong>. After that it becomes
+an ordinary piece again.</p>
+
+<div class="table-scroll">
+<table class="rules-table">
+  <thead>
+    <tr><th scope="col">Power</th><th scope="col">Effect</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Power Shot</th><td>The ball travels through the first piece it meets instead of stopping against it.</td></tr>
+    <tr><th scope="row">Sprint</th><td>This piece moves two squares in one direction instead of one. Both squares of the path must be free — there is no jumping.</td></tr>
+    <tr><th scope="row">Wall</th><td>During the next opposing turn, this piece also cuts diagonal passes that slip past its corner — the only trajectories cover never closes.</td></tr>
+    <tr><th scope="row">Relay</th><td>After a pass, immediately move a second piece. Never a second pass.</td></tr>
+    <tr><th scope="row">Pull Back</th><td>Forces a chosen enemy outfield piece one square back towards its own half. Goalkeepers are immune.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>What Tactic Master does not have</h2>
+
+<ul>
+  <li><strong>No captures</strong>: no piece ever leaves the pitch.</li>
+  <li><strong>No offside</strong>, no fouls, no cards, no corners, no throw-ins.</li>
+  <li><strong>No randomness</strong>: no dice, no cards, no draws. Both players
+      see everything, always — perfect information, as in chess.</li>
+  <li><strong>No clock</strong>: the game is turn-based, think as long as you like.</li>
+  <li><strong>No differentiated piece movement</strong>: apart from the keeper,
+      every piece moves identically.</li>
+</ul>
+
+<p>Common questions are answered on the <a href="/en/faq">FAQ page</a>.</p>
+`;

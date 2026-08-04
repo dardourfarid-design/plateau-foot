@@ -630,6 +630,9 @@ body{
 }
 
 .token:hover{ transform: scale(1.06); }
+/* Le halo du Mur actif vit dans 09-refonte-accueil.css : c'est le dernier
+   fichier à redéfinir l'apparence des pions, et une règle posée ici serait
+   écrasée par l'animation d'invitation qui s'y trouve. */
 
 /* Ballon */
 
@@ -2554,8 +2557,25 @@ body{
 }
 
 /* --- Pion sélectionnable : subtle pulse invitation --- */
-.token.selectable:not(.selected):not(:hover) {
+/* `:not(.wall-active)` : le nudge décoratif anime box-shadow, donc il écraserait
+   le halo du Mur — une animation l'emporte sur une déclaration normale, quelle
+   que soit la spécificité. Un état porteur de sens passe avant une invitation. */
+.token.selectable:not(.selected):not(:hover):not(.wall-active) {
   animation: token-invite 2.5s ease-in-out infinite;
+}
+
+/* --- Mur actif (pouvoir) --- */
+/* Le pion coupe les passes diagonales qui contournent son coin pendant le tour
+   adverse. Sans repère visible, celui qui subit l'effet voit une passe refusée
+   sans cause apparente. Violet = couleur des pouvoirs (cf. .power-btn) ; la
+   pulsation dit que l'effet est EN COURS, pas seulement disponible. */
+.token.wall-active {
+  box-shadow: 0 0 0 3px #9B5DE5, 0 0 14px rgba(155,93,229,0.7);
+  animation: wall-pulse 1.4s ease-in-out infinite;
+}
+@keyframes wall-pulse {
+  0%,100% { box-shadow: 0 0 0 3px #9B5DE5, 0 0 10px rgba(155,93,229,0.5); }
+  50%     { box-shadow: 0 0 0 3px #9B5DE5, 0 0 18px rgba(155,93,229,0.9); }
 }
 @keyframes token-invite {
   0%,100% { box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 1px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.55); }
@@ -2572,7 +2592,10 @@ body{
   .turn-banner.active-bleu,
   .turn-banner.active-rouge{ animation:none; }
   .cell:has(.ball):hover .ball{ animation:none; }
-  .token.selectable:not(.selected):not(:hover){ animation:none; }
+  .token.selectable:not(.selected):not(:hover):not(.wall-active){ animation:none; }
+  /* Le Mur perd sa pulsation mais garde son halo fixe : l'information reste,
+     seul le mouvement disparaît. */
+  .token.wall-active{ animation:none; }
 }
 
 /* =====================================================================
@@ -3895,6 +3918,18 @@ body:has(#setupScreen.hidden) .seo-about{ display:none; }
   .seo-facts{ grid-template-columns:1fr; gap:2px; }
   .seo-facts dd{ margin:0 0 8px; }
 }
+/* Liens vers les pages de référence servies à part (/regles, /faq, /glossaire,
+   /blog). L'overlay Règles & FAQ garde son rôle en cours de partie ; ces liens
+   existent pour les visiteurs et les robots qui arrivent sur la landing. */
+.seo-links{
+  margin:18px 0 0;
+  padding-top:14px;
+  border-top:1px solid rgba(240,230,211,0.08);
+  font-size:14px;
+  line-height:2;
+}
+.seo-links a{ color:var(--or); font-weight:600; }
+
 .seo-about details{
   border-bottom:1px solid rgba(240,230,211,0.08);
   padding:8px 0;

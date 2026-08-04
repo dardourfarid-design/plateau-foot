@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- FICHIER GÉNÉRÉ par tools/build-blog.mjs — ne pas éditer à la main.
-     Le contenu se modifie dans content/blog/articles.mjs. -->
+<!-- FICHIER GÉNÉRÉ — ne pas éditer à la main. Le contenu se modifie dans
+     content/ puis se régénère (voir tools/build-blog.mjs, tools/build-pages.mjs). -->
 <title>Le blog — Tactic Master</title>
 <meta name="description" content="Règles, stratégies et coulisses de Tactic Master, le jeu de plateau de foot gratuit jouable dans le navigateur.">
 <link rel="canonical" href="https://tactic-master.vercel.app/blog">
-<meta property="og:type" content="article">
+<meta property="og:type" content="website">
 <meta property="og:site_name" content="Tactic Master">
 <meta property="og:title" content="Le blog — Tactic Master">
 <meta property="og:description" content="Règles, stratégies et coulisses de Tactic Master, le jeu de plateau de foot gratuit jouable dans le navigateur.">
@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/blog/blog.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Blog","name":"Le blog de Tactic Master","url":"https://tactic-master.vercel.app/blog","blogPost":[{"@type":"BlogPosting","headline":"Les règles de Tactic Master","datePublished":"2026-07-18","url":"https://tactic-master.vercel.app/blog/regles-du-jeu"},{"@type":"BlogPosting","headline":"5 stratégies pour gagner tes premières parties","datePublished":"2026-07-17","url":"https://tactic-master.vercel.app/blog/strategies-pour-gagner"},{"@type":"BlogPosting","headline":"Comment battre l'IA en difficulté maximale","datePublished":"2026-07-16","url":"https://tactic-master.vercel.app/blog/battre-lia-difficile"},{"@type":"BlogPosting","headline":"Jouer à deux, sur un écran ou en ligne","datePublished":"2026-07-15","url":"https://tactic-master.vercel.app/blog/jouer-a-deux"},{"@type":"BlogPosting","headline":"Dames et football : d'où vient Tactic Master","datePublished":"2026-07-14","url":"https://tactic-master.vercel.app/blog/dames-et-football"}]}</script>
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Blog","name":"Le blog de Tactic Master","url":"https://tactic-master.vercel.app/blog","inLanguage":"fr","blogPost":[{"@type":"BlogPosting","headline":"Comprendre la couverture défensive","datePublished":"2026-08-04","url":"https://tactic-master.vercel.app/blog/la-couverture-defensive"},{"@type":"BlogPosting","headline":"Bien ouvrir une partie de Tactic Master","datePublished":"2026-08-03","url":"https://tactic-master.vercel.app/blog/bien-ouvrir-une-partie"},{"@type":"BlogPosting","headline":"Défendre sans jamais tacler","datePublished":"2026-08-02","url":"https://tactic-master.vercel.app/blog/defendre-sans-tacler"},{"@type":"BlogPosting","headline":"Découverte, Classique ou Expert ?","datePublished":"2026-08-01","url":"https://tactic-master.vercel.app/blog/choisir-son-palier-de-regles"},{"@type":"BlogPosting","headline":"Comment fonctionne l'ordinateur du jeu","datePublished":"2026-07-31","url":"https://tactic-master.vercel.app/blog/comment-fonctionne-l-ia"},{"@type":"BlogPosting","headline":"Maîtriser la une-deux","datePublished":"2026-07-30","url":"https://tactic-master.vercel.app/blog/maitriser-la-une-deux"},{"@type":"BlogPosting","headline":"Le point de penalty, la case qui débloque","datePublished":"2026-07-29","url":"https://tactic-master.vercel.app/blog/le-point-de-penalty"},{"@type":"BlogPosting","headline":"Les cinq pouvoirs et quand les utiliser","datePublished":"2026-07-28","url":"https://tactic-master.vercel.app/blog/les-cinq-pouvoirs"},{"@type":"BlogPosting","headline":"Le rôle du gardien","datePublished":"2026-07-27","url":"https://tactic-master.vercel.app/blog/le-role-du-gardien"},{"@type":"BlogPosting","headline":"Jouer à Tactic Master avec des enfants","datePublished":"2026-07-26","url":"https://tactic-master.vercel.app/blog/jouer-avec-des-enfants"},{"@type":"BlogPosting","headline":"Les règles de Tactic Master","datePublished":"2026-07-18","url":"https://tactic-master.vercel.app/blog/regles-du-jeu"},{"@type":"BlogPosting","headline":"5 stratégies pour gagner tes premières parties","datePublished":"2026-07-17","url":"https://tactic-master.vercel.app/blog/strategies-pour-gagner"},{"@type":"BlogPosting","headline":"Comment battre l'IA en difficulté maximale","datePublished":"2026-07-16","url":"https://tactic-master.vercel.app/blog/battre-lia-difficile"},{"@type":"BlogPosting","headline":"Jouer à deux, sur un écran ou en ligne","datePublished":"2026-07-15","url":"https://tactic-master.vercel.app/blog/jouer-a-deux"},{"@type":"BlogPosting","headline":"Dames et football : d'où vient Tactic Master","datePublished":"2026-07-14","url":"https://tactic-master.vercel.app/blog/dames-et-football"}]},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://tactic-master.vercel.app/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://tactic-master.vercel.app/blog"}]}]</script>
 </head>
 <body>
 <header class="blog-top">
@@ -32,8 +32,90 @@
 <main class="blog-index">
   <h1>Le blog</h1>
   <p class="blog-intro">Les règles en détail, des stratégies concrètes, et de temps
-     en temps les coulisses du développement.</p>
+     en temps les coulisses du développement. Pour la référence exhaustive, voir
+     les <a href="/regles">règles complètes</a>, la <a href="/faq">FAQ</a> et le
+     <a href="/glossaire">glossaire</a>.</p>
   <ul class="blog-list">
+    <li class="blog-card">
+      <a href="/blog/la-couverture-defensive">
+        <p class="blog-date"><time datetime="2026-08-04">4 août 2026</time></p>
+        <h2>Comprendre la couverture défensive</h2>
+        <p class="blog-excerpt">La mécanique qui décide le plus de parties de Tactic Master : ce que couvre un pion, pourquoi les diagonales restent ouvertes, et comment défendre en quinconce.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/bien-ouvrir-une-partie">
+        <p class="blog-date"><time datetime="2026-08-03">3 août 2026</time></p>
+        <h2>Bien ouvrir une partie de Tactic Master</h2>
+        <p class="blog-excerpt">Ce que la position de départ autorise vraiment, pourquoi la passe droit devant est bloquée, trois ouvertures qui marchent et les erreurs des cinq premiers tours.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/defendre-sans-tacler">
+        <p class="blog-date"><time datetime="2026-08-02">2 août 2026</time></p>
+        <h2>Défendre sans jamais tacler</h2>
+        <p class="blog-excerpt">Il n'existe aucune façon de reprendre le ballon à l'adversaire : six règles pour défendre par le placement, du quinconce au dégagement qui déclenche une une-deux.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/choisir-son-palier-de-regles">
+        <p class="blog-date"><time datetime="2026-08-01">1 août 2026</time></p>
+        <h2>Découverte, Classique ou Expert ?</h2>
+        <p class="blog-excerpt">Les trois paliers de règles de Tactic Master comparés : ce que chacun active, à qui il s'adresse, ses limites, et les deux réglages fins qui valent le détour.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/comment-fonctionne-l-ia">
+        <p class="blog-date"><time datetime="2026-07-31">31 juillet 2026</time></p>
+        <h2>Comment fonctionne l'ordinateur du jeu</h2>
+        <p class="blog-excerpt">Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu'il évalue, ce qu'il ignore, et comment exploiter ses angles morts.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/maitriser-la-une-deux">
+        <p class="blog-date"><time datetime="2026-07-30">30 juillet 2026</time></p>
+        <h2>Maîtriser la une-deux</h2>
+        <p class="blog-excerpt">Le déplacement bonus le plus sous-exploité de Tactic Master : ce qui le déclenche exactement, comment le provoquer un tour à l'avance et où dépenser le gain.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/le-point-de-penalty">
+        <p class="blog-date"><time datetime="2026-07-29">29 juillet 2026</time></p>
+        <h2>Le point de penalty, la case qui débloque</h2>
+        <p class="blog-excerpt">Une case par camp vaut plus que les autres : où elle se trouve, ce qu'un tir y gagne, les trois façons d'y amener le ballon et les trois façons de la défendre.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/les-cinq-pouvoirs">
+        <p class="blog-date"><time datetime="2026-07-28">28 juillet 2026</time></p>
+        <h2>Les cinq pouvoirs et quand les utiliser</h2>
+        <p class="blog-excerpt">Tir Puissant, Sprint, Relais, Repli adverse et Mur : l'effet exact de chacun, le moment où il vaut un but, et la façon dont l'ordinateur les déclenche.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/le-role-du-gardien">
+        <p class="blog-date"><time datetime="2026-07-27">27 juillet 2026</time></p>
+        <h2>Le rôle du gardien</h2>
+        <p class="blog-excerpt">Trois cases, aucune couverture : pourquoi le gardien de Tactic Master obéit à ses propres règles, ce que cela change en attaque comme en défense, et ses limites.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
+    <li class="blog-card">
+      <a href="/blog/jouer-avec-des-enfants">
+        <p class="blog-date"><time datetime="2026-07-26">26 juillet 2026</time></p>
+        <h2>Jouer à Tactic Master avec des enfants</h2>
+        <p class="blog-excerpt">Quel palier choisir, les trois phrases qui suffisent à expliquer le jeu, ce qui accroche selon l'âge, et comment s'handicaper honnêtement contre un enfant.</p>
+        <span class="blog-more">Lire →</span>
+      </a>
+    </li>
     <li class="blog-card">
       <a href="/blog/regles-du-jeu">
         <p class="blog-date"><time datetime="2026-07-18">18 juillet 2026</time></p>
@@ -83,8 +165,20 @@
 </aside>
 </main>
 <footer class="blog-foot">
-  <a href="/blog">Tous les articles</a> &nbsp;·&nbsp;
-  <a href="/terms">Conditions</a> &nbsp;·&nbsp;
+  <a href="/blog">Tous les articles</a>
+  &nbsp;·&nbsp;
+  <a href="/regles">Règles complètes</a>
+  &nbsp;·&nbsp;
+  <a href="/faq">FAQ</a>
+  &nbsp;·&nbsp;
+  <a href="/glossaire">Glossaire</a>
+  &nbsp;·&nbsp;
+  <a href="/a-propos">À propos</a>
+  &nbsp;·&nbsp;
+  <a href="/contact">Contact</a>
+  &nbsp;·&nbsp;
+  <a href="/terms">Conditions</a>
+  &nbsp;·&nbsp;
   <a href="/privacy">Confidentialité</a>
   <p>© 2026 Tactic Master</p>
 </footer>

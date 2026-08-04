@@ -1,5 +1,5 @@
 import { describe, test, expect } from './test-utils.js';
-import { createGame, selectToken, passTurn, moveSelectedToken, passBall, applyBallMovement, getMoveDestinations } from '../public/src/engine/gameEngine.js';
+import { createGame, selectToken, passTurn, moveSelectedToken, passBall, applyBallMovement, getMoveDestinations, getPassDestinations } from '../public/src/engine/gameEngine.js';
 import { TEAMS } from '../public/src/engine/constants.js';
 import {
   POWER_TYPES, canActivatePower, getPowerShotDestinations, activateTirPuissant,
@@ -111,32 +111,92 @@ describe('Sprint', () => {
 });
 
 describe('Mur', () => {
-  test('activateMur place le pion en mode mur actif jusqu\'au tour adverse suivant', () => {
+  // Ces tests remplacent une version qui verrouillait un comportement inerte :
+  // isBlockedByWall testait si le mur était SUR la case visée (or la boucle de
+  // passe s'arrête déjà sur tout pion), et expireWallIfNeeded retirait le mur
+  // au moment précis où il aurait dû agir. Le pouvoir n'avait aucun effet.
+
+  test('activateMur arme le mur au nom de son équipe et consomme le pouvoir', () => {
     let state = createGame();
     state = givePower(state, 'b-att1', POWER_TYPES.MUR);
     const next = activateMur(state, 'b-att1');
     expect(next.activeWallTokenId).toBe('b-att1');
-    const updated = next.tokens.find(t => t.id === 'b-att1');
-    expect(updated.powerUsed).toBe(true);
+    expect(next.activeWallTeam).toBe(TEAMS.BLEU);
+    expect(next.tokens.find(t => t.id === 'b-att1').powerUsed).toBe(true);
   });
 
-  test('isBlockedByWall détecte une trajectoire diagonale qui traverse le mur', () => {
+  test('le mur coupe la diagonale qui contourne le pion, pas les orthogonales', () => {
+    let state = createGame();
+    state = givePower(state, 'b-att1', POWER_TYPES.MUR); // en (6,3)
+    state = { ...activateMur(state, 'b-att1'), turn: TEAMS.ROUGE };
+
+    // Depuis (5,2), le pas diagonal (+1,+1) vers (6,3) contourne (6,2) et (5,3).
+    // Le mur est en (6,3) : il n'est sur AUCUNE des deux cases contournées, la
+    // diagonale n'est donc pas coupée par le mur (elle bute sur le pion lui-même).
+    expect(isBlockedByWall(state, 5, 2, 1, 1)).toBe(false);
+
+    // Depuis (5,3), le pas (+1,-1) vers (6,2) contourne (6,3) — le mur. Coupé.
+    expect(isBlockedByWall(state, 5, 3, 1, -1)).toBe(true);
+    // Même départ, pas orthogonal : jamais concerné.
+    expect(isBlockedByWall(state, 5, 3, 1, 0)).toBe(false);
+  });
+
+  test('le mur ne gêne jamais le camp qui l\'a érigé', () => {
+    let state = createGame();
+    state = givePower(state, 'b-att1', POWER_TYPES.MUR);
+    state = activateMur(state, 'b-att1'); // turn reste BLEU
+    expect(isBlockedByWall(state, 5, 3, 1, -1)).toBe(false);
+  });
+
+  test('le mur retire une destination de passe réellement disponible sans lui', () => {
+    // Vérification de bout en bout : c'est ce test qui aurait échoué du temps où
+    // le pouvoir était inerte.
+    const base = createGame({ ruleset: 'decouverte' });
+    const tokens = [
+      { id: 'r-a', team: TEAMS.ROUGE, row: 4, col: 2, isGK: false },
+      { id: 'b-w', team: TEAMS.BLEU, row: 4, col: 4, isGK: false, power: POWER_TYPES.MUR, powerUsed: false },
+      { id: 'b-gk', team: TEAMS.BLEU, row: 8, col: 3, isGK: true },
+      { id: 'r-gk', team: TEAMS.ROUGE, row: 0, col: 3, isGK: true }
+    ];
+    const sansMur = { ...base, tokens, ball: { row: 3, col: 3 }, turn: TEAMS.ROUGE };
+    // Le pas (+1,+1) depuis (3,3) vers (4,4) est bloqué par le pion b-w lui-même,
+    // mais (+1,-1) vers (4,2) l'est par r-a. On teste (−1,+1) : (2,4) libre.
+    const cible = [4, 4];
+    const avant = getPassDestinations(sansMur).some(([r, c]) => r === cible[0] && c === cible[1]);
+    expect(avant).toBe(false); // occupé par b-w : sanity check de la position
+
+    // Cas utile : le mur en (4,4) coupe le pas (+1,+1) de (3,3)… non, il EST
+    // dessus. On déplace le mur en (3,4) : la diagonale (3,3) -> (4,4) contourne
+    // alors (4,3) et (3,4), donc le mur.
+    const murToks = tokens.map(t => t.id === 'b-w' ? { ...t, row: 3, col: 4 } : t);
+    const posLibre = { ...base, tokens: murToks, ball: { row: 3, col: 3 }, turn: TEAMS.ROUGE };
+    const dispoSansMur = getPassDestinations(posLibre).some(([r, c]) => r === 4 && c === 4);
+    expect(dispoSansMur).toBe(true);
+
+    const avecMur = { ...posLibre, activeWallTokenId: 'b-w', activeWallTeam: TEAMS.BLEU, activeWallArmed: true };
+    const dispoAvecMur = getPassDestinations(avecMur).some(([r, c]) => r === 4 && c === 4);
+    expect(dispoAvecMur).toBe(false);
+  });
+
+  test('le mur survit au tour adverse puis disparaît au retour de la main', () => {
     let state = createGame();
     state = givePower(state, 'b-att1', POWER_TYPES.MUR);
     state = activateMur(state, 'b-att1');
-    expect(isBlockedByWall(state, 6, 3, 1, 1)).toBe(true);
-    expect(isBlockedByWall(state, 6, 3, 1, 0)).toBe(false);
-  });
 
-  test('expireWallIfNeeded retire l\'effet une fois le tour concerné atteint', () => {
-    let state = createGame();
-    state = givePower(state, 'b-att1', POWER_TYPES.MUR);
-    state = activateMur(state, 'b-att1');
-    expect(state.activeWallTokenId).toBeTruthy();
-    expect(expireWallIfNeeded(state).activeWallTokenId).toBeTruthy();
+    // 1. Encore le tour de l'activateur (activateMur ne termine pas le tour) :
+    //    le mur ne doit surtout pas être retiré ici.
+    state = expireWallIfNeeded(state);
+    expect(state.activeWallTokenId).toBe('b-att1');
 
-    const stateAtRougeTurn = { ...state, turn: TEAMS.ROUGE };
-    expect(expireWallIfNeeded(stateAtRougeTurn).activeWallTokenId).toBe(undefined);
+    // 2. Tour adverse : le mur agit, l'expiration s'arme.
+    state = expireWallIfNeeded({ ...state, turn: TEAMS.ROUGE });
+    expect(state.activeWallTokenId).toBe('b-att1');
+    expect(state.activeWallArmed).toBe(true);
+
+    // 3. La main revient : le mur tombe.
+    state = expireWallIfNeeded({ ...state, turn: TEAMS.BLEU });
+    expect(state.activeWallTokenId).toBe(undefined);
+    expect(state.activeWallTeam).toBe(undefined);
   });
 });
 

@@ -279,11 +279,25 @@ tests/               suite de tests du moteur
 >   plusieurs reprises quand elle était recopiée à la main ; le contenu est
 >   maintenant une donnée unique et l'échafaudage (métas, PWA, hreflang,
 >   Plausible) est écrit une seule fois dans le gabarit.
-> - `public/blog/*.html` — articles, générés depuis `content/blog/` (#300).
+> - `public/blog.html` et `public/blog/*.html` — index et articles, générés par
+>   `node tools/build-blog.mjs` depuis `content/blog/` (#300).
+> - `public/{regles,faq,glossaire,a-propos,contact}.html` et
+>   `public/en/{rules,faq}.html` — pages de référence, générées par
+>   `node tools/build-pages.mjs` depuis `content/pages.mjs`. Les règles et la FAQ
+>   ne vivaient que dans une overlay `display:none` de l'accueil : invisibles
+>   pour les moteurs comme pour un visiteur arrivé par une recherche. L'overlay
+>   reste (c'est le bon geste en cours de partie), la référence vit désormais à
+>   une URL propre.
 >
-> Dans les deux cas, un test (`tests/enLandingGenerated.test.js`,
-> `tests/blog.test.js`) échoue en CI si le fichier committé a dérivé de sa
-> source : après modification du contenu, régénérer puis committer.
+> Le gabarit commun (métas, JSON-LD, pied de page, origine) est dans
+> `tools/lib/page-layout.mjs`, partagé par les générateurs du blog et des pages :
+> **ajouter une page à `NAV` la fait apparaître partout d'un coup**, et il faut
+> aussi l'ajouter au pied de page de `public/index.html` (un test le vérifie).
+>
+> Dans tous les cas, un test (`tests/enLandingGenerated.test.js`,
+> `tests/blog.test.js`, `tests/pages.test.js`) échoue en CI si le fichier
+> committé a dérivé de sa source : après modification du contenu, régénérer puis
+> committer.
 
 ## Mettre l'app en ligne (déploiement réel)
 

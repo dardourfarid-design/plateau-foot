@@ -1239,6 +1239,17 @@
   </dl>
 
   <p><button class="tutorial-link seo-faq-link" id="aboutFaqBtn" type="button">Voir toutes les règles et les questions fréquentes →</button></p>
+
+  <!-- L'overlay ci-dessus est le bon geste EN COURS DE PARTIE, mais son contenu
+       reste masqué : ni un moteur, ni un visiteur arrivé depuis une recherche
+       n'en tirent quoi que ce soit. Ces liens mènent aux mêmes contenus à des
+       URL propres, servies en HTML statique. Ne pas les retirer. -->
+  <p class="seo-links">
+    <a href="/regles">Les règles complètes</a> ·
+    <a href="/faq">Questions fréquentes</a> ·
+    <a href="/glossaire">Glossaire du jeu</a> ·
+    <a href="/blog">Le blog</a>
+  </p>
 </section>
 
 <noscript>
@@ -1251,9 +1262,21 @@
 
 <!-- Pied de page légal : accessible sans compte, exigé pour la vente en ligne -->
 <footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">
-  <!-- #300 : sans ce lien, /blog n'est atteignable que par le sitemap — une
-       section orpheline est mal explorée et mal classée. -->
+  <!-- #300 : sans ces liens, /blog et les pages de référence ne sont
+       atteignables que par le sitemap — une section orpheline est mal explorée
+       et mal classée. Miroir de NAV dans tools/lib/page-layout.mjs : une page
+       ajoutée là doit l'être ici aussi. -->
   <a href="/blog" style="color:inherit">Blog</a>
+  &nbsp;·&nbsp;
+  <a href="/regles" style="color:inherit">Règles</a>
+  &nbsp;·&nbsp;
+  <a href="/faq" style="color:inherit">FAQ</a>
+  &nbsp;·&nbsp;
+  <a href="/glossaire" style="color:inherit">Glossaire</a>
+  &nbsp;·&nbsp;
+  <a href="/a-propos" style="color:inherit">À propos</a>
+  &nbsp;·&nbsp;
+  <a href="/contact" style="color:inherit">Contact</a>
   &nbsp;·&nbsp;
   <a href="/terms" style="color:inherit">Conditions d'utilisation &amp; de vente</a>
   &nbsp;·&nbsp;

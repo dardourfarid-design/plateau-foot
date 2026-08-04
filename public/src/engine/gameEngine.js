@@ -118,6 +118,33 @@ export function isCellCoveredBy(state, row, col, team) {
   });
 }
 
+// ---------- MUR (pouvoir) : blocage des diagonales ----------
+// Le pouvoir Mur vit dans powers.js, mais son EFFET doit etre consulte ici, au
+// coeur du calcul des passes. powers.js importe deja gameEngine.js : la
+// verification est donc definie de ce cote pour ne pas creer de cycle, et
+// powers.js la reexporte.
+//
+// CE QUE LE MUR BLOQUE, ET POURQUOI CE CHOIX
+// Une diagonale ne s'arrete pas contre un pion qu'elle frole : elle passe entre
+// deux cases. Le mur ferme precisement ce passage — si le pion en mode mur
+// occupe l'une des deux cases que la diagonale contourne, la trajectoire est
+// coupee. C'est le seul moyen du jeu de fermer une diagonale, ce qui repond au
+// point faible structurel de la defense (la couverture est orthogonale et ne
+// ferme jamais les biais).
+//
+// La version precedente testait si le mur etait SUR la case visee : sans effet,
+// puisque la boucle de passe s'arrete deja sur tout pion.
+export function isBlockedByWall(state, fromRow, fromCol, dr, dc) {
+  if (!state.activeWallTokenId) return false;
+  if (dr === 0 || dc === 0) return false; // seules les diagonales sont concernees
+  const wall = state.tokens.find(t => t.id === state.activeWallTokenId);
+  if (!wall) return false;
+  // Un mur ne gene jamais le camp qui l'a erige.
+  if (wall.team === state.turn) return false;
+  return (wall.row === fromRow + dr && wall.col === fromCol)
+      || (wall.row === fromRow && wall.col === fromCol + dc);
+}
+
 // Une passe partant d'une aile (colonne de bord) est un "centre" : plus dur a
 // couper, elle ignore la couverture adverse sur ce coup. Recompense le jeu large.
 export function isWingPass(state) {
@@ -195,11 +222,22 @@ export function getPassDestinations(state, options = {}) {
     [-1, -1], [-1, 1], [1, -1], [1, 1]
   ];
   directions.forEach(([dr, dc]) => {
-    let r = state.ball.row + dr;
-    let c = state.ball.col + dc;
+    // La case d'ou part le pas courant : le mur se verifie sur le PAS, pas sur
+    // la case d'arrivee (il ferme un passage entre deux cases, pas une case).
+    let fromR = state.ball.row;
+    let fromC = state.ball.col;
+    let r = fromR + dr;
+    let c = fromC + dc;
     while (inBounds(r, c) && !tokenAt(state, r, c)) {
+      // Le mur est une obstruction physique, pas de la couverture : il coupe la
+      // trajectoire meme quand celle-ci ignore la couverture (centre depuis
+      // l'aile, tir du point de penalty). D'ou la verification AVANT le test de
+      // couverture, et hors du garde `ignoreCoverage`.
+      if (isBlockedByWall(state, fromR, fromC, dr, dc)) break;
       if (!ignoreCoverage && isCellCoveredBy(state, r, c, opponent)) break;
       dests.push([r, c, dr, dc]);
+      fromR = r;
+      fromC = c;
       r += dr;
       c += dc;
     }

@@ -27,8 +27,96 @@
 import {
   STRATEGIES_POUR_GAGNER, BATTRE_IA_DIFFICILE, JOUER_A_DEUX, DAMES_ET_FOOTBALL
 } from './strategies.mjs';
+import {
+  LA_COUVERTURE_DEFENSIVE, MAITRISER_LA_UNE_DEUX, LE_POINT_DE_PENALTY,
+  LES_CINQ_POUVOIRS, LE_ROLE_DU_GARDIEN
+} from './mecaniques.mjs';
+import {
+  BIEN_OUVRIR_UNE_PARTIE, DEFENDRE_SANS_TACLER, CHOISIR_SON_PALIER,
+  COMMENT_FONCTIONNE_L_IA, JOUER_AVEC_DES_ENFANTS
+} from './pratique.mjs';
 
 export const ARTICLES = [
+  {
+    slug: 'la-couverture-defensive',
+    title: 'Comprendre la couverture défensive',
+    description:
+      'La mécanique qui décide le plus de parties de Tactic Master : ce que couvre un pion, pourquoi les diagonales restent ouvertes, et comment défendre en quinconce.',
+    date: '2026-08-04',
+    body: LA_COUVERTURE_DEFENSIVE
+  },
+  {
+    slug: 'bien-ouvrir-une-partie',
+    title: 'Bien ouvrir une partie de Tactic Master',
+    description:
+      'Ce que la position de départ autorise vraiment, pourquoi la passe droit devant est bloquée, trois ouvertures qui marchent et les erreurs des cinq premiers tours.',
+    date: '2026-08-03',
+    body: BIEN_OUVRIR_UNE_PARTIE
+  },
+  {
+    slug: 'defendre-sans-tacler',
+    title: 'Défendre sans jamais tacler',
+    description:
+      'Il n\'existe aucune façon de reprendre le ballon à l\'adversaire : six règles pour défendre par le placement, du quinconce au dégagement qui déclenche une une-deux.',
+    date: '2026-08-02',
+    body: DEFENDRE_SANS_TACLER
+  },
+  {
+    slug: 'choisir-son-palier-de-regles',
+    title: 'Découverte, Classique ou Expert ?',
+    description:
+      'Les trois paliers de règles de Tactic Master comparés : ce que chacun active, à qui il s\'adresse, ses limites, et les deux réglages fins qui valent le détour.',
+    date: '2026-08-01',
+    body: CHOISIR_SON_PALIER
+  },
+  {
+    slug: 'comment-fonctionne-l-ia',
+    title: 'Comment fonctionne l\'ordinateur du jeu',
+    description:
+      'Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu\'il évalue, ce qu\'il ignore, et comment exploiter ses angles morts.',
+    date: '2026-07-31',
+    body: COMMENT_FONCTIONNE_L_IA
+  },
+  {
+    slug: 'maitriser-la-une-deux',
+    title: 'Maîtriser la une-deux',
+    description:
+      'Le déplacement bonus le plus sous-exploité de Tactic Master : ce qui le déclenche exactement, comment le provoquer un tour à l\'avance et où dépenser le gain.',
+    date: '2026-07-30',
+    body: MAITRISER_LA_UNE_DEUX
+  },
+  {
+    slug: 'le-point-de-penalty',
+    title: 'Le point de penalty, la case qui débloque',
+    description:
+      'Une case par camp vaut plus que les autres : où elle se trouve, ce qu\'un tir y gagne, les trois façons d\'y amener le ballon et les trois façons de la défendre.',
+    date: '2026-07-29',
+    body: LE_POINT_DE_PENALTY
+  },
+  {
+    slug: 'les-cinq-pouvoirs',
+    title: 'Les cinq pouvoirs et quand les utiliser',
+    description:
+      'Tir Puissant, Sprint, Relais, Repli adverse et Mur : l\'effet exact de chacun, le moment où il vaut un but, et la façon dont l\'ordinateur les déclenche.',
+    date: '2026-07-28',
+    body: LES_CINQ_POUVOIRS
+  },
+  {
+    slug: 'le-role-du-gardien',
+    title: 'Le rôle du gardien',
+    description:
+      'Trois cases, aucune couverture : pourquoi le gardien de Tactic Master obéit à ses propres règles, ce que cela change en attaque comme en défense, et ses limites.',
+    date: '2026-07-27',
+    body: LE_ROLE_DU_GARDIEN
+  },
+  {
+    slug: 'jouer-avec-des-enfants',
+    title: 'Jouer à Tactic Master avec des enfants',
+    description:
+      'Quel palier choisir, les trois phrases qui suffisent à expliquer le jeu, ce qui accroche selon l\'âge, et comment s\'handicaper honnêtement contre un enfant.',
+    date: '2026-07-26',
+    body: JOUER_AVEC_DES_ENFANTS
+  },
   {
     slug: 'regles-du-jeu',
     title: 'Les règles de Tactic Master',
@@ -60,18 +148,20 @@ Expert, décrit plus bas.</p>
 <h2>Ton tour de jeu</h2>
 
 <p>C'est le point que les nouveaux joueurs comprennent souvent de travers, alors
-autant être précis. Un tour se déroule en deux temps :</p>
+autant être précis. À ton tour, tu fais <strong>une</strong> action, au choix :</p>
 
 <ol>
-  <li><strong>Tu déplaces un pion d'une case</strong>, dans n'importe quelle
-      direction — diagonales comprises. La case d'arrivée doit être libre.</li>
-  <li><strong>Si ce pion arrive à côté du ballon</strong>, tu peux enchaîner par
-      une passe. Sinon, ton tour s'arrête là.</li>
+  <li><strong>Déplacer un pion d'une case</strong>, dans n'importe quelle
+      direction — diagonales comprises. La case d'arrivée doit être libre. Si ce
+      pion arrive à côté du ballon, tu peux enchaîner par une passe ; sinon, ton
+      tour s'arrête là.</li>
+  <li><strong>Pousser le ballon avec un pion déjà à son contact</strong>, sans le
+      déplacer : tu le sélectionnes, tu cliques la case d'arrivée du ballon.</li>
 </ol>
 
-<p>La passe est donc <strong>optionnelle</strong>, et elle n'est possible que si ton
-déplacement t'a amené au contact du ballon. Tu ne peux pas pousser le ballon avec
-un pion qui était déjà à côté sans avoir bougé : il faut arriver dessus.</p>
+<p>La passe qui suit un déplacement est <strong>optionnelle</strong> : rien ne
+t'oblige à pousser le ballon parce que ton pion est arrivé à côté. En revanche, tu
+ne peux jamais faire deux passes dans le même tour.</p>
 
 <h2>La passe</h2>
 

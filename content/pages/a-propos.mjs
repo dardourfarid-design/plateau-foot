@@ -1,0 +1,133 @@
+// Page /a-propos. Objectif : dire qui édite le site, comment le contenu est
+// produit et vérifié, et ce qui est gratuit ou payant. C'est la page que
+// cherchent les lecteurs comme les examinateurs pour juger si un site est tenu
+// par quelqu'un de réel et de joignable.
+//
+// L'éditeur n'est PAS nommé : décision de l'utilisateur du 2026-08-04, prise
+// après avoir essayé l'inverse. Ne pas la reproposer.
+// La formule « édité à titre indépendant » est la même dans public/privacy.html
+// et dans les CGU (§1) — les trois pages doivent continuer à dire la même chose.
+// Ce qui porte la confiance ici, ce n'est donc pas une identité : c'est le dépôt
+// public, la méthode de vérification des contenus et une adresse qui répond.
+
+export const A_PROPOS = `
+<p class="page-lead">Tactic Master est un jeu de plateau de football au tour par
+tour, gratuit et jouable dans le navigateur. Cette page explique qui l'édite,
+comment il est fabriqué, et selon quelles règles le contenu de ce site est
+écrit et vérifié.</p>
+
+<h2>Le projet</h2>
+
+<p>Tactic Master est né d'une question simple : est-il possible de faire un jeu
+de football qui ne demande aucun réflexe&nbsp;? Les jeux de football vidéo se
+jouent aux doigts ; les jeux de gestion se jouent en tableaux. Entre les deux, il
+manquait le match lui-même, joué case par case, comme on joue aux échecs ou aux
+dames.</p>
+
+<p>Le pari du jeu tient en une phrase : <strong>des règles qui s'expliquent en
+une minute, une profondeur tactique qui tient des dizaines de parties</strong>.
+Un tour, c'est un pion déplacé d'une case. Le reste — la couverture défensive,
+les centres depuis l'aile, le point de penalty, la une-deux — n'ajoute pas de
+complexité de manipulation, seulement des raisons de réfléchir avant de
+cliquer.</p>
+
+<p>Le jeu a été construit par itérations, en public : chaque mécanique a d'abord
+été un prototype jouable, et plusieurs ont été retirées parce qu'elles rendaient
+les parties confuses. La version actuelle joue à six pions par équipe sur un
+plateau de 7 × 9 cases — la première version en comptait onze sur un terrain
+plus grand, et personne n'arrivait à lire le plateau d'un coup d'œil.</p>
+
+<h2>Qui édite ce site</h2>
+
+<p>Tactic Master est <strong>édité à titre indépendant</strong>. Il n'y a ni
+studio, ni éditeur tiers, ni régie derrière ce projet : le jeu, le site, les
+illustrations et les textes sont produits par la même personne.</p>
+
+<p>C'est aussi la même personne qui répond aux messages. Si vous écrivez à
+l'adresse indiquée sur la page <a href="/contact">contact</a>, vous n'aurez pas
+affaire à un service client externalisé.</p>
+
+<p>Le code source du projet est <strong>consultable publiquement</strong> sur
+<a href="https://github.com/dardourfarid-design/plateau-foot" rel="noopener">le
+dépôt GitHub du projet</a>, sous licence propriétaire (consultation autorisée,
+réutilisation soumise à accord écrit). L'historique des commits, l'intégration
+continue et les tickets y sont visibles : c'est le moyen le plus direct de
+vérifier que ce site est activement maintenu, et par qui.</p>
+
+<p>Pour joindre l'équipe — question, bug, suggestion, demande liée aux
+données personnelles — la marche à suivre est sur la page
+<a href="/contact">contact</a>.</p>
+
+<h2>Comment le contenu de ce site est écrit</h2>
+
+<p>Ce site publie des règles de jeu, des guides de stratégie et des articles de
+fond. Trois principes encadrent leur rédaction, et ils ne sont pas décoratifs :</p>
+
+<h3>1. Toute affirmation sur les règles est vérifiée dans le moteur du jeu</h3>
+
+<p>Les règles décrites ici ne sont pas recopiées de mémoire : elles sont relues
+dans le code qui les applique réellement avant publication. Cette exigence n'est
+pas théorique — la première version de notre article de règles contenait trois
+erreurs, découvertes précisément en la relisant contre le moteur. Un article de
+règles faux est pire que pas d'article du tout : il fait perdre des parties à
+ceux qui lui font confiance.</p>
+
+<p>La conséquence est que la page <a href="/regles">règles complètes</a>, la
+<a href="/faq">FAQ</a> et le <a href="/glossaire">glossaire</a> décrivent le
+comportement effectif du jeu, cas limites compris — pas une intention de
+conception.</p>
+
+<h3>2. Les articles sont écrits pour être utiles, pas pour occuper de la place</h3>
+
+<p>Chaque article part d'une question qu'un joueur se pose vraiment : pourquoi je
+perds, comment ouvrir une défense fermée, quel palier de règles choisir pour
+jouer avec un enfant. Aucun contenu n'est publié pour atteindre un volume.</p>
+
+<h3>3. Les corrections sont faites, pas dissimulées</h3>
+
+<p>Quand une erreur est constatée dans un article publié, il est corrigé. Le jeu
+évolue : une mécanique modifiée entraîne la relecture des pages qui en
+parlent.</p>
+
+<h2>Gratuit, payant, et publicité</h2>
+
+<p><strong>Tout le jeu est gratuit.</strong> Les règles, les modes, les niveaux de
+difficulté, le multijoueur et le puzzle du jour n'exigent aucun paiement. Aucun
+contenu de jeu n'est réservé à un achat.</p>
+
+<p>Une boutique optionnelle propose des <strong>thèmes de terrain et des packs de
+joueurs à collectionner</strong>, strictement cosmétiques : rien de ce qui s'y
+achète ne procure d'avantage en match, et rien n'est nécessaire pour jouer ni
+pour gagner.</p>
+
+<p>Le site est amené à financer son hébergement par de la publicité. Le cadre est
+posé dans la <a href="/privacy">politique de confidentialité</a> : aucun script
+publicitaire n'est chargé tant que le consentement n'a pas été donné, et ce
+consentement se retire à tout moment, aussi facilement qu'il a été donné.</p>
+
+<h2>Comment le jeu est fabriqué</h2>
+
+<p>Tactic Master est une application web : HTML, CSS et JavaScript, sans moteur
+de jeu tiers ni framework d'interface. Les règles vivent dans un moteur de
+fonctions pures, testé unitairement et indépendant de l'affichage — c'est ce qui
+permet de garantir qu'une même position produit le même résultat en solo, en
+local à deux et en ligne.</p>
+
+<p>Le jeu s'installe en application web (PWA) sur iOS et Android, et les modes
+locaux fonctionnent hors connexion. Les comptes, le multijoueur et la boutique
+s'appuient sur Supabase.</p>
+
+<p>Les illustrations de joueurs sont <strong>générées par intelligence
+artificielle puis retravaillées</strong> pour tenir la charte visuelle du jeu :
+c'est assumé, et documenté dans le dépôt public plutôt que passé sous silence.</p>
+
+<h2>Par où commencer</h2>
+
+<ul>
+  <li><a href="/">Jouer une partie</a> — aucune inscription, environ cinq minutes.</li>
+  <li><a href="/regles">Les règles complètes</a> — la référence, cas limites compris.</li>
+  <li><a href="/blog/strategies-pour-gagner">Cinq stratégies pour gagner</a> — si vous enchaînez les défaites.</li>
+  <li><a href="/faq">La FAQ</a> — les questions les plus fréquentes.</li>
+  <li><a href="/glossaire">Le glossaire</a> — le vocabulaire du jeu.</li>
+</ul>
+`;

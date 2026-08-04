@@ -14,7 +14,9 @@
 // ne mutent jamais l'état, elles en retournent un nouveau.
 
 import { TEAMS } from './constants.js';
-import { inBounds, tokenAt, isBallAt, isAdjacent, PHASES } from './gameEngine.js';
+import {
+  inBounds, tokenAt, isBallAt, isAdjacent, isBlockedByWall, PHASES
+} from './gameEngine.js';
 
 export const POWER_TYPES = Object.freeze({
   TIR_PUISSANT: 'tir_puissant',
@@ -35,7 +37,7 @@ export const POWER_LABELS = Object.freeze({
 export const POWER_DESCRIPTIONS = Object.freeze({
   [POWER_TYPES.TIR_PUISSANT]: 'Pousse le ballon à travers le premier pion adverse rencontré, sans s\'arrêter contre lui.',
   [POWER_TYPES.SPRINT]: 'Ce pion se déplace de 2 cases au lieu d\'1, en ligne droite.',
-  [POWER_TYPES.MUR]: 'Pendant ce tour, ce pion bloque aussi les trajectoires en diagonale qui le traversent.',
+  [POWER_TYPES.MUR]: 'Pendant le tour adverse suivant, ce pion coupe les passes diagonales qui contournent son coin.',
   [POWER_TYPES.RELAIS]: 'Après une passe, déplace immédiatement un second pion (sans nouvelle passe).',
   [POWER_TYPES.REPLI_ADVERSE]: 'Force un pion adverse choisi à reculer d\'une case avant son prochain tour.'
 });
@@ -72,19 +74,26 @@ export function getPowerShotDestinations(state) {
     [-1, -1], [-1, 1], [1, -1], [1, 1]
   ];
   directions.forEach(([dr, dc]) => {
-    let r = state.ball.row + dr;
-    let c = state.ball.col + dc;
+    let fromR = state.ball.row;
+    let fromC = state.ball.col;
+    let r = fromR + dr;
+    let c = fromC + dc;
     let piercedOnce = false;
 
     while (inBounds(r, c)) {
+      // Un mur adverse coupe la diagonale même pour un tir puissant : le tir
+      // traverse UN pion, il ne franchit pas un passage fermé.
+      if (isBlockedByWall(state, fromR, fromC, dr, dc)) break;
       const occupant = tokenAt(state, r, c);
       if (occupant) {
         if (piercedOnce) break;
         piercedOnce = true;
+        fromR = r; fromC = c;
         r += dr; c += dc;
         continue;
       }
       dests.push([r, c]);
+      fromR = r; fromC = c;
       r += dr; c += dc;
     }
   });
@@ -141,10 +150,26 @@ export function activateSprint(state, tokenId, row, col, moveSelectedTokenFn) {
 
 // ---------------------------------------------------------------
 // MUR — marque le pion comme actif en mode "mur" pour le tour adverse
-// suivant uniquement. L'effet réel (bloquer les trajectoires diagonales)
-// est vérifié par isBlockedByWall(), appelée depuis une variante de
-// getPassDestinations côté gameEngine quand un mur est en place.
+// suivant uniquement. L'effet réel (couper les trajectoires diagonales qui
+// contournent le pion) est vérifié par isBlockedByWall(), définie dans
+// gameEngine.js — powers.js importe déjà gameEngine, la vérification vit donc
+// là-bas pour éviter un cycle, et est réexportée ici pour les appelants
+// historiques.
+//
+// DURÉE DE VIE — le point délicat
+// Le mur doit protéger pendant LE TOUR ADVERSE, puis disparaître. La version
+// précédente le retirait dès que `state.turn` devenait celui de l'adversaire,
+// c'est-à-dire au moment précis où il aurait dû agir : il n'a donc jamais eu le
+// moindre effet. On distingue maintenant deux étapes explicites :
+//   1. le tour passe à l'adversaire  -> on ARME l'expiration (le mur agit) ;
+//   2. la main revient à l'activateur -> on retire le mur.
+// Le drapeau intermédiaire évite de dépendre du moment exact où l'appelant
+// invoque expireWallIfNeeded() : activateMur() ne termine pas le tour, donc
+// l'appel qui suit immédiatement l'activation se fait encore du côté de
+// l'activateur et ne doit rien retirer.
 // ---------------------------------------------------------------
+export { isBlockedByWall };
+
 export function activateMur(state, tokenId) {
   const token = state.tokens.find(t => t.id === tokenId);
   if (!token || !canActivatePower(state, token) || token.power !== POWER_TYPES.MUR) return state;
@@ -152,23 +177,25 @@ export function activateMur(state, tokenId) {
   const stateWithWall = {
     ...state,
     activeWallTokenId: tokenId,
-    activeWallExpiresAfterTurn: state.turn === TEAMS.BLEU ? TEAMS.ROUGE : TEAMS.BLEU
+    activeWallTeam: token.team,
+    activeWallArmed: false
   };
   return markPowerUsed(stateWithWall, tokenId);
 }
 
-export function isBlockedByWall(state, row, col, dr, dc) {
-  if (!state.activeWallTokenId) return false;
-  const isDiagonal = dr !== 0 && dc !== 0;
-  if (!isDiagonal) return false;
-  const wallToken = state.tokens.find(t => t.id === state.activeWallTokenId);
-  return wallToken && wallToken.row === row && wallToken.col === col;
-}
-
 export function expireWallIfNeeded(state) {
   if (!state.activeWallTokenId) return state;
-  if (state.turn !== state.activeWallExpiresAfterTurn) return state;
-  const { activeWallTokenId, activeWallExpiresAfterTurn, ...rest } = state;
+
+  // Tour de l'adversaire : le mur agit. On note qu'il a bien vu le handoff.
+  if (state.turn !== state.activeWallTeam) {
+    return state.activeWallArmed ? state : { ...state, activeWallArmed: true };
+  }
+
+  // Tour de l'activateur. Si le mur n'a pas encore protégé un tour adverse,
+  // c'est qu'on est entre l'activation et la fin du tour : on le laisse.
+  if (!state.activeWallArmed) return state;
+
+  const { activeWallTokenId, activeWallTeam, activeWallArmed, ...rest } = state;
   return rest;
 }
 

@@ -89,6 +89,22 @@
 .blog-article li { margin-bottom: 8px; }
 .blog-article strong { color: #fff; }
 .blog-article em { color: var(--craie-att); }
+/* Les liens en ligne du corps restaient au bleu par défaut du navigateur —
+   invisible tant que les articles n'en contenaient presque pas, criard depuis
+   que les pages de référence se renvoient les unes aux autres. Le soulignement
+   est conservé : la couleur seule ne suffit pas à signaler un lien. */
+.blog-article p a,
+.blog-article li a,
+.blog-article dd a,
+.blog-article .page-lead a,
+.blog-index .blog-intro a {
+  color: var(--or);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-article p a:hover,
+.blog-article li a:hover,
+.blog-article dd a:hover { color: #fff; }
 
 /* --- Index : cartes -------------------------------------------------- */
 
@@ -160,3 +176,117 @@
 }
 .blog-foot a { color: inherit; }
 .blog-foot p { margin: 10px 0 0; }
+/* Le pied de page liste maintenant huit destinations (voir NAV dans
+   tools/lib/page-layout.mjs) : sur mobile elles tiennent sur trois lignes, il
+   faut donc un interligne, sinon les liens se touchent et deviennent
+   difficiles à viser au doigt. */
+.blog-foot { line-height: 2; }
+
+/* --- Pages de référence : /regles, /faq, /glossaire… ------------------ */
+/* Partagent la mise en page des articles (.blog-article) ; seules les
+   spécificités documentaires sont ici. */
+
+.page-lead {
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--craie-att);
+  border-left: 3px solid var(--or);
+  padding-left: 16px;
+  margin: 0 0 28px;
+}
+
+/* Un tableau à sept colonnes ne rentre pas sur un écran de téléphone. Il
+   défile dans son propre conteneur : c'est LUI qui déborde, jamais la page. */
+.table-scroll {
+  overflow-x: auto;
+  margin: 0 0 24px;
+  -webkit-overflow-scrolling: touch;
+}
+.rules-board,
+.rules-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 460px;
+  font-size: 14px;
+}
+.rules-board caption,
+.rules-table caption {
+  caption-side: bottom;
+  padding-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--craie-att);
+  text-align: left;
+}
+.rules-board th,
+.rules-board td,
+.rules-table th,
+.rules-table td {
+  border: 1px solid rgba(240, 230, 211, 0.14);
+  padding: 8px 10px;
+  text-align: left;
+}
+.rules-board td,
+.rules-board th { text-align: center; }
+.rules-board thead th,
+.rules-table thead th,
+.rules-board tbody th,
+.rules-table tbody th {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: .5px;
+  color: var(--craie);
+  background: rgba(240, 230, 211, 0.05);
+}
+/* Les cases de cage sont la seule information du damier qu'on doit repérer
+   sans lire : elles portent donc une couleur, pas seulement un mot. */
+.rules-board .cage {
+  background: rgba(200, 132, 26, 0.14);
+  color: var(--or);
+  font-weight: 700;
+}
+
+.glossary { margin: 0 0 24px; }
+.glossary dt {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  color: var(--or);
+  margin-top: 22px;
+  /* Une ancre visée depuis un lien ne doit pas se coller au bord haut. */
+  scroll-margin-top: 20px;
+}
+.glossary dd {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* --- « À lire ensuite » ----------------------------------------------- */
+/* Sans ce bloc, chaque article est un cul-de-sac : rien n'y mène au suivant. */
+
+.blog-related {
+  margin-top: 44px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(240, 230, 211, 0.12);
+}
+.blog-related h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  padding-top: 0;
+  border-top: 0;
+}
+.blog-related ul { list-style: none; margin: 0; padding: 0; }
+.blog-related li {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  color: var(--craie-att);
+}
+.blog-related a { color: var(--or); font-weight: 600; }

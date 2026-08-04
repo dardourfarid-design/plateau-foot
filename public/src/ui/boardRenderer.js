@@ -243,6 +243,9 @@ function renderToken(state, tok, lineupsByTeam) {
   div.className = 'token ' + tok.team + (tok.isGK ? ' gardien' : '');
   if (tok.id === state.selectedTokenId) div.classList.add('selected');
   if (canSelectToken(state, tok)) div.classList.add('selectable');
+  // Mur actif : sans marque visible, le pouvoir coupe des diagonales sans que
+  // le joueur qui subit l'effet comprenne pourquoi sa passe est refusée.
+  if (tok.id === state.activeWallTokenId) div.classList.add('wall-active');
   div.dataset.tokenId = tok.id;
 
   const playerName = displayNameForToken(tok.id, lineupsByTeam);

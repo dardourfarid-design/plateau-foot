@@ -306,6 +306,9 @@
 }
 
 .token:hover{ transform: scale(1.06); }
+/* Le halo du Mur actif vit dans 09-refonte-accueil.css : c'est le dernier
+   fichier à redéfinir l'apparence des pions, et une règle posée ici serait
+   écrasée par l'animation d'invitation qui s'y trouve. */
 
 /* Ballon */
 

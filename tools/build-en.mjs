@@ -192,11 +192,24 @@ ${rulesHtml}
 
   <h3>Frequently asked questions</h3>
 ${faqHtml}
+
+  <!-- Les deux pages de référence ANGLAISES (générées par build-pages.mjs).
+       Sans ces liens, elles ne seraient atteignables que par le sitemap, et la
+       landing EN resterait la seule page anglaise du site — c'est-à-dire une
+       page isolée et mince. Ne pas les retirer. -->
+  <p class="seo-links">
+    <a href="/en/rules">The full rules</a> ·
+    <a href="/en/faq">Frequently asked questions</a>
+  </p>
 </section>
 
 <footer class="legal-footer" style="text-align:center;padding:18px 12px 26px;font-size:12px;opacity:0.65">
   <!-- #323 : sans ce lien, le blog n'était atteignable depuis l'anglais que par
        le sitemap. Les articles sont en français, d'où le label. -->
+  <a href="/en/rules" style="color:inherit">Rules</a>
+  &nbsp;·&nbsp;
+  <a href="/en/faq" style="color:inherit">FAQ</a>
+  &nbsp;·&nbsp;
   <a href="/blog" style="color:inherit">Blog (French)</a>
   &nbsp;·&nbsp;
   <a href="/terms" style="color:inherit">Terms of use &amp; sale (French)</a>

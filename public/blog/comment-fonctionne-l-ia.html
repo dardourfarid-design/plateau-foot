@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- FICHIER GÉNÉRÉ — ne pas éditer à la main. Le contenu se modifie dans
+     content/ puis se régénère (voir tools/build-blog.mjs, tools/build-pages.mjs). -->
+<title>Comment fonctionne l'ordinateur du jeu — Tactic Master</title>
+<meta name="description" content="Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu'il évalue, ce qu'il ignore, et comment exploiter ses angles morts.">
+<link rel="canonical" href="https://tactic-master.vercel.app/blog/comment-fonctionne-l-ia">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Tactic Master">
+<meta property="og:title" content="Comment fonctionne l'ordinateur du jeu — Tactic Master">
+<meta property="og:description" content="Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu'il évalue, ce qu'il ignore, et comment exploiter ses angles morts.">
+<meta property="og:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<meta property="og:url" content="https://tactic-master.vercel.app/blog/comment-fonctionne-l-ia">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Comment fonctionne l'ordinateur du jeu — Tactic Master">
+<meta name="twitter:description" content="Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu'il évalue, ce qu'il ignore, et comment exploiter ses angles morts.">
+<meta name="twitter:image" content="https://tactic-master.vercel.app/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/blog/blog.css">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"Article","headline":"Comment fonctionne l'ordinateur du jeu","description":"Les coulisses des trois niveaux de Tactic Master : comment chacun choisit son coup, ce qu'il évalue, ce qu'il ignore, et comment exploiter ses angles morts.","datePublished":"2026-07-31","dateModified":"2026-07-31","image":"https://tactic-master.vercel.app/og-image.jpg","author":{"@type":"Organization","name":"Tactic Master","url":"https://tactic-master.vercel.app/a-propos"},"publisher":{"@type":"Organization","name":"Tactic Master","url":"https://tactic-master.vercel.app"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://tactic-master.vercel.app/blog/comment-fonctionne-l-ia"},"isAccessibleForFree":true,"inLanguage":"fr"},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Accueil","item":"https://tactic-master.vercel.app/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://tactic-master.vercel.app/blog"},{"@type":"ListItem","position":3,"name":"Comment fonctionne l'ordinateur du jeu","item":"https://tactic-master.vercel.app/blog/comment-fonctionne-l-ia"}]}]</script>
+</head>
+<body>
+<header class="blog-top">
+  <a class="blog-home" href="/">← Tactic Master</a>
+</header>
+<main class="blog-article">
+  <p class="blog-date"><time datetime="2026-07-31">31 juillet 2026</time></p>
+  <h1>Comment fonctionne l'ordinateur du jeu</h1>
+<p>L'ordinateur de Tactic Master propose trois niveaux. Contrairement à beaucoup
+de jeux, ce ne sont pas trois versions du même algorithme auquel on aurait ajouté
+du hasard : ce sont trois façons différentes de choisir un coup. Les connaître
+change la manière de jouer contre elles.</p>
+
+<p>Voici, sans enjoliver, comment chacune décide.</p>
+
+<h2>Le socle commun : l'énumération des coups</h2>
+
+<p>Avant tout choix, le jeu dresse la liste complète des coups légaux de l'équipe
+au trait. Trois familles :</p>
+
+<ul>
+  <li>déplacer un pion ;</li>
+  <li>pousser le ballon avec un pion déjà à son contact ;</li>
+  <li>déplacer un pion <em>puis</em> pousser le ballon, quand le déplacement
+      amène ce pion au contact.</li>
+</ul>
+
+<p>Sur la position de départ, cela fait 92 possibilités. Aucun niveau ne « voit »
+plus de coups qu'un autre : ils voient tous exactement les mêmes. Ce qui les
+distingue, c'est ce qu'ils en font.</p>
+
+<h2>Facile : du hasard, volontairement bridé</h2>
+
+<p>Le niveau Facile joue au hasard six fois sur dix. Les quatre autres fois, il
+préfère un coup qui touche le ballon, sans chercher plus loin.</p>
+
+<p>Une contrainte supplémentaire mérite d'être connue : le niveau Facile
+<strong>ne pousse jamais le ballon de plus de deux cases</strong>. Ce plafond
+n'est pas là pour le rendre faible mais pour le rendre supportable. Sans lui, un
+ordinateur « facile » pouvait traverser le plateau et marquer dès son premier
+tour sur une erreur de placement, ce qui punit exactement les joueurs qui
+apprennent.</p>
+
+<p>Il n'utilise jamais ses pouvoirs.</p>
+
+<p><strong>Comment le battre :</strong> jouez normalement. Il ne construit rien,
+donc toute progression régulière suffit. C'est le niveau pour se familiariser avec
+la couverture sans être sanctionné.</p>
+
+<h2>Moyen : l'occasion immédiate, puis la distance au but</h2>
+
+<p>Le niveau Moyen procède en deux temps.</p>
+
+<p><strong>D'abord</strong>, il vérifie s'il existe un coup qui marque
+immédiatement. S'il y en a un, il le joue, sans réfléchir davantage. Cette règle
+seule explique la majorité des buts qu'il inscrit : il ne rate jamais une
+occasion posée devant lui.</p>
+
+<p><strong>Ensuite</strong>, à défaut, il évalue chaque coup selon deux critères :
+l'écart de buts, qui pèse massivement, et la distance du ballon à votre cage.
+Puis il garde le tiers le mieux classé et en tire un au hasard — ce qui le rend
+imprévisible sans le rendre mauvais.</p>
+
+<p><strong>Sa faiblesse est structurelle</strong> et vaut la peine d'être
+comprise : son évaluation <em>ne tient aucun compte de sa propre défense</em>.
+Ni la position de ses pions, ni la couverture qu'ils exercent, ni les
+trajectoires ouvertes vers son but n'entrent dans son calcul. Seule compte la
+distance du ballon à votre cage.</p>
+
+<p><strong>Comment le battre :</strong> ne lui laissez jamais un coup gagnant
+immédiat — vérifiez avant chaque coup qu'aucune de ses passes ne peut atteindre
+votre but. Cela fait, exploitez son désintérêt pour sa propre défense : il monte
+ses pions vers l'avant et laisse des diagonales ouvertes derrière lui.</p>
+
+<h2>Difficile : un coup d'avance, et l'usage des pouvoirs</h2>
+
+<p>Le niveau Difficile commence comme le Moyen : s'il peut marquer, il marque.</p>
+
+<p>Sinon, il fait quelque chose de nettement plus coûteux. Pour
+<strong>chacun</strong> de ses coups possibles, il simule la position obtenue,
+puis explore <strong>jusqu'à douze réponses</strong> que vous pourriez y apporter
+et retient <em>la pire pour lui</em>. Il joue ensuite le coup dont le pire
+scénario est le moins mauvais.</p>
+
+<p>C'est une recherche à deux demi-coups, prudente par construction : il choisit
+en supposant que vous trouverez votre meilleure réplique. En pratique, cela
+signifie qu'il <strong>ne s'expose plus</strong> — les coups qui ouvrent une
+trajectoire vers son but sont éliminés, puisqu'ils apparaissent dans la
+simulation.</p>
+
+<p>Il utilise en plus ses pouvoirs, selon des déclencheurs simples : Tir Puissant
+uniquement s'il marque, Relais sur une passe qui progresse, Repli adverse sur un
+pion qui conteste le ballon, Sprint quand aucun de ses pions n'est au contact,
+Mur quand le ballon est dans sa moitié défensive.</p>
+
+<p><strong>Deux limites exploitables.</strong> D'une part, il n'échantillonne que
+douze de vos réponses possibles quand il y en a davantage : une menace peut lui
+échapper dans une position très ouverte. D'autre part, son évaluation reste la
+même que celle du niveau Moyen — écart de buts et distance du ballon. Il défend
+mieux parce qu'il anticipe, pas parce qu'il comprend sa propre structure.</p>
+
+<p><strong>Comment le battre :</strong> jouez des menaces à deux tours. Une
+position d'où <em>deux</em> passes gagnantes différentes existent au tour suivant
+le met en difficulté : il ne peut en désamorcer qu'une. Et privilégiez les
+positions denses, où le nombre de réponses possibles dépasse ce qu'il
+échantillonne.</p>
+
+<h2>Ce que l'ordinateur ne fait pas</h2>
+
+<p>Par honnêteté, et parce que c'est utile à savoir :</p>
+
+<ul>
+  <li>Il ne s'adapte pas à vous. Aucun apprentissage, aucune mémoire d'une partie
+      à l'autre.</li>
+  <li>Il ne triche pas. Il joue à partir du même état de jeu que vous, avec les
+      mêmes règles, et n'a accès à aucune information supplémentaire.</li>
+  <li>Il n'évalue pas le placement défensif ni la couverture, à aucun niveau.</li>
+  <li>Il ne planifie pas au-delà de la réponse adverse immédiate.</li>
+</ul>
+
+<p>Autrement dit : contre le niveau Difficile, vous n'affrontez pas un joueur
+qui comprend le jeu mieux que vous. Vous affrontez un joueur qui ne fait
+jamais de gaffe évidente, et qui vérifie systématiquement une chose que vous
+oubliez parfois — ce qui se passe juste après.</p>
+
+<h2>Pourquoi c'est écrit ici</h2>
+
+<p>Un adversaire artificiel dont on ignore le fonctionnement finit toujours par
+sembler injuste : on lui prête de la triche quand il gagne et de la bêtise quand
+il perd. Décrire ses règles de décision règle la question — et rend, au passage,
+la victoire contre le niveau Difficile plus intéressante à chercher.</p>
+
+<nav class="blog-related" aria-label="À lire ensuite">
+  <h2>À lire ensuite</h2>
+  <ul>
+    <li><a href="/blog/maitriser-la-une-deux">Maîtriser la une-deux</a> — Le déplacement bonus le plus sous-exploité de Tactic Master : ce qui le déclenche exactement, comment le provoquer un tour à l'avance et où dépenser le gain.</li>
+    <li><a href="/blog/le-point-de-penalty">Le point de penalty, la case qui débloque</a> — Une case par camp vaut plus que les autres : où elle se trouve, ce qu'un tir y gagne, les trois façons d'y amener le ballon et les trois façons de la défendre.</li>
+  </ul>
+</nav>
+
+<aside class="blog-cta">
+  <p>Tactic Master est gratuit et se joue directement dans le navigateur, sans
+     installation ni compte.</p>
+  <a class="btn primary" href="/?utm_source=blog">Jouer une partie</a>
+</aside>
+</main>
+<footer class="blog-foot">
+  <a href="/blog">Tous les articles</a>
+  &nbsp;·&nbsp;
+  <a href="/regles">Règles complètes</a>
+  &nbsp;·&nbsp;
+  <a href="/faq">FAQ</a>
+  &nbsp;·&nbsp;
+  <a href="/glossaire">Glossaire</a>
+  &nbsp;·&nbsp;
+  <a href="/a-propos">À propos</a>
+  &nbsp;·&nbsp;
+  <a href="/contact">Contact</a>
+  &nbsp;·&nbsp;
+  <a href="/terms">Conditions</a>
+  &nbsp;·&nbsp;
+  <a href="/privacy">Confidentialité</a>
+  <p>© 2026 Tactic Master</p>
+</footer>
+</body>
+</html>

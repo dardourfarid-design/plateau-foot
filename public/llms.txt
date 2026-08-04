@@ -58,8 +58,16 @@ Plateformes : navigateur web, installable en PWA sur iOS et Android.
 
 ## Pages
 
-- [Accueil (français)](https://tactic-master.vercel.app/) : présentation, règles, FAQ et accès au jeu.
-- [Home (English)](https://tactic-master.vercel.app/en) : English landing page with the rules and FAQ.
+- [Accueil (français)](https://tactic-master.vercel.app/) : présentation et accès au jeu.
+- [Home (English)](https://tactic-master.vercel.app/en) : English landing page.
+- [Rules (English)](https://tactic-master.vercel.app/en/rules) : complete rules reference in English.
+- [FAQ (English)](https://tactic-master.vercel.app/en/faq) : frequently asked questions in English.
+- [Règles complètes](https://tactic-master.vercel.app/regles) : la référence exhaustive — plateau, tour de jeu, couverture défensive, cases spéciales, une-deux, paliers, pouvoirs, cas limites.
+- [Questions fréquentes](https://tactic-master.vercel.app/faq) : prise en main, règles et cas limites, modes de jeu, compte, boutique, données.
+- [Glossaire](https://tactic-master.vercel.app/glossaire) : le vocabulaire du jeu défini terme par terme.
+- [Blog](https://tactic-master.vercel.app/blog) : guides de stratégie, explications de mécaniques et coulisses du développement.
+- [À propos](https://tactic-master.vercel.app/a-propos) : qui édite le site et comment les contenus sont vérifiés.
+- [Contact](https://tactic-master.vercel.app/contact)
 - [Conditions d'utilisation et de vente](https://tactic-master.vercel.app/terms)
 - [Politique de confidentialité](https://tactic-master.vercel.app/privacy)
 
@@ -75,4 +83,4 @@ opponent's back line. A 7×9 board, 6 pieces per side (1 goalkeeper, 2 defenders
 Play solo against the computer, two players on one device, or online with a game
 code. Free, no installation, installable as a PWA on iOS and Android.
 
-Dernière mise à jour : 2026-07-18.
+Dernière mise à jour : 2026-08-04.

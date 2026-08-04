@@ -10,88 +10,25 @@
 //
 // Le HTML n'est pas minifié : il est copié verbatim par le build, ce qui rend
 // les balises servies identiques à celles qu'on relit ici.
+//
+// L'en-tête, le pied de page et l'origine vivent dans tools/lib/page-layout.mjs,
+// partagés avec tools/build-pages.mjs (règles, FAQ, glossaire…) : une page
+// ajoutée à NAV apparaît dans le pied de page du blog ET des pages de référence.
 
 import { ARTICLES } from '../content/blog/articles.mjs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  ORIGIN, esc, frDate, head, header, footer, cta, breadcrumb
+} from './lib/page-layout.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'public', 'blog');
 
-// TODO(#307) : basculer sur le domaine personnalisé une fois branché sur
-// Vercel. Un seul endroit à changer — canonical, og:url et sitemap en dérivent.
-const ORIGIN = 'https://tactic-master.vercel.app';
-
-// Police : celles DÉJÀ chargées par le site (#309). Ne pas en ajouter — le
-// poids des webfonts sur le chemin critique est un sujet réglé, pas à rouvrir.
-const FONTS =
-  'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800' +
-  '&family=Space+Grotesk:wght@400;500;600;700&display=swap';
-
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-const frDate = iso => new Date(iso + 'T12:00:00Z').toLocaleDateString('fr-FR',
-  { year: 'numeric', month: 'long', day: 'numeric' });
-
-function head({ title, description, url, extraCss = '', jsonLd }) {
-  return `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- FICHIER GÉNÉRÉ par tools/build-blog.mjs — ne pas éditer à la main.
-     Le contenu se modifie dans content/blog/articles.mjs. -->
-<title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${url}">
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="Tactic Master">
-<meta property="og:title" content="${esc(title)}">
-<meta property="og:description" content="${esc(description)}">
-<meta property="og:image" content="${ORIGIN}/og-image.jpg">
-<meta property="og:url" content="${url}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${esc(title)}">
-<meta name="twitter:description" content="${esc(description)}">
-<meta name="twitter:image" content="${ORIGIN}/og-image.jpg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="${FONTS}" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
-<link rel="stylesheet" href="/blog/blog.css">
-${jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : ''}${extraCss}
-</head>
-<body>`;
-}
-
-const header = `
-<header class="blog-top">
-  <a class="blog-home" href="/">← Tactic Master</a>
-</header>`;
-
-const footer = `
-<footer class="blog-foot">
-  <a href="/blog">Tous les articles</a> &nbsp;·&nbsp;
-  <a href="/terms">Conditions</a> &nbsp;·&nbsp;
-  <a href="/privacy">Confidentialité</a>
-  <p>© 2026 Tactic Master</p>
-</footer>
-</body>
-</html>
-`;
-
-const cta = `
-<aside class="blog-cta">
-  <p>Tactic Master est gratuit et se joue directement dans le navigateur, sans
-     installation ni compte.</p>
-  <a class="btn primary" href="/?utm_source=blog">Jouer une partie</a>
-</aside>`;
-
 function buildArticle(a) {
   const url = `${ORIGIN}/blog/${a.slug}`;
-  const jsonLd = {
+  const jsonLd = [{
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: a.title,
@@ -99,19 +36,46 @@ function buildArticle(a) {
     datePublished: a.date,
     dateModified: a.date,
     image: `${ORIGIN}/og-image.jpg`,
-    author: { '@type': 'Organization', name: 'Tactic Master' },
-    publisher: { '@type': 'Organization', name: 'Tactic Master' },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': url }
-  };
+    // Auteur = l'organisation, pas une personne nommée : l'éditeur ne souhaite
+    // pas être identifié (décision du 2026-08-04). `/a-propos` porte alors seul
+    // le signal d'expertise, via la méthode de vérification des contenus.
+    author: { '@type': 'Organization', name: 'Tactic Master', url: `${ORIGIN}/a-propos` },
+    publisher: { '@type': 'Organization', name: 'Tactic Master', url: ORIGIN },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    isAccessibleForFree: true,
+    inLanguage: 'fr'
+  }, breadcrumb([
+    { name: 'Accueil', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: a.title, path: `/blog/${a.slug}` }
+  ])];
+
+  // Lectures liées : les deux articles suivants dans l'ordre de publication,
+  // en boucle. Sans ce bloc, chaque article est un cul-de-sac — un visiteur
+  // (et un robot) n'y voit qu'une page isolée au lieu d'un corpus.
+  const i = ARTICLES.findIndex(x => x.slug === a.slug);
+  const related = [1, 2]
+    .map(k => ARTICLES[(i + k) % ARTICLES.length])
+    .filter(x => x && x.slug !== a.slug);
+
+  const relatedHtml = related.length ? `
+<nav class="blog-related" aria-label="À lire ensuite">
+  <h2>À lire ensuite</h2>
+  <ul>${related.map(r => `
+    <li><a href="/blog/${r.slug}">${esc(r.title)}</a> — ${esc(r.description)}</li>`).join('')}
+  </ul>
+</nav>` : '';
+
   return head({ title: `${a.title} — Tactic Master`, description: a.description, url, jsonLd })
-    + header
+    + header()
     + `\n<main class="blog-article">
   <p class="blog-date"><time datetime="${a.date}">${frDate(a.date)}</time></p>
   <h1>${esc(a.title)}</h1>
 ${a.body.trim()}
-${cta}
+${relatedHtml}
+${cta()}
 </main>`
-    + footer;
+    + footer();
 }
 
 function buildIndex() {
@@ -130,29 +94,36 @@ function buildIndex() {
     title: 'Le blog — Tactic Master',
     description: 'Règles, stratégies et coulisses de Tactic Master, le jeu de plateau de foot gratuit jouable dans le navigateur.',
     url,
-    jsonLd: {
+    ogType: 'website',
+    jsonLd: [{
       '@context': 'https://schema.org',
       '@type': 'Blog',
       name: 'Le blog de Tactic Master',
       url,
+      inLanguage: 'fr',
       blogPost: ARTICLES.map(a => ({
         '@type': 'BlogPosting',
         headline: a.title,
         datePublished: a.date,
         url: `${ORIGIN}/blog/${a.slug}`
       }))
-    }
+    }, breadcrumb([
+      { name: 'Accueil', path: '/' },
+      { name: 'Blog', path: '/blog' }
+    ])]
   })
-    + header
+    + header()
     + `\n<main class="blog-index">
   <h1>Le blog</h1>
   <p class="blog-intro">Les règles en détail, des stratégies concrètes, et de temps
-     en temps les coulisses du développement.</p>
+     en temps les coulisses du développement. Pour la référence exhaustive, voir
+     les <a href="/regles">règles complètes</a>, la <a href="/faq">FAQ</a> et le
+     <a href="/glossaire">glossaire</a>.</p>
   <ul class="blog-list">${cards}
   </ul>
-${cta}
+${cta()}
 </main>`
-    + footer;
+    + footer();
 }
 
 // --- Sitemap : réécrit le bloc /blog, sans toucher au reste ------------------

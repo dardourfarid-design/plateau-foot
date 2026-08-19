@@ -11,12 +11,23 @@ import { buildBundle, OUTPUT } from '../tools/bundle-edge-function.mjs';
 // rejouer un moteur périmé côté serveur.
 // Correctif en cas d'échec : `node tools/sync-edge-engine.mjs`.
 
+// Comparaison à fins de ligne normalisées, et ce n'est PAS une tolérance : les
+// deux fichiers ont des conventions différentes PAR CONSTRUCTION. .gitattributes
+// impose `eol=lf` à la copie _engine (elle part chez Deno), tandis que la source
+// suit core.autocrlf et arrive en CRLF sur un checkout Windows. Comparer les
+// octets bruts faisait donc échouer ce test après tout checkout propre sous
+// Windows — il n'était vert que si `sync-edge-engine.mjs` venait de tourner,
+// c'est-à-dire au moment où il ne servait à rien. Ce qu'on veut vérifier, c'est
+// que le CONTENU n'a pas dérivé ; les fins de ligne sont réécrites par git.
+// Le second bloc de ce fichier normalisait déjà, pour la même raison.
+const lf = s => (typeof s === 'string' ? s.replace(/\r\n/g, '\n') : s);
+
 describe('copie moteur de l’Edge Function (_engine)', () => {
   for (const name of ENGINE_FILES) {
     test(`${name} est identique à public/src/engine/${name}`, () => {
       const { src, dst } = readPair(name);
       expect(dst).toBeTruthy(); // la copie doit exister
-      expect(dst).toBe(src);    // et être identique octet pour octet
+      expect(lf(dst)).toBe(lf(src));
     });
   }
 });
